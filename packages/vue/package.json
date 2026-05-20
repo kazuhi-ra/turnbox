@@ -1,0 +1,33 @@
+{
+  "name": "@turnbox/vue",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist",
+    "storybook": "storybook dev -p 6008"
+  },
+  "peerDependencies": {
+    "vue": ">=3"
+  },
+  "dependencies": {
+    "@turnbox/core": "workspace:^",
+    "@turnbox/dom": "workspace:*"
+  },
+  "devDependencies": {
+    "@storybook/vue3-vite": "^10.4.0",
+    "@vue/test-utils": "^2",
+    "storybook": "^10.4.0",
+    "vue": "^3"
+  }
+}

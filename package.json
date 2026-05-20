@@ -1,0 +1,39 @@
+{
+  "name": "turnbox_js",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=26.0.0"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
+    "build": "turbo run build",
+    "build:packages": "turbo run build --filter='./packages/*'",
+    "lint": "biome lint packages/ tests/",
+    "lint:fix": "biome lint --write packages/ tests/",
+    "format": "biome format --write packages/ tests/"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@playwright/test": "^1.60.0",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@vitest/coverage-v8": "^3.2.0",
+    "@vue/test-utils": "^2",
+    "jquery": "1.12.4",
+    "jsdom": "^26.1.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "tsup": "^8.5.1",
+    "turbo": "^2.5.0",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.0",
+    "vue": "^3"
+  }
+}

@@ -1,0 +1,581 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+
+import type { TurnBoxTestAdapter } from "./adapter.js";
+import { adapters, implAdapters } from "../adapters/index.js";
+import { createJQueryAdapter } from "../adapters/jquery.js";
+
+// ── shared: jQuery と DOM 両方で同じ挙動 ─────────────────────────────────────
+
+describe.each(adapters)("%s — wrap-around", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    adapter.destroy();
+    vi.useRealTimers();
+  });
+
+  describe("type:real — prev() wrap", () => {
+    it("prev() from face 1 wraps to face 4", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+
+    it("prev() from face 1 shows face 4 and hides face 1", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.isFaceShown(4)).toBe(true);
+      expect(adapter.isFaceShown(1)).toBe(false);
+    });
+  });
+
+  describe("type:repeat — traverse", () => {
+    it("can traverse all faces 1→2→3→4 in sequence", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      for (let face = 2; face <= 4; face++) {
+        adapter.next();
+        await adapter.advanceTime(300);
+        expect(adapter.getCurrentFace()).toBe(face);
+      }
+    });
+  });
+});
+
+// ── jQuery — turnBox.js 固有の挙動 ──────────────────────────────────────────
+// turnBoxAnimate が face > facePcs をクランプするため next() wrap は不可。
+// non-real の prev() は face 0 → face_pcs リマップで wrap する。
+
+describe("jQuery — wrap-around", () => {
+  let adapter: ReturnType<typeof createJQueryAdapter>;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    adapter.destroy();
+    vi.useRealTimers();
+  });
+
+  it("type:real — next() from face 4 is no-op (turnBoxAnimate clamps face > facePcs)", async () => {
+    adapter = createJQueryAdapter({ facePcs: 4, type: "real", duration: 200 });
+    adapter.goTo(4);
+    await adapter.advanceTime(300);
+    adapter.next();
+    await adapter.advanceTime(300);
+    expect(adapter.getCurrentFace()).toBe(4);
+  });
+
+  it("type:repeat — next() from face 4 is no-op (turnBoxAnimate clamps face > facePcs)", async () => {
+    adapter = createJQueryAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+    adapter.goTo(4);
+    await adapter.advanceTime(300);
+    adapter.next();
+    await adapter.advanceTime(300);
+    expect(adapter.getCurrentFace()).toBe(4);
+  });
+
+  it("type:skip — next() from face 4 is no-op (turnBoxAnimate clamps face > facePcs)", async () => {
+    adapter = createJQueryAdapter({ facePcs: 4, type: "skip", duration: 200 });
+    adapter.goTo(4);
+    await adapter.advanceTime(300);
+    adapter.next();
+    await adapter.advanceTime(300);
+    expect(adapter.getCurrentFace()).toBe(4);
+  });
+
+  it("type:repeat — prev() from face 1 wraps to face 4", async () => {
+    adapter = createJQueryAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+    adapter.prev();
+    await adapter.advanceTime(300);
+    expect(adapter.getCurrentFace()).toBe(4);
+    expect(adapter.isFaceShown(4)).toBe(true);
+    expect(adapter.isFaceShown(1)).toBe(false);
+  });
+
+  it("type:skip — prev() from face 1 wraps to face 4", async () => {
+    adapter = createJQueryAdapter({ facePcs: 4, type: "skip", duration: 200 });
+    adapter.prev();
+    await adapter.advanceTime(300);
+    expect(adapter.getCurrentFace()).toBe(4);
+  });
+});
+
+// ── impl: DOM / React / Vue — jQuery の制約を持たない正しい実装の挙動 ─────────
+
+describe.each(implAdapters)("%s — wrap-around", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    adapter.destroy();
+    vi.useRealTimers();
+  });
+
+  // type:real — 両方向 wrap
+
+  describe("type:real — wrap (4-face only)", () => {
+    it("next() from face 4 wraps to face 1", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.isFaceShown(1)).toBe(true);
+      expect(adapter.isFaceShown(4)).toBe(false);
+    });
+
+    it("round trip: prev() 1→4, next() 4→1", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+    });
+  });
+
+  // type:repeat — 両方向 wrap (4-face only)
+
+  describe("type:repeat — wrap (4-face only)", () => {
+    it("next() from face 4 wraps to face 1", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.isFaceShown(1)).toBe(true);
+      expect(adapter.isFaceShown(4)).toBe(false);
+    });
+
+    it("prev() from face 1 wraps to face 4", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.isFaceShown(4)).toBe(true);
+      expect(adapter.isFaceShown(1)).toBe(false);
+    });
+
+    it("round trip: next() 4→1, prev() 1→4", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+  });
+
+  // type:skip — 両方向 wrap (4-face only)
+  // skip は virtual face を使わず face5→1 / face0→4 を直接リマップして wrap する。
+
+  describe("type:skip — wrap (4-face only)", () => {
+    it("next() from face 4 wraps to face 1", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.isFaceShown(1)).toBe(true);
+      expect(adapter.isFaceShown(4)).toBe(false);
+    });
+
+    it("prev() from face 1 wraps to face 4", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.isFaceShown(4)).toBe(true);
+      expect(adapter.isFaceShown(1)).toBe(false);
+    });
+
+    it("round trip: next() 4→1, prev() 1→4", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+  });
+
+  // transform state after wrap completion
+
+  describe("transform state after wrap completion", () => {
+    // type:real
+    it("type:real — prev() 1→4: face4 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — prev() 1→4: face1 at rotateX(-270deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(-270deg)");
+    });
+
+    it("type:real — next() 4→1: face1 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — next() 4→1: face2 at rotateX(90deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(2).transform).toContain("rotateX(90deg)");
+    });
+
+    it("type:real — 4→1 wrap then next to 2: face2 shown, face1 hidden", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(2);
+      expect(adapter.isFaceShown(2)).toBe(true);
+      expect(adapter.isFaceShown(1)).toBe(false);
+    });
+
+    it("type:real — 4→1 wrap then next to 2: face2 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(2).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — consecutive wraps 1→4→1: transforms correct after each", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — direction:negative next() 4→1: face1 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", direction: "negative", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — direction:negative prev() 1→4: face4 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", direction: "negative", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — even≠height prev() 1→4: face4 at rotateX(0deg) after adjust cleanup", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        type: "real",
+        height: 200,
+        even: 150,
+        axis: "X",
+        duration: 200,
+      });
+      adapter.prev();
+      await adapter.advanceTime(500);
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:real — even≠height next() 4→1: face1 at rotateX(0deg) after adjust cleanup", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        type: "real",
+        height: 200,
+        even: 150,
+        axis: "X",
+        duration: 200,
+      });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(500);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
+    });
+
+    // ── axis:Y fixed-geometry wrap — edge pre-positioning regression ─────────
+    // Bug: incoming face sat at ±270° (wrong side), causing a 270° CSS arc and
+    // visible edge separation. Fix: pre-position at ±90° before the transition,
+    // then override the target to 0° so CSS interpolates the correct 90° arc.
+
+    it("type:real axis:Y — next() 4→1: face1 pre-positioned at +90° before transition (not −270°)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      // t=0, sync: incoming face1 is at +90° (not −270°)
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(90deg) translate3d(100px, 0px, 100px)",
+      );
+    });
+
+    it("type:real axis:Y — next() 4→1: face1 target is 0° at ADJUST_TIME (not −360°)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(25); // just past ADJUST_TIME=20ms
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    it("type:real axis:Y — prev() 1→4: face4 pre-positioned at −90° before transition (not +270°)", () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.prev();
+      // t=0, sync: incoming face4 is at −90° (not +270°)
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(-90deg) translate3d(-100px, 0px, 100px)",
+      );
+    });
+
+    it("type:real axis:Y — prev() 1→4: face4 target is 0° at ADJUST_TIME (not +360°)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(25);
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    it("type:real axis:Y — direction:negative next() 4→1: face1 pre-positioned at −90°", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        type: "real",
+        axis: "Y",
+        direction: "negative",
+        duration: 200,
+      });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(-90deg) translate3d(-100px, 0px, 100px)",
+      );
+    });
+
+    it("type:real axis:Y — direction:negative next() 4→1: face1 target is 0° at ADJUST_TIME", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        type: "real",
+        axis: "Y",
+        direction: "negative",
+        duration: 200,
+      });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(25);
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    it("type:real axis:Y — direction:negative prev() 1→4: face4 pre-positioned at +90°", () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        type: "real",
+        axis: "Y",
+        direction: "negative",
+        duration: 200,
+      });
+      adapter.prev();
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(90deg) translate3d(100px, 0px, 100px)",
+      );
+    });
+
+    it("type:real axis:Y — direction:negative prev() 1→4: face4 target is 0° at ADJUST_TIME", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        type: "real",
+        axis: "Y",
+        direction: "negative",
+        duration: 200,
+      });
+      adapter.prev();
+      await adapter.advanceTime(25);
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    // ── axis:Y wrap — post-animation state ─────────────────────────────────
+    // Verifies cleanup restores standard resting positions after axis:Y wrap.
+
+    it("type:real axis:Y — next() 4→1: face1 at rotateY(0deg) after completion", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    it("type:real axis:Y — next() 4→1: face4 at rotateY(270deg) after completion", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      // currentFace=1: calcDeg(1,4)=(1-4)*-90=+270 — standard resting position for face4
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(270deg) translate3d(100px, 0px, 100px)",
+      );
+    });
+
+    it("type:real axis:Y — prev() 1→4: face4 at rotateY(0deg) after completion", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    it("type:real axis:Y — prev() 1→4: face1 at rotateY(−270deg) after completion", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(-270deg) translate3d(-100px, 0px, 100px)",
+      );
+    });
+
+    it("type:real axis:Y — consecutive wraps 1→4→1: transforms correct after each", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toBe(
+        "rotateY(0deg) translate3d(0px, 0px, 0px)",
+      );
+    });
+
+    // type:repeat
+    // prev() 1→4: face4=0°, face1=-90° (even current → odd face: -90°)
+    // next() 4→1: face1=0°, face4=90° (odd current → even face: +90°)
+
+    it("type:repeat — prev() 1→4: face4 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:repeat — prev() 1→4: face1 at rotateX(-90deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(-90deg)");
+    });
+
+    it("type:repeat — next() 4→1: face1 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:repeat — next() 4→1: face4 at rotateX(90deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(90deg)");
+    });
+
+    // type:skip
+    // prev() 1→4: face4=0°, face1=+90° (calcDeg edge case: currentFace=4,faceNum=1 → +90°)
+    // next() 4→1: face1=0°, face4=-90° (calcDeg edge case: currentFace=1,faceNum=4 → -90°)
+
+    it("type:skip — prev() 1→4: face4 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:skip — prev() 1→4: face1 at rotateX(90deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(90deg)");
+    });
+
+    it("type:skip — next() 4→1: face1 at rotateX(0deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
+    });
+
+    it("type:skip — next() 4→1: face4 at rotateX(-90deg)", async () => {
+      adapter = createAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getFaceState(4).transform).toContain("rotateX(-90deg)");
+    });
+  });
+});

@@ -1,0 +1,27 @@
+{
+  "name": "@turnbox/dom",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist",
+    "storybook": "storybook dev -p 6006"
+  },
+  "dependencies": {
+    "@turnbox/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@storybook/html-vite": "^10.4.0",
+    "storybook": "^10.4.0"
+  }
+}
