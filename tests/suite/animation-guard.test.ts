@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { implAdapters } from "../adapters/index.js";
+import { modernAdapters } from "../adapters/index.js";
 
 // ── アニメーション中は操作を無視する ─────────────────────────────────────────
 // アニメーションが完了する前に next()/prev()/goTo() を呼んでも no-op になること。
 // 完了後は通常通り動作すること。
 
-describe.each(implAdapters)("%s — animation guard", (_, createAdapter) => {
+describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {

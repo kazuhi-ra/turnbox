@@ -4,14 +4,14 @@ import { createReactAdapter } from "./react.js";
 import { createVueAdapter } from "./vue.js";
 import type { AdapterFactory } from "../suite/adapter.js";
 
-// 全アダプター: shared テストで使用
-export const adapters: [string, AdapterFactory][] = [
+// jQuery + DOM: 旧実装と新実装の振る舞いが一致することを検証するテスト用
+export const sharedAdapters: [string, AdapterFactory][] = [
   ["jQuery", createJQueryAdapter],
   ["DOM", createDomAdapter],
 ];
 
-// 正しい実装アダプター（jQuery/turnBox.js の制約を持たない）
-export const implAdapters: [string, AdapterFactory][] = [
+// DOM + React + Vue: jQuery の制約を持たない新実装固有の振る舞いを検証するテスト用
+export const modernAdapters: [string, AdapterFactory][] = [
   ["DOM", createDomAdapter],
   ["React", createReactAdapter],
   ["Vue", createVueAdapter],

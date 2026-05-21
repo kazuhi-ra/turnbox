@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createJQueryAdapter } from "../adapters/jquery.js";
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { adapters } from "../adapters/index.js";
+import { sharedAdapters } from "../adapters/index.js";
 
-describe.each(adapters)("%s — edge cases", (_, createAdapter) => {
+describe.each(sharedAdapters)("%s — edge cases", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -63,17 +62,17 @@ describe.each(adapters)("%s — edge cases", (_, createAdapter) => {
     expect(adapter.isFaceShown(2)).toBe(true);
   });
 
-  // ── even option (fixed=false) ────────────────────────────────────────────────
+  // ── uneven geometry: even ≠ length (fixed=false) ────────────────────────────
   // When even !== height (axis:X) or even !== width (axis:Y), fixed=false.
   // Navigation behavior (face transitions) must still work correctly.
 
-  it("even option (axis:X, even≠height): starts at face 1", () => {
+  it("uneven geometry (axis:X, even≠height): starts at face 1", () => {
     adapter = createAdapter({ facePcs: 4, height: 50, even: 30, axis: "X" });
     expect(adapter.getCurrentFace()).toBe(1);
     expect(adapter.isFaceShown(1)).toBe(true);
   });
 
-  it("even option (axis:X, even≠height): navigation works correctly", async () => {
+  it("uneven geometry (axis:X, even≠height): navigation works correctly", async () => {
     adapter = createAdapter({ facePcs: 4, height: 50, even: 30, axis: "X", duration: 200 });
     adapter.goTo(2);
     await adapter.advanceTime(300);
@@ -82,7 +81,7 @@ describe.each(adapters)("%s — edge cases", (_, createAdapter) => {
     expect(adapter.isFaceShown(1)).toBe(false);
   });
 
-  it("even option (axis:Y, even≠width): navigation works correctly", async () => {
+  it("uneven geometry (axis:Y, even≠width): navigation works correctly", async () => {
     adapter = createAdapter({ facePcs: 4, width: 200, even: 120, axis: "Y", duration: 200 });
     adapter.goTo(3);
     await adapter.advanceTime(300);
@@ -148,11 +147,11 @@ describe.each(adapters)("%s — edge cases", (_, createAdapter) => {
     check();
   });
 
-  // ── turnBoxAdjust cleanup with even option ───────────────────────────────────
+  // ── turnBoxAdjust cleanup (uneven geometry) ──────────────────────────────────
   // When fixed=false (even≠length), certain transitions add .turnBoxAdjust.
   // It must be removed after animation completes (no leftover state).
 
-  it("even option: no .turnBoxAdjust left after face1 PREV animation", async () => {
+  it("uneven geometry: no .turnBoxAdjust left after face1 PREV animation", async () => {
     adapter = createAdapter({ facePcs: 4, height: 50, even: 30, axis: "X", duration: 200 });
     adapter.prev(); // current=1 → target=0 → adds turnBoxAdjust (direction:positive, 1→0 path)
     await adapter.advanceTime(300);
@@ -160,7 +159,7 @@ describe.each(adapters)("%s — edge cases", (_, createAdapter) => {
     expect(container.classList.contains("turnBoxAdjust")).toBe(false);
   });
 
-  it("even option: no .turnBoxAdjust left after face2 NEXT animation", async () => {
+  it("uneven geometry: no .turnBoxAdjust left after face2 NEXT animation", async () => {
     adapter = createAdapter({ facePcs: 4, height: 50, even: 30, axis: "X", duration: 200 });
     adapter.goTo(2);
     await adapter.advanceTime(300);
@@ -171,92 +170,3 @@ describe.each(adapters)("%s — edge cases", (_, createAdapter) => {
   });
 });
 
-// ── jQuery adapter — double-init guard and CSS structure ─────────────────────
-// These tests verify jQuery-specific initialization behavior.
-
-describe("jQuery adapter — double-init guard", () => {
-  let adapter: ReturnType<typeof createJQueryAdapter>;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    adapter.destroy();
-    vi.useRealTimers();
-  });
-
-  it("calling turnBox() on an already-initialized element does not reset to face 1", async () => {
-    adapter = createJQueryAdapter({ facePcs: 4, duration: 200 });
-    adapter.goTo(3);
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(3);
-
-    const $$ = (globalThis as Record<string, unknown>).$ as (s: string) => {
-      turnBox: (o?: object) => void;
-    };
-    const container = document.querySelector("[data-turnbox-test]") as HTMLElement;
-    const testId = container.getAttribute("data-turnbox-test");
-    $$(`[data-turnbox-test="${testId}"]`).turnBox();
-
-    expect(adapter.getCurrentFace()).toBe(3);
-    expect(adapter.isFaceShown(3)).toBe(true);
-  });
-});
-
-// ── jQuery adapter — CSS structure for 2/3-face boxes ────────────────────────
-
-describe("jQuery adapter — 2/3-face: no virtual wrap CSS rules", () => {
-  let adapter: ReturnType<typeof createJQueryAdapter>;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    adapter.destroy();
-    vi.useRealTimers();
-  });
-
-  const hasRule = (currentFace: number): boolean => {
-    const styleEl = document.head.querySelector('style[id*="turnBoxStyle"]');
-    const sheet = (styleEl as HTMLStyleElement)?.sheet;
-    if (!sheet) return false;
-    return Array.from(sheet.cssRules).some(
-      (r) =>
-        r instanceof CSSStyleRule && r.selectorText.includes(`turnBoxCurrentFace${currentFace}`),
-    );
-  };
-
-  it("2-face box: no CSS rules for currentFace0 or currentFace5", () => {
-    adapter = createJQueryAdapter({ facePcs: 2 });
-    expect(hasRule(0)).toBe(false);
-    expect(hasRule(5)).toBe(false);
-  });
-
-  it("2-face box: has CSS rules only for currentFace1 and currentFace2", () => {
-    adapter = createJQueryAdapter({ facePcs: 2 });
-    expect(hasRule(1)).toBe(true);
-    expect(hasRule(2)).toBe(true);
-    expect(hasRule(3)).toBe(false);
-  });
-
-  it("3-face box: no CSS rules for currentFace0 or currentFace5", () => {
-    adapter = createJQueryAdapter({ facePcs: 3 });
-    expect(hasRule(0)).toBe(false);
-    expect(hasRule(5)).toBe(false);
-  });
-
-  it("3-face box: has CSS rules for currentFace1, 2, 3 only", () => {
-    adapter = createJQueryAdapter({ facePcs: 3 });
-    expect(hasRule(1)).toBe(true);
-    expect(hasRule(2)).toBe(true);
-    expect(hasRule(3)).toBe(true);
-    expect(hasRule(4)).toBe(false);
-  });
-
-  it("4-face box: has CSS rules for currentFace0 through currentFace5 (virtual wrap)", () => {
-    adapter = createJQueryAdapter({ facePcs: 4 });
-    for (let i = 0; i <= 5; i++) {
-      expect(hasRule(i)).toBe(true);
-    }
-  });
-});
