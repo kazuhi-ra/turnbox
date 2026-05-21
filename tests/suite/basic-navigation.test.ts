@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { adapters } from "../adapters/index.js";
+import { sharedAdapters } from "../adapters/index.js";
 
 const onlyOneFaceShown = (adapter: TurnBoxTestAdapter, facePcs: number): void => {
   const shownFaces = Array.from({ length: facePcs }, (_, i) => i + 1).filter((f) =>
@@ -10,7 +10,7 @@ const onlyOneFaceShown = (adapter: TurnBoxTestAdapter, facePcs: number): void =>
   expect(shownFaces).toHaveLength(1);
 };
 
-describe.each(adapters)("%s — basic navigation", (_, createAdapter) => {
+describe.each(sharedAdapters)("%s — basic navigation", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -160,17 +160,6 @@ describe.each(adapters)("%s — basic navigation", (_, createAdapter) => {
         await adapter.advanceTime(300);
         onlyOneFaceShown(adapter, 4);
       }
-    });
-  });
-
-  // ── type:real boundary ─────────────────────────────────────────────────────
-
-  describe("type:real boundary", () => {
-    it("prev() from face 1 wraps to face 4", async () => {
-      adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
-      adapter.prev();
-      await adapter.advanceTime(300);
-      expect(adapter.getCurrentFace()).toBe(4);
     });
   });
 

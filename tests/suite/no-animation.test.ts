@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { adapters } from "../adapters/index.js";
+import { sharedAdapters } from "../adapters/index.js";
 
-describe.each(adapters)("%s — no animation", (_, createAdapter) => {
+describe.each(sharedAdapters)("%s — no animation", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -24,13 +24,6 @@ describe.each(adapters)("%s — no animation", (_, createAdapter) => {
     expect(adapter.getCurrentFace()).toBe(2);
     expect(adapter.isFaceShown(2)).toBe(true);
     expect(adapter.isFaceShown(1)).toBe(false);
-  });
-
-  it("goTo(2, false) transitions to target face", async () => {
-    adapter = createAdapter({ facePcs: 4, duration: 200 });
-    adapter.goTo(2, false);
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(2);
   });
 
   it("goTo(3, false) from face 1 reaches face 3", async () => {

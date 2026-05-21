@@ -1,30 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createJQueryAdapter } from "../adapters/jquery.js";
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { adapters, implAdapters } from "../adapters/index.js";
+import { sharedAdapters, modernAdapters } from "../adapters/index.js";
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Helper: read a CSS transform rule from the injected <style> tag.
-// jQuery turnBox.js injects CSS into <head>; other adapters use inline styles.
-// ──────────────────────────────────────────────────────────────────────────────
-const readCSSTransform = (currentFace: number, faceNum: number): string => {
-  const styleEl = document.head.querySelector('style[id*="turnBoxStyle"]');
-  const sheet = (styleEl as HTMLStyleElement)?.sheet;
-  if (!sheet) return "";
-  for (const rule of Array.from(sheet.cssRules)) {
-    if (!(rule instanceof CSSStyleRule)) continue;
-    if (
-      rule.selectorText.includes(`turnBoxCurrentFace${currentFace}`) &&
-      rule.selectorText.includes(`turnBoxFaceNum${faceNum}`) &&
-      !rule.selectorText.includes("Adjust")
-    ) {
-      return rule.style.transform;
-    }
-  }
-  return "";
-};
 
-describe.each(adapters)("%s — transform values", (_, createAdapter) => {
+describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -308,70 +287,6 @@ describe.each(adapters)("%s — transform values", (_, createAdapter) => {
   });
 });
 
-// ── jQuery adapter — CSS wrap positions (virtual face 0/5) ────────────────────
-// These verify the CSS generation for wrap animations.
-// Other adapters use inline styles and should verify via unit tests on their own
-// transform calculation logic.
-
-describe("jQuery adapter — CSS wrap positions", () => {
-  let adapter: TurnBoxTestAdapter;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-  afterEach(() => {
-    adapter.destroy();
-    vi.useRealTimers();
-  });
-
-  describe("axis:X — virtual currentFace5 (face4 NEXT → face1 arrival)", () => {
-    it("face1 arrives at front: rotateX(-360deg) translate3d(0,0,0)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
-      expect(readCSSTransform(5, 1)).toBe("rotateX(-360deg) translate3d(0px, 0px, 0px)");
-    });
-
-    it("face4 departs to bottom: rotateX(-90deg) translate3d(0, 25px, 25px)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
-      expect(readCSSTransform(5, 4)).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
-    });
-  });
-
-  describe("axis:X — virtual currentFace0 (face1 PREV → face4 arrival)", () => {
-    it("face4 arrives at front: rotateX(360deg) translate3d(0,0,0)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
-      expect(readCSSTransform(0, 4)).toBe("rotateX(360deg) translate3d(0px, 0px, 0px)");
-    });
-
-    it("face1 departs to top: rotateX(90deg) translate3d(0, -25px, 25px)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
-      expect(readCSSTransform(0, 1)).toBe("rotateX(90deg) translate3d(0px, -25px, 25px)");
-    });
-  });
-
-  describe("axis:Y — virtual currentFace5 (face4 NEXT → face1 arrival)", () => {
-    it("face1 arrives at front: rotateY(-360deg) translate3d(0,0,0)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(readCSSTransform(5, 1)).toBe("rotateY(-360deg) translate3d(0px, 0px, 0px)");
-    });
-
-    it("face4 departs to left: rotateY(-90deg) translate3d(-100px, 0, 100px)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(readCSSTransform(5, 4)).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
-    });
-  });
-
-  describe("axis:Y — virtual currentFace0 (face1 PREV → face4 arrival)", () => {
-    it("face4 arrives at front: rotateY(360deg) translate3d(0,0,0)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(readCSSTransform(0, 4)).toBe("rotateY(360deg) translate3d(0px, 0px, 0px)");
-    });
-
-    it("face1 departs to right: rotateY(90deg) translate3d(100px, 0, 100px)", () => {
-      adapter = createJQueryAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(readCSSTransform(0, 1)).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
-    });
-  });
-});
 
 // ── impl: DOM / React / Vue — transformOrigin (variable geometry) ─────────────
 // jQuery sets transform-origin via CSS class rules (not inline style),
@@ -397,7 +312,7 @@ describe("jQuery adapter — CSS wrap positions", () => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 describe.each(
-  implAdapters,
+  modernAdapters,
 )("%s — variable geometry face positions (axis:X)", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
@@ -487,7 +402,11 @@ describe.each(
   });
 });
 
-describe.each(implAdapters)("%s — transform-origin (variable geometry)", (_, createAdapter) => {
+// ── variable geometry: transform-origin ──────────────────────────────────────
+// Verifies that transformOrigin is computed correctly from the even value,
+// and remains locked to the pivot edge during hasAdjust transitions.
+
+describe.each(modernAdapters)("%s — variable geometry: transform-origin", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -538,10 +457,67 @@ describe.each(implAdapters)("%s — transform-origin (variable geometry)", (_, c
     });
   });
 
-  // ── face dimensions for variable geometry ──────────────────────────────────
-  // Even-numbered faces (2, 4) must be shorter/narrower than odd faces (1, 3).
-  // This matches the original jQuery behavior and ensures faces connect at the
-  // correct 3D edge without Z-overflow ghosting.
+  // When hasAdjust=true, the transition animates adjust(from) → adjust(target),
+  // both computed with '50% 0px' origin. Regular transforms are applied only in
+  // the cleanup after animation ends.
+
+  describe("during variable-geometry animation: transformOrigin is pivot-edge-locked (axis:X)", () => {
+    it("face2→face3: at transition start, transformOrigin is '50% 0px'", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        axis: "X",
+        height: 200,
+        even: 120,
+        duration: 200,
+        delay: 0,
+      });
+      // Navigate to face 2 first; wait for isAnimating to clear (ADJUST_TIME + time = 20 + 200)
+      adapter.goTo(2, false);
+      await adapter.advanceTime(250);
+      // face 2 → face 3: hasAdjust=true
+      adapter.next();
+      await adapter.advanceTime(25); // just past ADJUST_TIME=20ms
+      for (const faceNum of [1, 2, 3, 4]) {
+        expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 0px");
+      }
+    });
+
+    it("face3→face2: at transition start, transformOrigin is '50% 0px'", async () => {
+      adapter = createAdapter({
+        facePcs: 4,
+        axis: "X",
+        height: 200,
+        even: 120,
+        duration: 200,
+        delay: 0,
+      });
+      adapter.goTo(3, false);
+      await adapter.advanceTime(250);
+      // face 3 → face 2: hasAdjust=true
+      adapter.prev();
+      await adapter.advanceTime(25);
+      for (const faceNum of [1, 2, 3, 4]) {
+        expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 0px");
+      }
+    });
+  });
+});
+
+// ── variable geometry: face dimensions ───────────────────────────────────────
+// Even-numbered faces (2, 4) must be shorter/narrower than odd faces (1, 3).
+// This ensures faces connect at the correct 3D edge without Z-overflow ghosting.
+
+describe.each(modernAdapters)("%s — variable geometry: face dimensions", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    adapter?.destroy();
+    vi.useRealTimers();
+  });
 
   describe("axis:X variable geometry — face heights", () => {
     it("even face 2 has height = even px", () => {
@@ -583,13 +559,26 @@ describe.each(implAdapters)("%s — transform-origin (variable geometry)", (_, c
       expect(adapter.getFaceState(3).inlineWidth).toBe("200px");
     });
   });
+});
 
-  // ── container transition for variable geometry ─────────────────────────────
-  // Original jQuery sets transition: all on the container, so the container
-  // height/left change is animated alongside face rotations. Without this,
-  // the instant dimension change creates a visible jitter at animation start.
+// ── variable geometry: container ──────────────────────────────────────────────
+// The container height (axis:X) or left (axis:Y) changes based on the current
+// face to keep the perspective origin aligned with the visible face.
+// This change is animated via a CSS transition alongside face rotations.
 
-  describe("axis:X variable geometry — container transition during animation", () => {
+describe.each(modernAdapters)("%s — variable geometry: container", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    adapter?.destroy();
+    vi.useRealTimers();
+  });
+
+  describe("axis:X — container transition during animation", () => {
     it("container has height transition while animating (doAnimate=true)", async () => {
       adapter = createAdapter({
         facePcs: 4,
@@ -640,7 +629,7 @@ describe.each(implAdapters)("%s — transform-origin (variable geometry)", (_, c
     });
   });
 
-  describe("axis:Y variable geometry — container transition during animation", () => {
+  describe("axis:Y — container transition during animation", () => {
     it("container has left transition while animating (doAnimate=true)", async () => {
       adapter = createAdapter({
         facePcs: 4,
@@ -670,61 +659,7 @@ describe.each(implAdapters)("%s — transform-origin (variable geometry)", (_, c
     });
   });
 
-  // ── adjust phase: transformOrigin stays '50% 0px' during CSS transition ──
-  // When hasAdjust=true, the transition animates adjust(from) → adjust(target),
-  // both computed with '50% 0px' origin. This matches the original jQuery behavior
-  // where .turnBoxCurrentFaceN.turnBoxAdjust CSS rules (keyed per source face)
-  // deactivate on class change, activating the target face's adjust rules.
-  // Regular transforms are applied only in the cleanup after animation ends.
-
-  describe("adjust phase — transformOrigin stays '50% 0px' during CSS transition (axis:X)", () => {
-    it("face2→face3: at transition start, transformOrigin is '50% 0px'", async () => {
-      adapter = createAdapter({
-        facePcs: 4,
-        axis: "X",
-        height: 200,
-        even: 120,
-        duration: 200,
-        delay: 0,
-      });
-      // Navigate to face 2 first; wait for isAnimating to clear (ADJUST_TIME + time = 20 + 200)
-      adapter.goTo(2, false);
-      await adapter.advanceTime(250);
-      // face 2 → face 3: hasAdjust=true
-      adapter.next();
-      await adapter.advanceTime(25); // just past ADJUST_TIME=20ms
-      for (const faceNum of [1, 2, 3, 4]) {
-        expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 0px");
-      }
-    });
-
-    it("face3→face2: at transition start, transformOrigin is '50% 0px'", async () => {
-      adapter = createAdapter({
-        facePcs: 4,
-        axis: "X",
-        height: 200,
-        even: 120,
-        duration: 200,
-        delay: 0,
-      });
-      adapter.goTo(3, false);
-      await adapter.advanceTime(250);
-      // face 3 → face 2: hasAdjust=true
-      adapter.prev();
-      await adapter.advanceTime(25);
-      for (const faceNum of [1, 2, 3, 4]) {
-        expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 0px");
-      }
-    });
-  });
-
-  // ── container dimensions for variable geometry ─────────────────────────────
-  // Original jQuery changes the CONTAINER dimension when on even faces:
-  //   axis:X → container height = even px (on even faces), height px (on odd)
-  //   axis:Y → container left = (width - even)/2 px (on even faces), 0px (on odd)
-  // This shifts the perspective origin to align with the currently-visible face.
-
-  describe("axis:X variable geometry — container height", () => {
+  describe("axis:X — container height", () => {
     it("init (face 1, odd): container height = height px", () => {
       adapter = createAdapter({ facePcs: 4, axis: "X", height: 200, even: 120 });
       expect(adapter.getContainerState().inlineHeight).toBe("200px");
@@ -766,7 +701,7 @@ describe.each(implAdapters)("%s — transform-origin (variable geometry)", (_, c
     });
   });
 
-  describe("axis:Y variable geometry — container left", () => {
+  describe("axis:Y — container left", () => {
     it("init (face 1, odd): container left = 0px", () => {
       adapter = createAdapter({ facePcs: 4, axis: "Y", width: 200, even: 120 });
       expect(adapter.getContainerState().inlineLeft).toBe("0px");

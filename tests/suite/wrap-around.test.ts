@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { adapters, implAdapters } from "../adapters/index.js";
+import { sharedAdapters, modernAdapters } from "../adapters/index.js";
 import { createJQueryAdapter } from "../adapters/jquery.js";
 
 // ── shared: jQuery と DOM 両方で同じ挙動 ─────────────────────────────────────
 
-describe.each(adapters)("%s — wrap-around", (_, createAdapter) => {
+describe.each(sharedAdapters)("%s — wrap-around", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -63,53 +63,61 @@ describe("jQuery — wrap-around", () => {
     vi.useRealTimers();
   });
 
-  it("type:real — next() from face 4 is no-op (turnBoxAnimate clamps face > facePcs)", async () => {
-    adapter = createJQueryAdapter({ facePcs: 4, type: "real", duration: 200 });
-    adapter.goTo(4);
-    await adapter.advanceTime(300);
-    adapter.next();
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(4);
+  // turnBoxAnimate が face > facePcs をクランプするため、全 type で next() wrap は不可。
+
+  describe("next() from face 4 is no-op (all types: turnBoxAnimate clamps to facePcs)", () => {
+    it("type:real", async () => {
+      adapter = createJQueryAdapter({ facePcs: 4, type: "real", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+
+    it("type:repeat", async () => {
+      adapter = createJQueryAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+
+    it("type:skip", async () => {
+      adapter = createJQueryAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.goTo(4);
+      await adapter.advanceTime(300);
+      adapter.next();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
   });
 
-  it("type:repeat — next() from face 4 is no-op (turnBoxAnimate clamps face > facePcs)", async () => {
-    adapter = createJQueryAdapter({ facePcs: 4, type: "repeat", duration: 200 });
-    adapter.goTo(4);
-    await adapter.advanceTime(300);
-    adapter.next();
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(4);
-  });
+  // face 0 → face_pcs リマップにより type:repeat / type:skip の prev() は wrap する。
 
-  it("type:skip — next() from face 4 is no-op (turnBoxAnimate clamps face > facePcs)", async () => {
-    adapter = createJQueryAdapter({ facePcs: 4, type: "skip", duration: 200 });
-    adapter.goTo(4);
-    await adapter.advanceTime(300);
-    adapter.next();
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(4);
-  });
+  describe("prev() from face 1 wraps to face 4 (type:repeat and type:skip)", () => {
+    it("type:repeat", async () => {
+      adapter = createJQueryAdapter({ facePcs: 4, type: "repeat", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.isFaceShown(4)).toBe(true);
+      expect(adapter.isFaceShown(1)).toBe(false);
+    });
 
-  it("type:repeat — prev() from face 1 wraps to face 4", async () => {
-    adapter = createJQueryAdapter({ facePcs: 4, type: "repeat", duration: 200 });
-    adapter.prev();
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(4);
-    expect(adapter.isFaceShown(4)).toBe(true);
-    expect(adapter.isFaceShown(1)).toBe(false);
-  });
-
-  it("type:skip — prev() from face 1 wraps to face 4", async () => {
-    adapter = createJQueryAdapter({ facePcs: 4, type: "skip", duration: 200 });
-    adapter.prev();
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(4);
+    it("type:skip", async () => {
+      adapter = createJQueryAdapter({ facePcs: 4, type: "skip", duration: 200 });
+      adapter.prev();
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
   });
 });
 
 // ── impl: DOM / React / Vue — jQuery の制約を持たない正しい実装の挙動 ─────────
 
-describe.each(implAdapters)("%s — wrap-around", (_, createAdapter) => {
+describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -219,9 +227,9 @@ describe.each(implAdapters)("%s — wrap-around", (_, createAdapter) => {
     });
   });
 
-  // transform state after wrap completion
+  // post-wrap state: face transforms restored to resting positions
 
-  describe("transform state after wrap completion", () => {
+  describe("post-wrap state: face transforms restored to resting positions", () => {
     // type:real
     it("type:real — prev() 1→4: face4 at rotateX(0deg)", async () => {
       adapter = createAdapter({ facePcs: 4, type: "real", duration: 200 });
