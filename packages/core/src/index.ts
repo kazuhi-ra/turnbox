@@ -2,7 +2,7 @@
 // and authors building custom renderers on top of @turnbox/core.
 
 // Option types
-export type { Axis, Direction, AnimationType, TurnBoxOptions } from "./types.js";
+export type { Axis, Direction, AnimationType, FaceCount, TurnBoxOptions } from "./types.js";
 
 // Normalized types (needed when calling calc functions directly)
 export type { NormalizedOptions, Geometry, FaceTransform } from "./types.js";

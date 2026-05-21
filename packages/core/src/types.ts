@@ -29,8 +29,10 @@ export type Geometry =
   | { kind: "fixed"; axis: Axis; length: number }
   | { kind: "variable"; axis: Axis; length: number; even: number };
 
+export type FaceCount = 2 | 3 | 4;
+
 export type TurnBoxOptions = {
-  facePcs: number;
+  facePcs: FaceCount;
   axis?: Axis;
   direction?: Direction;
   type?: AnimationType;
@@ -42,7 +44,7 @@ export type TurnBoxOptions = {
 };
 
 export type NormalizedOptions = {
-  facePcs: number;
+  facePcs: FaceCount;
   direction: Direction;
   type: AnimationType;
   duration: number;
