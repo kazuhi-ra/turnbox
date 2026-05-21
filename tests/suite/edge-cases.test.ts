@@ -169,4 +169,3 @@ describe.each(sharedAdapters)("%s — edge cases", (_, createAdapter) => {
     expect(container.classList.contains("turnBoxAdjust")).toBe(false);
   });
 });
-

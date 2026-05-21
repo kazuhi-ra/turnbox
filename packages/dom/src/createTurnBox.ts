@@ -126,8 +126,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
     const changeHalf = shortDeg < 0 ? -half : half;
     const [x, y, z]: [number, number, number] =
       geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
-    incomingFaceEl.style.transform =
-      `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
+    incomingFaceEl.style.transform = `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
   };
 
   // Fixed-geometry wrap: override incoming face to 0° so transition goes

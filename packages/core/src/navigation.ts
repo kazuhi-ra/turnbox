@@ -19,13 +19,26 @@ export const shouldAnimate = (
 const isVirtualWrapFace = (f: number): f is VirtualWrapFace =>
   f === VIRTUAL_PREV_WRAP || f === VIRTUAL_NEXT_WRAP;
 
-const resolveVirtualLanding = (via: VirtualWrapFace): 1 | 4 =>
-  via === VIRTUAL_PREV_WRAP ? 4 : 1;
+const resolveVirtualLanding = (via: VirtualWrapFace): 1 | 4 => (via === VIRTUAL_PREV_WRAP ? 4 : 1);
 
 // Static lookup: (currentFace, targetFace) pairs that require the variable-geometry adjust pre-phase
 const ADJUST_PAIRS: Record<Direction, readonly [number, number][]> = {
-  positive: [[0, 1],[1, 0],[2, 3],[3, 2],[4, 5],[5, 4]],
-  negative: [[0, 5],[1, 2],[2, 1],[3, 4],[4, 3],[5, 0]],
+  positive: [
+    [0, 1],
+    [1, 0],
+    [2, 3],
+    [3, 2],
+    [4, 5],
+    [5, 4],
+  ],
+  negative: [
+    [0, 5],
+    [1, 2],
+    [2, 1],
+    [3, 4],
+    [4, 3],
+    [5, 0],
+  ],
 };
 
 const needsAdjust = (from: number, to: number, opts: NormalizedOptions): boolean => {
@@ -35,15 +48,17 @@ const needsAdjust = (from: number, to: number, opts: NormalizedOptions): boolean
 
 // Resolves rawTarget to a canonical face number and wrap kind.
 // Returns { kind: "noop" } when the target is out of range or already current.
-type BoundaryResult =
-  | { kind: "noop" }
-  | { kind: "resolved"; to: number; isDirectWrap: boolean };
+type BoundaryResult = { kind: "noop" } | { kind: "resolved"; to: number; isDirectWrap: boolean };
 
 const resolveBoundary = (rawTarget: number, opts: NormalizedOptions): BoundaryResult => {
   if (opts.facePcs === MAX_FACE_PCS) {
     if (opts.type === "real") {
       if (rawTarget < 0) return { kind: "noop" };
-      return { kind: "resolved", to: rawTarget > 5 ? opts.facePcs : rawTarget, isDirectWrap: false };
+      return {
+        kind: "resolved",
+        to: rawTarget > 5 ? opts.facePcs : rawTarget,
+        isDirectWrap: false,
+      };
     }
     if (opts.type === "repeat" || opts.type === "skip") {
       if (rawTarget === opts.facePcs + 1) return { kind: "resolved", to: 1, isDirectWrap: true };

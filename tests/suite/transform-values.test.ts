@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { TurnBoxTestAdapter } from "./adapter.js";
 import { sharedAdapters, modernAdapters } from "../adapters/index.js";
 
-
 describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
@@ -286,7 +285,6 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
     });
   });
 });
-
 
 // ── impl: DOM / React / Vue — transformOrigin (variable geometry) ─────────────
 // jQuery sets transform-origin via CSS class rules (not inline style),

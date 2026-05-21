@@ -10,17 +10,15 @@ import type {
 import { MAX_FACE_PCS } from "./normalize.js";
 
 // Named transformOrigin values for the three non-dynamic cases
-const TRANSFORM_ORIGIN_CENTER    = "50% 50%";  // fixed geometry: center pivot
-const TRANSFORM_ORIGIN_TOP_EDGE  = "50% 0px";  // variable axis:X adjust: top-edge pivot
-const TRANSFORM_ORIGIN_LEFT_EDGE = "0px 50%";  // variable axis:Y adjust: left-edge pivot
+const TRANSFORM_ORIGIN_CENTER = "50% 50%"; // fixed geometry: center pivot
+const TRANSFORM_ORIGIN_TOP_EDGE = "50% 0px"; // variable axis:X adjust: top-edge pivot
+const TRANSFORM_ORIGIN_LEFT_EDGE = "0px 50%"; // variable axis:Y adjust: left-edge pivot
 
-export const getFaceParity = (faceNum: number): FaceParity =>
-  faceNum % 2 !== 0 ? "odd" : "even";
+export const getFaceParity = (faceNum: number): FaceParity => (faceNum % 2 !== 0 ? "odd" : "even");
 
 // ── Degree calculation ────────────────────────────────────────────────────────
 
-const calcBaseDeg = (currentFace: number, faceNum: number): number =>
-  (currentFace - faceNum) * -90;
+const calcBaseDeg = (currentFace: number, faceNum: number): number => (currentFace - faceNum) * -90;
 
 const isSkipWrapEdge = (currentFace: number, faceNum: number): boolean =>
   (currentFace === MAX_FACE_PCS && faceNum === 1) ||
@@ -37,8 +35,8 @@ const applyAnimationType = (
     return isSkipWrapEdge(currentFace, faceNum) ? clamped * -1 : clamped;
   }
   if (type === "repeat") {
-    if (getFaceParity(currentFace) === "odd"  && getFaceParity(faceNum) === "even") return 90;
-    if (getFaceParity(currentFace) === "even" && getFaceParity(faceNum) === "odd")  return -90;
+    if (getFaceParity(currentFace) === "odd" && getFaceParity(faceNum) === "even") return 90;
+    if (getFaceParity(currentFace) === "even" && getFaceParity(faceNum) === "odd") return -90;
   }
   return deg;
 };
@@ -49,11 +47,7 @@ const applyDirection = (deg: number, direction: NormalizedOptions["direction"]):
   return Object.is(flipped, -0) ? 0 : flipped;
 };
 
-const calcDeg = (
-  currentFace: number,
-  faceNum: number,
-  options: NormalizedOptions,
-): RotationDeg => {
+const calcDeg = (currentFace: number, faceNum: number, options: NormalizedOptions): RotationDeg => {
   const base = calcBaseDeg(currentFace, faceNum);
   const typed = applyAnimationType(base, currentFace, faceNum, options.type);
   return applyDirection(typed, options.direction) as RotationDeg;
@@ -104,64 +98,70 @@ const calcFixedTranslate = (
 
 type VariableTranslateFactory = (l: number, e: number) => [number, number, number];
 
-const variableTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
+const variableTranslateTable: Record<
+  Axis,
+  Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>
+> = {
   Y: {
     odd: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (_l, e)   => [e, 0, 0],
-      half:  (l, e)    => [e * 2 - l, 0, e],
-      neg90: (l, e)    => [e - l, 0, e],
+      zero: () => [0, 0, 0],
+      pos90: (_l, e) => [e, 0, 0],
+      half: (l, e) => [e * 2 - l, 0, e],
+      neg90: (l, e) => [e - l, 0, e],
     },
     even: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (l, e)    => [e, 0, -(e - l)],
-      half:  (l, e)    => [e, 0, l],
-      neg90: (_l, e)   => [0, 0, e],
+      zero: () => [0, 0, 0],
+      pos90: (l, e) => [e, 0, -(e - l)],
+      half: (l, e) => [e, 0, l],
+      neg90: (_l, e) => [0, 0, e],
     },
   },
   X: {
     odd: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (l, e)    => [0, e - l, e],
-      half:  (l, e)    => [0, e * 2 - l, e],
-      neg90: (_l, e)   => [0, e, 0],
+      zero: () => [0, 0, 0],
+      pos90: (l, e) => [0, e - l, e],
+      half: (l, e) => [0, e * 2 - l, e],
+      neg90: (_l, e) => [0, e, 0],
     },
     even: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (_l, e)   => [0, 0, e],
-      half:  (l, e)    => [0, e, l],
-      neg90: (l, e)    => [0, e, -(e - l)],
+      zero: () => [0, 0, 0],
+      pos90: (_l, e) => [0, 0, e],
+      half: (l, e) => [0, e, l],
+      neg90: (l, e) => [0, e, -(e - l)],
     },
   },
 };
 
-const adjustTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
+const adjustTranslateTable: Record<
+  Axis,
+  Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>
+> = {
   Y: {
     odd: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (_l, e)   => [0, 0, e],
-      half:  (l, e)    => [-l, 0, e],
-      neg90: (l, _e)   => [-l, 0, 0],
+      zero: () => [0, 0, 0],
+      pos90: (_l, e) => [0, 0, e],
+      half: (l, e) => [-l, 0, e],
+      neg90: (l, _e) => [-l, 0, 0],
     },
     even: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (l, _e)   => [0, 0, l],
-      half:  (l, e)    => [-e, 0, l],
-      neg90: (_l, e)   => [-e, 0, 0],
+      zero: () => [0, 0, 0],
+      pos90: (l, _e) => [0, 0, l],
+      half: (l, e) => [-e, 0, l],
+      neg90: (_l, e) => [-e, 0, 0],
     },
   },
   X: {
     odd: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (l, _e)   => [0, -l, 0],
-      half:  (l, e)    => [0, -l, e],
-      neg90: (_l, e)   => [0, 0, e],
+      zero: () => [0, 0, 0],
+      pos90: (l, _e) => [0, -l, 0],
+      half: (l, e) => [0, -l, e],
+      neg90: (_l, e) => [0, 0, e],
     },
     even: {
-      zero:  ()        => [0, 0, 0],
-      pos90: (_l, e)   => [0, -e, 0],
-      half:  (l, e)    => [0, -e, l],
-      neg90: (l, _e)   => [0, 0, l],
+      zero: () => [0, 0, 0],
+      pos90: (_l, e) => [0, -e, 0],
+      half: (l, e) => [0, -e, l],
+      neg90: (l, _e) => [0, 0, l],
     },
   },
 };
