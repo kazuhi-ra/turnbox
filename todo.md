@@ -110,4 +110,21 @@ packages/\* に作成
 
 ## パッケージテスト追加
 
+- [x] 474テスト ALL GREEN（jQuery + DOM + React + Vue）
+
 ---
+
+## Storybook バグ修正
+
+### Storybook opacity フェード除去
+
+- [x] `packages/dom/stories/TurnBox.stories.ts` — `.turnBoxFace.turnBoxTransition` の transition から `opacity` を除去
+- [x] `packages/react/stories/TurnBox.stories.tsx` — 同上
+- [x] `packages/vue/stories/TurnBox.stories.ts` — 同上
+- **原因**: 元の jQuery の face transition は `transform, z-index, background` のみで opacity は含まない。Storybook に誤って `opacity ${duration}ms ease` を含めていたため、face1 がフェードインしながら face4 と交差し、ぼやけて見えていた。
+
+### axis:Y face1↔face4 エッジ離れ修正（type:real 固定ジオメトリ）
+
+- [x] `packages/dom/src/createTurnBox.ts` — 固定ジオメトリ wrap 時のインカミング face をアニメーション前に ±90° へプレ配置し、ADJUST_TIME でターゲットを 0° に上書き
+- [x] `tests/suite/wrap-around.test.ts` — 回帰テスト追加（axis:Y, 全 direction/wrap ケースの t=0 プレ配置・ADJUST_TIME ターゲット・完了後状態）
+- **原因**: CSS 固定ジオメトリでは incoming face が ±270° の resting 位置にいる。CSS は ±270°→±360° を 90° 補間するが、translate3d の符号が axis:Y では ±90° と ±270° で逆になるため、補間経路がエッジから離れた側を通っていた。±90° に事前配置することで translate3d も正しい値になり、CSS が正しい 90° 弧を描く。
