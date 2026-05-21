@@ -1,6 +1,6 @@
-import type { NormalizedOptions, TurnBoxOptions } from "./types.js";
+import type { Geometry, NormalizedOptions, TurnBoxOptions } from "./types.js";
 
-const MAX_FACE_PCS = 4;
+export const MAX_FACE_PCS = 4;
 const DEFAULT_DURATION = 800;
 const DEFAULT_DELAY = 50;
 const DEFAULT_SIZE = 200;
@@ -14,7 +14,6 @@ export const normalizeOptions = (options: TurnBoxOptions): NormalizedOptions => 
   const width = options.width ?? DEFAULT_SIZE;
   const height = options.height ?? DEFAULT_SIZE;
   const even = options.even ?? (axis === "Y" ? width : height);
-
   const length = axis === "Y" ? width : height;
   const fixed = even === length;
 
@@ -22,5 +21,9 @@ export const normalizeOptions = (options: TurnBoxOptions): NormalizedOptions => 
   const rawType = options.type ?? "real";
   const type = !fixed && rawType === "skip" ? "real" : rawType;
 
-  return { facePcs, axis, direction, type, duration, delay, width, height, even, fixed };
+  const geometry: Geometry = fixed
+    ? { kind: "fixed", axis, length }
+    : { kind: "variable", axis, length, even };
+
+  return { facePcs, direction, type, duration, delay, geometry };
 };

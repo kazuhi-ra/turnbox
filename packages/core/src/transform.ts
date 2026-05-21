@@ -1,150 +1,200 @@
-import type { FaceTransform, NormalizedOptions } from "./types.js";
+import type {
+  Axis,
+  FaceParity,
+  FaceTransform,
+  FaceVisibility,
+  Geometry,
+  NormalizedOptions,
+  RotationDeg,
+} from "./types.js";
+import { MAX_FACE_PCS } from "./normalize.js";
 
-const calcDeg = (currentFace: number, faceNum: number, options: NormalizedOptions): number => {
-  const { type, direction } = options;
-  let deg = (currentFace - faceNum) * -90;
+// Named transformOrigin values for the three non-dynamic cases
+const TRANSFORM_ORIGIN_CENTER    = "50% 50%";  // fixed geometry: center pivot
+const TRANSFORM_ORIGIN_TOP_EDGE  = "50% 0px";  // variable axis:X adjust: top-edge pivot
+const TRANSFORM_ORIGIN_LEFT_EDGE = "0px 50%";  // variable axis:Y adjust: left-edge pivot
 
+export const getFaceParity = (faceNum: number): FaceParity =>
+  faceNum % 2 !== 0 ? "odd" : "even";
+
+// ── Degree calculation ────────────────────────────────────────────────────────
+
+const calcBaseDeg = (currentFace: number, faceNum: number): number =>
+  (currentFace - faceNum) * -90;
+
+const isSkipWrapEdge = (currentFace: number, faceNum: number): boolean =>
+  (currentFace === MAX_FACE_PCS && faceNum === 1) ||
+  (currentFace === 1 && faceNum === MAX_FACE_PCS);
+
+const applyAnimationType = (
+  deg: number,
+  currentFace: number,
+  faceNum: number,
+  type: NormalizedOptions["type"],
+): number => {
   if (type === "skip") {
-    if (deg < 0) deg = -90;
-    else if (deg > 0) deg = 90;
-    // wrap edges: currentFace4+faceNum1 or currentFace1+faceNum4 flip sign
-    if ((currentFace === 4 && faceNum === 1) || (currentFace === 1 && faceNum === 4)) {
-      deg = deg * -1;
-    }
+    const clamped = Math.sign(deg) * 90;
+    return isSkipWrapEdge(currentFace, faceNum) ? clamped * -1 : clamped;
   }
-
   if (type === "repeat") {
-    const currentOdd = currentFace % 2 !== 0;
-    const faceEven = faceNum % 2 === 0;
-    if (currentOdd && faceEven) deg = 90;
-    if (!currentOdd && !faceEven) deg = -90;
+    if (getFaceParity(currentFace) === "odd"  && getFaceParity(faceNum) === "even") return 90;
+    if (getFaceParity(currentFace) === "even" && getFaceParity(faceNum) === "odd")  return -90;
   }
-
-  if (direction === "negative") {
-    deg = deg * -1;
-    if (Object.is(deg, -0)) deg = 0;
-  }
-
   return deg;
 };
 
-const calcZIndex = (deg: number): number => {
+const applyDirection = (deg: number, direction: NormalizedOptions["direction"]): number => {
+  if (direction !== "negative") return deg;
+  const flipped = deg * -1;
+  return Object.is(flipped, -0) ? 0 : flipped;
+};
+
+const calcDeg = (
+  currentFace: number,
+  faceNum: number,
+  options: NormalizedOptions,
+): RotationDeg => {
+  const base = calcBaseDeg(currentFace, faceNum);
+  const typed = applyAnimationType(base, currentFace, faceNum, options.type);
+  return applyDirection(typed, options.direction) as RotationDeg;
+};
+
+// ── Z-index ───────────────────────────────────────────────────────────────────
+
+const faceVisibility = (deg: RotationDeg): FaceVisibility => {
   const abs = Math.abs(deg);
-  if (abs === 0 || abs === 360) return 20;
-  if (abs === 90 || abs === 270) return 10;
-  return 0;
+  if (abs === 0 || abs === 360) return "front";
+  if (abs === 90 || abs === 270) return "side";
+  return "hidden";
 };
 
-// translate3d for fixed geometry (even === length)
+const Z_INDEX: Record<FaceVisibility, number> = { front: 20, side: 10, hidden: 0 };
+
+const calcZIndex = (deg: RotationDeg): number => Z_INDEX[faceVisibility(deg)];
+
+// ── Translate tables ──────────────────────────────────────────────────────────
+
+// Classifies a RotationDeg into its effective quadrant for translate lookups.
+// pos90 = +90° rotation (or equivalent -270°); neg90 = -90° (or equivalent +270°).
+type DegBucket = "zero" | "pos90" | "half" | "neg90";
+
+const classifyDeg = (deg: RotationDeg): DegBucket => {
+  if (deg === 0 || Math.abs(deg) === 360) return "zero";
+  if (deg === 90 || deg === -270) return "pos90";
+  if (Math.abs(deg) === 180) return "half";
+  return "neg90";
+};
+
+// Fixed geometry: translate uses changeHalf = (deg<0 ? -l : l)/2.
+// axis:Y — same formula for |deg|=90 and |deg|=270.
+// axis:X — |deg|=90 negates changeHalf for y; |deg|=270 does not.
 const calcFixedTranslate = (
-  deg: number,
-  axis: "X" | "Y",
+  deg: RotationDeg,
+  axis: Axis,
   length: number,
 ): [number, number, number] => {
-  const changeLength = deg < 0 ? -length : length;
+  const abs = Math.abs(deg);
+  if (abs === 0 || abs === 360) return [0, 0, 0];
+  if (abs === 180) return [0, 0, length];
+  const changeHalf = (deg < 0 ? -length : length) / 2;
   const half = length / 2;
-  const changeHalf = changeLength / 2;
-
-  if (deg === 0 || Math.abs(deg) === 360) return [0, 0, 0];
-
-  if (axis === "Y") {
-    if (Math.abs(deg) === 90) return [changeHalf, 0, half];
-    if (Math.abs(deg) === 180) return [0, 0, length];
-    if (Math.abs(deg) === 270) return [changeHalf, 0, half];
-  } else {
-    if (Math.abs(deg) === 90) return [0, -changeHalf, half];
-    if (Math.abs(deg) === 180) return [0, 0, length];
-    if (Math.abs(deg) === 270) return [0, changeHalf, half];
-  }
-  return [0, 0, 0];
+  if (axis === "Y") return [changeHalf, 0, half];
+  return abs === 90 ? [0, -changeHalf, half] : [0, changeHalf, half];
 };
 
-// translate3d for variable geometry (even !== length)
-const calcVariableTranslate = (
-  deg: number,
+type VariableTranslateFactory = (l: number, e: number) => [number, number, number];
+
+const variableTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
+  Y: {
+    odd: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [e, 0, 0],
+      half:  (l, e)   => [e * 2 - l, 0, e],
+      neg90: (l, e)   => [e - l, 0, e],
+    },
+    even: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [e, 0, -(e - l)],
+      half:  (l, e)   => [e, 0, l],
+      neg90: (l, e)   => [0, 0, e],
+    },
+  },
+  X: {
+    odd: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [0, e - l, e],
+      half:  (l, e)   => [0, e * 2 - l, e],
+      neg90: (l, e)   => [0, e, 0],
+    },
+    even: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [0, 0, e],
+      half:  (l, e)   => [0, e, l],
+      neg90: (l, e)   => [0, e, -(e - l)],
+    },
+  },
+};
+
+const adjustTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
+  Y: {
+    odd: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [0, 0, e],
+      half:  (l, e)   => [-l, 0, e],
+      neg90: (l, e)   => [-l, 0, 0],
+    },
+    even: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [0, 0, l],
+      half:  (l, e)   => [-e, 0, l],
+      neg90: (l, e)   => [-e, 0, 0],
+    },
+  },
+  X: {
+    odd: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [0, -l, 0],
+      half:  (l, e)   => [0, -l, e],
+      neg90: (l, e)   => [0, 0, e],
+    },
+    even: {
+      zero:  ()       => [0, 0, 0],
+      pos90: (l, e)   => [0, -e, 0],
+      half:  (l, e)   => [0, -e, l],
+      neg90: (l, e)   => [0, 0, l],
+    },
+  },
+};
+
+const lookupTranslate = (
+  table: typeof variableTranslateTable,
+  deg: RotationDeg,
   faceNum: number,
-  axis: "X" | "Y",
-  length: number,
-  even: number,
-): [number, number, number] => {
-  if (deg === 0 || Math.abs(deg) === 360) return [0, 0, 0];
+  geometry: Extract<Geometry, { kind: "variable" }>,
+): [number, number, number] =>
+  table[geometry.axis][getFaceParity(faceNum)][classifyDeg(deg)](geometry.length, geometry.even);
 
-  const faceOdd = faceNum % 2 !== 0;
-
-  if (axis === "Y") {
-    if (faceOdd) {
-      if (deg === 90 || deg === -270) return [even, 0, 0];
-      if (Math.abs(deg) === 180) return [even * 2 - length, 0, even];
-      if (deg === 270 || deg === -90) return [even - length, 0, even];
-    } else {
-      if (deg === 90 || deg === -270) return [even, 0, -(even - length)];
-      if (Math.abs(deg) === 180) return [even, 0, length];
-      if (deg === 270 || deg === -90) return [0, 0, even];
-    }
-  } else {
-    if (faceOdd) {
-      if (deg === 90 || deg === -270) return [0, even - length, even];
-      if (Math.abs(deg) === 180) return [0, even * 2 - length, even];
-      if (deg === 270 || deg === -90) return [0, even, 0];
-    } else {
-      if (deg === 90 || deg === -270) return [0, 0, even];
-      if (Math.abs(deg) === 180) return [0, even, length];
-      if (deg === 270 || deg === -90) return [0, even, -(even - length)];
-    }
-  }
-  return [0, 0, 0];
-};
-
-// translate3d for turnBoxAdjust (variable, adjust=true)
-const calcAdjustTranslate = (
-  deg: number,
-  faceNum: number,
-  axis: "X" | "Y",
-  length: number,
-  even: number,
-): [number, number, number] => {
-  if (deg === 0 || Math.abs(deg) === 360) return [0, 0, 0];
-
-  const faceOdd = faceNum % 2 !== 0;
-
-  if (axis === "Y") {
-    if (faceOdd) {
-      if (deg === 90 || deg === -270) return [0, 0, even];
-      if (Math.abs(deg) === 180) return [-length, 0, even];
-      if (deg === 270 || deg === -90) return [-length, 0, 0];
-    } else {
-      if (deg === 90 || deg === -270) return [0, 0, length];
-      if (Math.abs(deg) === 180) return [-even, 0, length];
-      if (deg === 270 || deg === -90) return [-even, 0, 0];
-    }
-  } else {
-    if (faceOdd) {
-      if (deg === 90 || deg === -270) return [0, -length, 0];
-      if (Math.abs(deg) === 180) return [0, -length, even];
-      if (deg === 270 || deg === -90) return [0, 0, even];
-    } else {
-      if (deg === 90 || deg === -270) return [0, -even, 0];
-      if (Math.abs(deg) === 180) return [0, -even, length];
-      if (deg === 270 || deg === -90) return [0, 0, length];
-    }
-  }
-  return [0, 0, 0];
-};
+// ── Public API ────────────────────────────────────────────────────────────────
 
 export const calcFaceTransform = (
   currentFace: number,
   faceNum: number,
   options: NormalizedOptions,
 ): FaceTransform => {
-  const { axis, fixed, even } = options;
-  const length = axis === "Y" ? options.width : options.height;
+  const { geometry } = options;
   const deg = calcDeg(currentFace, faceNum, options);
-  const [x, y, z] = fixed
-    ? calcFixedTranslate(deg, axis, length)
-    : calcVariableTranslate(deg, faceNum, axis, length, even);
-  const transformOrigin = fixed ? "50% 50%" : axis === "X" ? `50% ${even}px` : `${even}px 50%`;
+  const [x, y, z] =
+    geometry.kind === "fixed"
+      ? calcFixedTranslate(deg, geometry.axis, geometry.length)
+      : lookupTranslate(variableTranslateTable, deg, faceNum, geometry);
+  const transformOrigin =
+    geometry.kind === "fixed"
+      ? TRANSFORM_ORIGIN_CENTER
+      : geometry.axis === "X"
+        ? `50% ${geometry.even}px`
+        : `${geometry.even}px 50%`;
 
-  return { axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
+  return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
 };
 
 export const calcAdjustFaceTransform = (
@@ -152,11 +202,15 @@ export const calcAdjustFaceTransform = (
   faceNum: number,
   options: NormalizedOptions,
 ): FaceTransform => {
-  const { axis, even } = options;
-  const length = axis === "Y" ? options.width : options.height;
+  const { geometry } = options;
   const deg = calcDeg(currentFace, faceNum, options);
-  const [x, y, z] = calcAdjustTranslate(deg, faceNum, axis, length, even);
-  const transformOrigin = axis === "X" ? "50% 0px" : "0px 50%";
+  // adjust is only used for variable geometry (fixed geometry never reaches hasAdjust=true)
+  const [x, y, z] =
+    geometry.kind === "variable"
+      ? lookupTranslate(adjustTranslateTable, deg, faceNum, geometry)
+      : [0, 0, 0];
+  const transformOrigin =
+    geometry.axis === "X" ? TRANSFORM_ORIGIN_TOP_EDGE : TRANSFORM_ORIGIN_LEFT_EDGE;
 
-  return { axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
+  return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
 };

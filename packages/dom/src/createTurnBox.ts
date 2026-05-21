@@ -2,10 +2,13 @@ import {
   normalizeOptions,
   calcFaceTransform,
   calcAdjustFaceTransform,
-  shouldAnimate,
+  resolveTransition,
+  VIRTUAL_PREV_WRAP,
+  VIRTUAL_NEXT_WRAP,
   type TurnBoxOptions,
   type NormalizedOptions,
-} from "@turnbox/core";
+  type VirtualWrapFace,
+} from "@turnbox/core/internal";
 import { toTransformString } from "./css.js";
 
 export type TurnBoxInstance = {
@@ -46,47 +49,21 @@ const applyAdjustTransforms = (
   });
 };
 
-const shouldAddAdjust = (
-  currentFace: number,
-  targetFace: number,
-  opts: NormalizedOptions,
-): boolean => {
-  if (opts.fixed || opts.type !== "real") return false;
-  const pairs =
-    opts.direction === "negative"
-      ? [
-          [0, 5],
-          [1, 2],
-          [2, 1],
-          [3, 4],
-          [4, 3],
-          [5, 0],
-        ]
-      : [
-          [0, 1],
-          [1, 0],
-          [2, 3],
-          [3, 2],
-          [4, 5],
-          [5, 4],
-        ];
-  return pairs.some(([c, t]) => c === currentFace && t === targetFace);
-};
-
 export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): TurnBoxInstance => {
   const opts = normalizeOptions(options);
+  const { geometry } = opts;
   const faces = Array.from(container.children).slice(0, opts.facePcs) as HTMLElement[];
 
   // Mark face elements and set dimensions for variable geometry
   faces.forEach((face, i) => {
     const faceNum = i + 1;
     face.classList.add("turnBoxFace", `turnBoxFaceNum${faceNum}`);
-    if (!opts.fixed) {
+    if (geometry.kind === "variable") {
       const isEven = faceNum % 2 === 0;
-      if (opts.axis === "X") {
-        face.style.height = isEven ? `${opts.even}px` : `${opts.height}px`;
+      if (geometry.axis === "X") {
+        face.style.height = isEven ? `${geometry.even}px` : `${geometry.length}px`;
       } else {
-        face.style.width = isEven ? `${opts.even}px` : `${opts.width}px`;
+        face.style.width = isEven ? `${geometry.even}px` : `${geometry.length}px`;
       }
     }
   });
@@ -103,80 +80,75 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
     container.classList.remove(`turnBoxCurrentFace${currentFace}`);
     currentFace = n;
     container.classList.add(`turnBoxCurrentFace${n}`);
-    if (!opts.fixed) {
+    if (geometry.kind === "variable") {
       const isEven = n % 2 === 0;
-      if (opts.axis === "X") {
-        container.style.height = isEven ? `${opts.even}px` : `${opts.height}px`;
+      if (geometry.axis === "X") {
+        container.style.height = isEven ? `${geometry.even}px` : `${geometry.length}px`;
       } else {
-        container.style.left = isEven ? `${(opts.width - opts.even) / 2}px` : "0px";
+        container.style.left = isEven ? `${(geometry.length - geometry.even) / 2}px` : "0px";
       }
     }
   };
 
+  const resolveRealFace = (faceNum: number): number => {
+    if (faceNum === VIRTUAL_PREV_WRAP) return 4;
+    if (faceNum === VIRTUAL_NEXT_WRAP) return 1;
+    return faceNum;
+  };
+
   const showFace = (faceNum: number): void => {
-    const realNum = faceNum === 0 ? 4 : faceNum === 5 ? 1 : faceNum;
-    faces[realNum - 1]?.classList.add("turnBoxShow");
+    faces[resolveRealFace(faceNum) - 1]?.classList.add("turnBoxShow");
   };
 
   const hideFace = (faceNum: number): void => {
-    const realNum = faceNum === 0 ? 4 : faceNum === 5 ? 1 : faceNum;
-    faces[realNum - 1]?.classList.remove("turnBoxShow");
+    faces[resolveRealFace(faceNum) - 1]?.classList.remove("turnBoxShow");
   };
 
   // Initialize
   container.classList.add("turnBoxContainer", `turnBoxCurrentFace${currentFace}`);
-  if (!opts.fixed) {
-    if (opts.axis === "X") {
-      container.style.height = `${opts.height}px`;
-    } else {
-      container.style.left = "0px";
-    }
+  if (geometry.kind === "variable") {
+    container.style[geometry.axis === "X" ? "height" : "left"] =
+      geometry.axis === "X" ? `${geometry.length}px` : "0px";
   }
   applyFaceTransforms(faces, currentFace, opts);
   faces[0]?.classList.add("turnBoxShow");
 
+  // Fixed-geometry wrap: incoming face sits at ±270° which CSS would interpolate
+  // as a 270° arc in the wrong direction. Pre-position it at the equivalent ±90°
+  // so the transition sweeps the correct 90° arc with connected edges.
+  const prePositionIncomingFace = (via: VirtualWrapFace): void => {
+    const incomingNum = via === VIRTUAL_NEXT_WRAP ? 1 : 4;
+    const incomingFaceEl = faces[incomingNum - 1];
+    if (!incomingFaceEl) return;
+    const dirSign = opts.direction === "negative" ? -1 : 1;
+    const shortDeg = (via === VIRTUAL_NEXT_WRAP ? 90 : -90) * dirSign;
+    const half = geometry.length / 2;
+    const changeHalf = shortDeg < 0 ? -half : half;
+    const [x, y, z]: [number, number, number] =
+      geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
+    incomingFaceEl.style.transform =
+      `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
+  };
+
+  // Fixed-geometry wrap: override incoming face to 0° so transition goes
+  // from the pre-positioned ±90° to 0°, not from ±90° to ±360°.
+  const overrideIncomingFaceToResting = (landAt: 1 | 4): void => {
+    const incomingFaceEl = faces[landAt - 1];
+    if (!incomingFaceEl) return;
+    const t = calcFaceTransform(landAt, landAt, opts);
+    incomingFaceEl.style.transform = toTransformString(t);
+  };
+
   const animate = (rawTarget: number, animationFlag: boolean): void => {
     if (isAnimating) return;
-    let targetFace = rawTarget;
-    let isWrap = false;
 
-    if (opts.facePcs === 4) {
-      if (opts.type === "real") {
-        // type:real: virtual face 0/5 are valid; clamp anything further out
-        if (targetFace > 5) targetFace = opts.facePcs;
-        if (targetFace < 0) return;
-      } else if (opts.type === "repeat" || opts.type === "skip") {
-        // repeat/skip: direct remap at boundary (no virtual face)
-        if (targetFace === opts.facePcs + 1) {
-          targetFace = 1;
-          isWrap = true;
-        } else if (targetFace === 0) {
-          targetFace = opts.facePcs;
-          isWrap = true;
-        } else if (targetFace < 1 || targetFace > opts.facePcs) {
-          return;
-        }
-      } else {
-        if (targetFace < 1 || targetFace > opts.facePcs) return;
-      }
-    } else {
-      // non-4-face: clamp to valid range, no wrap
-      if (targetFace < 1) return;
-      if (targetFace > opts.facePcs) targetFace = opts.facePcs;
-    }
-
-    if (currentFace === targetFace) return;
-
-    // For repeat wrap, shouldAnimate returns false (diff=3>1, not skip), so force it
-    const doAnimate =
-      isWrap && opts.type === "repeat"
-        ? animationFlag
-        : shouldAnimate(currentFace, targetFace, opts, animationFlag);
-    const time = opts.duration + opts.delay;
-    const from = currentFace;
-    const hasAdjust = shouldAddAdjust(from, targetFace, opts);
+    const transition = resolveTransition(currentFace, rawTarget, opts, animationFlag);
+    if (transition.kind === "noop") return;
 
     isAnimating = true;
+    const time = opts.duration + opts.delay;
+    const from = currentFace;
+    const hasAdjust = transition.kind === "step" && transition.hasAdjust;
 
     if (hasAdjust) {
       container.classList.add("turnBoxAdjust");
@@ -187,36 +159,23 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
           applyFaceTransforms(faces, currentFace, opts);
           isAnimating = false;
         },
-        time + ADJUST_TIME + 20,
+        time + ADJUST_TIME * 2,
       );
     }
 
-    // Fixed-geometry wrap: incoming face sits at ±270° which CSS would interpolate
-    // as a 270° arc in the wrong direction. Pre-position it at the equivalent ±90°
-    // so the transition sweeps the correct 90° arc with connected edges.
-    if (opts.fixed && (targetFace === 5 || targetFace === 0)) {
-      const isNextWrap = targetFace === 5;
-      const incomingNum = isNextWrap ? 1 : 4;
-      const incomingFaceEl = faces[incomingNum - 1];
-      if (incomingFaceEl) {
-        const dirSign = opts.direction === "negative" ? -1 : 1;
-        const shortDeg = (isNextWrap ? 90 : -90) * dirSign;
-        const len = opts.axis === "Y" ? opts.width : opts.height;
-        const changeHalf = shortDeg < 0 ? -(len / 2) : len / 2;
-        const half = len / 2;
-        const [x, y, z]: [number, number, number] =
-          opts.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
-        incomingFaceEl.style.transform = `rotate${opts.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
-      }
+    if (transition.kind === "virtual-wrap") {
+      prePositionIncomingFace(transition.via);
     }
 
+    const targetFace = transition.kind === "virtual-wrap" ? transition.via : transition.to;
+
     schedule(() => {
-      if (doAnimate) {
+      if (transition.doAnimate) {
         faces.forEach((f) => {
           f.classList.add("turnBoxTransition");
         });
-        if (!opts.fixed) {
-          const prop = opts.axis === "X" ? "height" : "left";
+        if (geometry.kind === "variable") {
+          const prop = geometry.axis === "X" ? "height" : "left";
           container.style.transition = `${prop} ${opts.duration}ms ease ${opts.delay}ms`;
         }
       }
@@ -224,43 +183,29 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
       showFace(targetFace);
       setCurrentFace(targetFace);
 
-      // When hasAdjust, transition must go from adjust(from) to adjust(target),
-      // keeping origin "50% 0px" throughout — matching the original jQuery CSS rule
-      // behavior (.box.turnBoxCurrentFaceN.turnBoxAdjust selector activates for
-      // the new face). Regular transforms apply in the cleanup after animation.
       if (hasAdjust) {
         applyAdjustTransforms(faces, targetFace, opts);
       } else {
         applyFaceTransforms(faces, targetFace, opts);
-        // Fixed-geometry wrap: override incoming face to 0° so transition goes
-        // from the pre-positioned ±90° to 0°, not from ±90° to ±360°.
-        if (opts.fixed && (targetFace === 5 || targetFace === 0)) {
-          const incomingNum = targetFace === 5 ? 1 : 4;
-          const incomingFaceEl = faces[incomingNum - 1];
-          if (incomingFaceEl) {
-            const t = calcFaceTransform(incomingNum, incomingNum, opts);
-            incomingFaceEl.style.transform = toTransformString(t);
-          }
+        if (transition.kind === "virtual-wrap") {
+          overrideIncomingFaceToResting(transition.landAt);
         }
       }
-
-      // Resolve virtual faces after animation
-      const realTarget = targetFace === 0 ? 4 : targetFace === 5 ? 1 : targetFace;
 
       schedule(() => {
         faces.forEach((f) => {
           f.classList.remove("turnBoxTransition");
         });
-        if (!opts.fixed) {
+        if (geometry.kind === "variable") {
           container.style.transition = "";
         }
         hideFace(from);
 
-        if (targetFace === 0 || targetFace === 5) {
-          container.classList.remove(`turnBoxCurrentFace${targetFace}`);
-          container.classList.add(`turnBoxCurrentFace${realTarget}`);
-          currentFace = realTarget;
-          applyFaceTransforms(faces, realTarget, opts);
+        if (transition.kind === "virtual-wrap") {
+          container.classList.remove(`turnBoxCurrentFace${transition.via}`);
+          container.classList.add(`turnBoxCurrentFace${transition.landAt}`);
+          currentFace = transition.landAt;
+          applyFaceTransforms(faces, transition.landAt, opts);
         }
 
         if (!hasAdjust) isAnimating = false;
