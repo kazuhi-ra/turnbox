@@ -5,6 +5,7 @@ import type { TurnBoxOptions } from "@turnbox/core";
 export type UseTurnBoxReturn = {
   containerRef: Ref<HTMLElement | null>;
   currentFace: Ref<number>;
+  isAnimating: Ref<boolean>;
   goTo(face: number, animation?: boolean): void;
   next(): void;
   prev(): void;
@@ -13,6 +14,7 @@ export type UseTurnBoxReturn = {
 export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
   const containerRef = ref<HTMLElement | null>(null);
   const currentFace = ref(1);
+  const isAnimating = ref(false);
   let instance: TurnBoxInstance | null = null;
 
   const init = (): void => {
@@ -23,9 +25,11 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       ...options,
       onChange: (face) => {
         currentFace.value = face;
+        isAnimating.value = true;
         options.onChange?.(face);
       },
       onAnimationEnd: (face) => {
+        isAnimating.value = false;
         options.onAnimationEnd?.(face);
       },
     });
@@ -61,6 +65,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
   return {
     containerRef,
     currentFace,
+    isAnimating,
     goTo: (face, animation = true) => instance?.goTo(face, animation),
     next: () => instance?.next(),
     prev: () => instance?.prev(),

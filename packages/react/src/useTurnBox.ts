@@ -5,6 +5,7 @@ import type { TurnBoxOptions } from "@turnbox/core";
 export type UseTurnBoxReturn = {
   containerRef: React.RefObject<HTMLElement | null>;
   currentFace: number;
+  isAnimating: boolean;
   goTo(face: number, animation?: boolean): void;
   next(): void;
   prev(): void;
@@ -16,6 +17,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
   const containerRef = useRef<HTMLElement>(null);
   const instanceRef = useRef<TurnBoxInstance | null>(null);
   const [currentFace, setCurrentFace] = useState(1);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Always call the latest callbacks without re-initializing the instance
   const onChangeRef = useRef(options.onChange);
@@ -39,9 +41,11 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       even,
       onChange: (face) => {
         setCurrentFace(face);
+        setIsAnimating(true);
         onChangeRef.current?.(face);
       },
       onAnimationEnd: (face) => {
+        setIsAnimating(false);
         onAnimationEndRef.current?.(face);
       },
     });
@@ -66,5 +70,5 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
     instanceRef.current?.prev();
   }, []);
 
-  return { containerRef, currentFace, goTo, next, prev };
+  return { containerRef, currentFace, isAnimating, goTo, next, prev };
 };

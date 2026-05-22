@@ -16,6 +16,7 @@ export type TurnBoxInstance = {
   next(): void;
   prev(): void;
   getCurrentFace(): number;
+  isAnimating(): boolean;
   destroy(): void;
 };
 
@@ -97,11 +98,15 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
   };
 
   const showFace = (faceNum: number): void => {
-    faces[resolveRealFace(faceNum) - 1]?.classList.add("turnBoxShow");
+    const face = faces[resolveRealFace(faceNum) - 1];
+    face?.classList.add("turnBoxShow");
+    face?.removeAttribute("aria-hidden");
   };
 
   const hideFace = (faceNum: number): void => {
-    faces[resolveRealFace(faceNum) - 1]?.classList.remove("turnBoxShow");
+    const face = faces[resolveRealFace(faceNum) - 1];
+    face?.classList.remove("turnBoxShow");
+    face?.setAttribute("aria-hidden", "true");
   };
 
   // Initialize
@@ -112,6 +117,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
   }
   applyFaceTransforms(faces, currentFace, opts);
   faces[0]?.classList.add("turnBoxShow");
+  for (const face of faces.slice(1)) face.setAttribute("aria-hidden", "true");
 
   // Fixed-geometry wrap: incoming face sits at ±270° which CSS would interpolate
   // as a 270° arc in the wrong direction. Pre-position it at the equivalent ±90°
@@ -232,6 +238,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
       animate(currentFace - 1, true);
     },
     getCurrentFace,
+    isAnimating: () => isAnimating,
     destroy() {
       for (const id of pendingTimers) clearTimeout(id);
       pendingTimers.length = 0;
@@ -245,6 +252,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
         face.style.transformOrigin = "";
         face.style.height = "";
         face.style.width = "";
+        face.removeAttribute("aria-hidden");
       });
       container.classList.remove(
         "turnBoxContainer",

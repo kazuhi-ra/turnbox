@@ -17,7 +17,7 @@
   },
   "overrides": [
     {
-      "includes": ["tests/adapters/vue.ts"],
+      "includes": ["tests/adapters/vue.ts", "tests/suite/is-animating-vue.test.ts"],
       "linter": {
         "rules": {
           "correctness": {
