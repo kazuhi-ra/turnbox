@@ -114,6 +114,13 @@ packages/\* に作成
 
 ---
 
+## TODO
+
+- [ ] React compound component（`TurnBox.Root / Face`）にアクセシビリティテストを追加
+  - `accessibility.test.ts` と同じ観点（初期状態・遷移後・no-animation・virtual-wrap・destroy）をカバー
+
+---
+
 ## Storybook バグ修正
 
 ### Storybook opacity フェード除去

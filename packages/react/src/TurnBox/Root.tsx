@@ -1,23 +1,169 @@
-import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
 import { normalizeOptions, calcFaceTransform } from "@turnbox/core";
-import type { TurnBoxOptions } from "@turnbox/core";
+import type { TurnBoxOptions, NormalizedOptions } from "@turnbox/core";
 import { resolveTransition, VIRTUAL_NEXT_WRAP } from "@turnbox/core/internal";
-import type { NormalizedOptions } from "@turnbox/core";
 import { TurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";
 import { Face } from "./Face.js";
 
-type RootProps = {
-  options: TurnBoxOptions;
-  children?: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
+// ─── State machine ────────────────────────────────────────────────────────────
+
+type IdleState = {
+  kind: "idle";
+  displayFace: number;
+  shownFaces: ReadonlySet<number>;
+  faceOverrides: ReadonlyMap<number, string>;
 };
 
-export type TurnBoxRootHandle = {
-  go(rawTarget: number, animation: boolean): void;
-  getCurrentFace(): number;
+type PrePositioningState = {
+  kind: "pre-positioning";
+  displayFace: number;
+  via: 0 | 5;
+  landAt: 1 | 4;
+  shownFaces: ReadonlySet<number>;
+  faceOverrides: ReadonlyMap<number, string>;
+};
+
+type AnimatingState = {
+  kind: "animating";
+  displayFace: number;
+  landAt: number;
+  shownFaces: ReadonlySet<number>;
+  faceOverrides: ReadonlyMap<number, string>;
+};
+
+type AdjustingState = {
+  kind: "adjusting";
+  displayFace: number;
+  to: number;
+  shownFaces: ReadonlySet<number>;
+  faceOverrides: ReadonlyMap<number, string>;
+};
+
+type AdjustAnimatingState = {
+  kind: "adjust-animating";
+  displayFace: number;
+  shownFaces: ReadonlySet<number>;
+  faceOverrides: ReadonlyMap<number, string>;
+};
+
+type TurnBoxState =
+  | IdleState
+  | PrePositioningState
+  | AnimatingState
+  | AdjustingState
+  | AdjustAnimatingState;
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+
+type TurnBoxAction =
+  | { type: "GO_STEP"; to: number; shownFaces: ReadonlySet<number> }
+  | { type: "GO_INSTANT"; displayFace: number }
+  | {
+      type: "GO_PRE_POSITIONING";
+      displayFace: number;
+      via: 0 | 5;
+      landAt: 1 | 4;
+      faceOverrides: ReadonlyMap<number, string>;
+      shownFaces: ReadonlySet<number>;
+    }
+  | { type: "GO_ADJUSTING"; to: number; shownFaces: ReadonlySet<number> }
+  | {
+      type: "ENTER_ANIMATING";
+      displayFace: number;
+      landAt: number;
+      shownFaces: ReadonlySet<number>;
+      faceOverrides: ReadonlyMap<number, string>;
+    }
+  | { type: "ENTER_ADJUST_ANIMATING"; displayFace: number }
+  | { type: "COMPLETE"; displayFace: number };
+
+// ─── Reducer (pure) ───────────────────────────────────────────────────────────
+
+const EMPTY_MAP: ReadonlyMap<number, string> = new Map();
+
+const reducer = (state: TurnBoxState, action: TurnBoxAction): TurnBoxState => {
+  switch (action.type) {
+    case "GO_STEP":
+      return {
+        kind: "animating",
+        displayFace: action.to,
+        landAt: action.to,
+        shownFaces: action.shownFaces,
+        faceOverrides: EMPTY_MAP,
+      };
+    case "GO_INSTANT":
+      return {
+        kind: "idle",
+        displayFace: action.displayFace,
+        shownFaces: new Set([action.displayFace]),
+        faceOverrides: EMPTY_MAP,
+      };
+    case "GO_PRE_POSITIONING":
+      return {
+        kind: "pre-positioning",
+        displayFace: action.displayFace,
+        via: action.via,
+        landAt: action.landAt,
+        shownFaces: action.shownFaces,
+        faceOverrides: action.faceOverrides,
+      };
+    case "GO_ADJUSTING":
+      return {
+        kind: "adjusting",
+        displayFace: state.displayFace,
+        to: action.to,
+        shownFaces: action.shownFaces,
+        faceOverrides: EMPTY_MAP,
+      };
+    case "ENTER_ANIMATING":
+      return {
+        kind: "animating",
+        displayFace: action.displayFace,
+        landAt: action.landAt,
+        shownFaces: action.shownFaces,
+        faceOverrides: action.faceOverrides,
+      };
+    case "ENTER_ADJUST_ANIMATING":
+      return {
+        kind: "adjust-animating",
+        displayFace: action.displayFace,
+        shownFaces: state.shownFaces,
+        faceOverrides: state.faceOverrides,
+      };
+    case "COMPLETE":
+      return {
+        kind: "idle",
+        displayFace: action.displayFace,
+        shownFaces: new Set([action.displayFace]),
+        faceOverrides: EMPTY_MAP,
+      };
+  }
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const toPhase = (state: TurnBoxState): AnimationPhase => {
+  switch (state.kind) {
+    case "idle":
+      return { kind: "idle" };
+    case "pre-positioning":
+      return { kind: "pre-positioning", via: state.via, landAt: state.landAt };
+    case "animating":
+      return { kind: "animating" };
+    case "adjusting":
+      return { kind: "adjusting", to: state.to };
+    case "adjust-animating":
+      return { kind: "adjust-animating" };
+  }
 };
 
 const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): string => {
@@ -31,208 +177,224 @@ const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): string =
   return `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
 };
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
+type RootProps = {
+  options: TurnBoxOptions;
+  children?: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+};
+
+export type TurnBoxRootHandle = {
+  go(rawTarget: number, animation: boolean): void;
+  getCurrentFace(): number;
+};
+
+const INITIAL_STATE: TurnBoxState = {
+  kind: "idle",
+  displayFace: 1,
+  shownFaces: new Set([1]),
+  faceOverrides: EMPTY_MAP,
+};
+
 export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
   ({ options, children, className, style }, ref) => {
-  const { facePcs, axis, direction, type, duration, delay, width, height, even } = options;
-  const opts = useMemo(
-    () =>
-      normalizeOptions({ facePcs, axis, direction, type, duration, delay, width, height, even }),
-    [facePcs, axis, direction, type, duration, delay, width, height, even],
-  );
+    const { facePcs, axis, direction, type, duration, delay, width, height, even } = options;
+    const opts = useMemo(
+      () =>
+        normalizeOptions({ facePcs, axis, direction, type, duration, delay, width, height, even }),
+      [facePcs, axis, direction, type, duration, delay, width, height, even],
+    );
 
-  const boxWidth = options.width ?? 200;
-  const boxHeight = options.height ?? 200;
+    const boxWidth = options.width ?? 200;
+    const boxHeight = options.height ?? 200;
 
-  const [displayFace, setDisplayFace] = useState(1);
-  const [phase, setPhase] = useState<AnimationPhase>({ kind: "idle" });
-  const [shownFaces, setShownFaces] = useState<ReadonlySet<number>>(new Set([1]));
-  const [faceOverrides, setFaceOverrides] = useState<ReadonlyMap<number, string>>(new Map());
+    const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
-  const currentFaceRef = useRef(1);
-  const isAnimatingRef = useRef(false);
-  const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const optsRef = useRef(opts);
-  optsRef.current = opts;
+    const isAnimatingRef = useRef(false);
+    const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  useEffect(
-    () => () => {
-      for (const id of pendingTimers.current) clearTimeout(id);
-    },
-    [],
-  );
+    useEffect(
+      () => () => {
+        for (const id of pendingTimers.current) clearTimeout(id);
+      },
+      [],
+    );
 
-  const addTimeout = useCallback((fn: () => void, delay: number) => {
-    const id = setTimeout(fn, delay);
-    pendingTimers.current.push(id);
-  }, []);
+    const addTimeout = useCallback((fn: () => void, ms: number) => {
+      const id = setTimeout(fn, ms);
+      pendingTimers.current.push(id);
+    }, []);
 
-  // Handle 2-phase transitions: fires after browser paints the pre-phase
-  useEffect(() => {
-    if (phase.kind === "pre-positioning") {
-      const { via, landAt } = phase;
-      const currentOpts = optsRef.current;
-      const restingTransform = toTransformString(calcFaceTransform(landAt, landAt, currentOpts));
+    // Handle 2-phase transitions: fires after browser paints the pre-phase
+    useEffect(() => {
+      if (state.kind === "pre-positioning") {
+        const { via, landAt } = state;
+        const restingTransform = toTransformString(calcFaceTransform(landAt, landAt, opts));
 
-      // rAF defers the transition start until the next paint, so the pre-position
-      // is observable at t=0 (required by tests and correct browser behavior).
-      const rafId = requestAnimationFrame(() => {
-        setFaceOverrides(new Map([[landAt, restingTransform]]));
-        setPhase({ kind: "animating" });
-        setDisplayFace(via);
-        setShownFaces((s) => new Set([...s, landAt]));
-        currentFaceRef.current = via;
+        // rAF defers the transition start until the next paint, so the pre-position
+        // is observable at t=0 (required by tests and correct browser behavior).
+        const rafId = requestAnimationFrame(() => {
+          dispatch({
+            type: "ENTER_ANIMATING",
+            displayFace: via,
+            landAt,
+            shownFaces: new Set([...state.shownFaces, landAt]),
+            faceOverrides: new Map([[landAt, restingTransform]]),
+          });
+          addTimeout(() => {
+            dispatch({ type: "COMPLETE", displayFace: landAt });
+            isAnimatingRef.current = false;
+          }, opts.duration + opts.delay);
+        });
 
+        return () => cancelAnimationFrame(rafId);
+      } else if (state.kind === "adjusting") {
+        const { to } = state;
+        dispatch({ type: "ENTER_ADJUST_ANIMATING", displayFace: to });
         addTimeout(() => {
-          setPhase({ kind: "idle" });
-          setDisplayFace(landAt);
-          setShownFaces(new Set([landAt]));
-          setFaceOverrides(new Map());
-          currentFaceRef.current = landAt;
+          dispatch({ type: "COMPLETE", displayFace: to });
           isAnimatingRef.current = false;
-        }, currentOpts.duration + currentOpts.delay);
-      });
+        }, opts.duration + opts.delay);
+      }
+    }, [state, opts, addTimeout]);
 
-      return () => cancelAnimationFrame(rafId);
-    } else if (phase.kind === "adjusting") {
-      const { to } = phase;
-      const currentOpts = optsRef.current;
+    const go = useCallback(
+      (rawTarget: number, animationFlag: boolean) => {
+        if (isAnimatingRef.current) return;
 
-      setPhase({ kind: "adjust-animating" });
-      setDisplayFace(to);
-      currentFaceRef.current = to;
+        const transition = resolveTransition(state.displayFace, rawTarget, opts, animationFlag);
+        if (transition.kind === "noop") return;
 
-      addTimeout(() => {
-        setPhase({ kind: "idle" });
-        setShownFaces(new Set([to]));
-        isAnimatingRef.current = false;
-      }, currentOpts.duration + currentOpts.delay);
-    }
-  }, [phase, addTimeout]);
+        isAnimatingRef.current = true;
+        const time = opts.duration + opts.delay;
 
-  const go = useCallback(
-    (rawTarget: number, animationFlag: boolean) => {
-      if (isAnimatingRef.current) return;
+        if (transition.kind === "virtual-wrap") {
+          if (!transition.doAnimate) {
+            dispatch({ type: "GO_INSTANT", displayFace: transition.landAt });
+            addTimeout(() => {
+              isAnimatingRef.current = false;
+            }, time);
+            return;
+          }
+          const incoming = transition.via === VIRTUAL_NEXT_WRAP ? 1 : 4;
+          dispatch({
+            type: "GO_PRE_POSITIONING",
+            displayFace: state.displayFace,
+            via: transition.via,
+            landAt: transition.landAt,
+            faceOverrides: new Map([[incoming, calcPrePositionTransform(transition.via, opts)]]),
+            shownFaces: new Set([state.displayFace, incoming]),
+          });
+          return;
+        }
 
-      const currentOpts = optsRef.current;
-      const from = currentFaceRef.current;
-      const transition = resolveTransition(from, rawTarget, currentOpts, animationFlag);
-      if (transition.kind === "noop") return;
+        if (transition.kind === "step" && transition.hasAdjust) {
+          if (!transition.doAnimate) {
+            dispatch({ type: "GO_INSTANT", displayFace: transition.to });
+            addTimeout(() => {
+              isAnimatingRef.current = false;
+            }, time);
+            return;
+          }
+          dispatch({
+            type: "GO_ADJUSTING",
+            to: transition.to,
+            shownFaces: new Set([state.displayFace, transition.to]),
+          });
+          return;
+        }
 
-      isAnimatingRef.current = true;
-      const time = currentOpts.duration + currentOpts.delay;
-
-      if (transition.kind === "virtual-wrap") {
-        if (!transition.doAnimate) {
-          setDisplayFace(transition.landAt);
-          setShownFaces(new Set([transition.landAt]));
-          currentFaceRef.current = transition.landAt;
+        const to = transition.to;
+        if (transition.doAnimate) {
+          dispatch({ type: "GO_STEP", to, shownFaces: new Set([state.displayFace, to]) });
+          addTimeout(() => {
+            dispatch({ type: "COMPLETE", displayFace: to });
+            isAnimatingRef.current = false;
+          }, time);
+        } else {
+          dispatch({ type: "GO_INSTANT", displayFace: to });
           addTimeout(() => {
             isAnimatingRef.current = false;
           }, time);
-          return;
         }
-        const incoming = transition.via === VIRTUAL_NEXT_WRAP ? 1 : 4;
-        setFaceOverrides(
-          new Map([[incoming, calcPrePositionTransform(transition.via, currentOpts)]]),
-        );
-        setPhase({ kind: "pre-positioning", via: transition.via, landAt: transition.landAt });
-        return;
-      }
+      },
+      [state.displayFace, opts, addTimeout],
+    );
 
-      if (transition.kind === "step" && transition.hasAdjust) {
-        if (!transition.doAnimate) {
-          setDisplayFace(transition.to);
-          setShownFaces(new Set([transition.to]));
-          currentFaceRef.current = transition.to;
-          addTimeout(() => {
-            isAnimatingRef.current = false;
-          }, time);
-          return;
-        }
-        setShownFaces((s) => new Set([...s, transition.to]));
-        setPhase({ kind: "adjusting", to: transition.to });
-        return;
-      }
+    useImperativeHandle(
+      ref,
+      () => ({ go, getCurrentFace: () => state.displayFace }),
+      [go, state.displayFace],
+    );
 
-      const to = transition.to;
-      if (transition.doAnimate) {
-        setPhase({ kind: "animating" });
-        setDisplayFace(to);
-        setShownFaces((s) => new Set([...s, to]));
-        currentFaceRef.current = to;
-
-        addTimeout(() => {
-          setPhase({ kind: "idle" });
-          setShownFaces(new Set([to]));
-          isAnimatingRef.current = false;
-        }, time);
-      } else {
-        setDisplayFace(to);
-        setShownFaces(new Set([to]));
-        currentFaceRef.current = to;
-        addTimeout(() => {
-          isAnimatingRef.current = false;
-        }, time);
-      }
-    },
-    [addTimeout],
-  );
-
-  useImperativeHandle(ref, () => ({ go, getCurrentFace: () => currentFaceRef.current }), [go]);
-
-  const { geometry } = opts;
-  const isDisplayEven = displayFace % 2 === 0;
-  const containerDynStyle: React.CSSProperties =
-    geometry.kind === "variable"
-      ? geometry.axis === "X"
-        ? {
-            height: isDisplayEven ? geometry.even : geometry.length,
-            transition:
-              phase.kind === "animating" || phase.kind === "adjust-animating"
+    const { geometry } = opts;
+    const isDisplayEven = state.displayFace % 2 === 0;
+    const isAnimating = state.kind === "animating" || state.kind === "adjust-animating";
+    const containerDynStyle: React.CSSProperties =
+      geometry.kind === "variable"
+        ? geometry.axis === "X"
+          ? {
+              height: isDisplayEven ? geometry.even : geometry.length,
+              transition: isAnimating
                 ? `height ${opts.duration}ms ease ${opts.delay}ms`
                 : undefined,
-          }
-        : {
-            left: isDisplayEven ? (geometry.length - geometry.even) / 2 : 0,
-            transition:
-              phase.kind === "animating" || phase.kind === "adjust-animating"
+            }
+          : {
+              left: isDisplayEven ? (geometry.length - geometry.even) / 2 : 0,
+              transition: isAnimating
                 ? `left ${opts.duration}ms ease ${opts.delay}ms`
                 : undefined,
-          }
-      : {};
+            }
+        : {};
 
-  const indexedChildren = React.Children.map(children, (child, i) => {
-    if (React.isValidElement(child) && child.type === Face) {
-      return React.cloneElement(child as React.ReactElement<{ _faceIndex?: number }>, {
-        _faceIndex: i + 1,
-      });
-    }
-    return child;
-  });
+    const indexedChildren = React.Children.map(children, (child, i) => {
+      if (React.isValidElement(child) && child.type === Face) {
+        return React.cloneElement(child as React.ReactElement<{ _faceIndex?: number }>, {
+          _faceIndex: i + 1,
+        });
+      }
+      return child;
+    });
 
-  const ctx = useMemo(
-    () => ({ opts, displayFace, phase, shownFaces, faceOverrides, go }),
-    [opts, displayFace, phase, shownFaces, faceOverrides, go],
-  );
+    const ctx = useMemo(
+      () => ({
+        opts,
+        displayFace: state.displayFace,
+        phase: toPhase(state),
+        shownFaces: state.shownFaces,
+        faceOverrides: state.faceOverrides,
+        go,
+      }),
+      [opts, state, go],
+    );
 
-  return (
-    <div
-      className={className}
-      style={{ perspective: "1000px", width: boxWidth, height: boxHeight, position: "relative", ...style }}
-    >
+    return (
       <div
-        data-turnbox-box
+        className={className}
         style={{
+          perspective: "1000px",
           width: boxWidth,
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          transformStyle: "preserve-3d",
-          ...containerDynStyle,
+          height: boxHeight,
+          position: "relative",
+          ...style,
         }}
       >
-        <TurnBoxContext.Provider value={ctx}>{indexedChildren}</TurnBoxContext.Provider>
+        <div
+          data-turnbox-box
+          style={{
+            width: boxWidth,
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            transformStyle: "preserve-3d",
+            ...containerDynStyle,
+          }}
+        >
+          <TurnBoxContext.Provider value={ctx}>{indexedChildren}</TurnBoxContext.Provider>
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
