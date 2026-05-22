@@ -22,11 +22,7 @@ export type TurnBoxInstance = {
 
 const ADJUST_TIME = 20;
 
-const applyFaceTransforms = (
-  faces: HTMLElement[],
-  currentFace: number,
-  opts: NormalizedOptions,
-): void => {
+const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
     const faceNum = i + 1;
     const t = calcFaceTransform(currentFace, faceNum, opts);
@@ -36,11 +32,7 @@ const applyFaceTransforms = (
   });
 };
 
-const applyAdjustTransforms = (
-  faces: HTMLElement[],
-  currentFace: number,
-  opts: NormalizedOptions,
-): void => {
+const applyAdjustTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
     const faceNum = i + 1;
     const t = calcAdjustFaceTransform(currentFace, faceNum, opts);
@@ -112,8 +104,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
   // Initialize
   container.classList.add("turnBoxContainer", `turnBoxCurrentFace${currentFace}`);
   if (geometry.kind === "variable") {
-    container.style[geometry.axis === "X" ? "height" : "left"] =
-      geometry.axis === "X" ? `${geometry.length}px` : "0px";
+    container.style[geometry.axis === "X" ? "height" : "left"] = geometry.axis === "X" ? `${geometry.length}px` : "0px";
   }
   applyFaceTransforms(faces, currentFace, opts);
   faces[0]?.classList.add("turnBoxShow");
@@ -130,8 +121,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
     const shortDeg = (via === VIRTUAL_NEXT_WRAP ? 90 : -90) * dirSign;
     const half = geometry.length / 2;
     const changeHalf = shortDeg < 0 ? -half : half;
-    const [x, y, z]: [number, number, number] =
-      geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
+    const [x, y, z]: [number, number, number] = geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
     incomingFaceEl.style.transform = `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
   };
 
@@ -154,8 +144,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
     const time = opts.duration + opts.delay;
     const from = currentFace;
     const hasAdjust = transition.kind === "step" && transition.hasAdjust;
-    const finalFace: number =
-      transition.kind === "virtual-wrap" ? transition.landAt : transition.to;
+    const finalFace: number = transition.kind === "virtual-wrap" ? transition.landAt : transition.to;
 
     if (hasAdjust) {
       container.classList.add("turnBoxAdjust");
@@ -256,9 +245,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
       });
       container.classList.remove(
         "turnBoxContainer",
-        ...Array.from(container.classList).filter(
-          (c) => c.startsWith("turnBoxCurrentFace") || c === "turnBoxAdjust",
-        ),
+        ...Array.from(container.classList).filter((c) => c.startsWith("turnBoxCurrentFace") || c === "turnBoxAdjust"),
       );
       container.style.height = "";
       container.style.left = "";

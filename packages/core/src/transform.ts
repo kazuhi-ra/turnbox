@@ -21,8 +21,7 @@ export const getFaceParity = (faceNum: number): FaceParity => (faceNum % 2 !== 0
 const calcBaseDeg = (currentFace: number, faceNum: number): number => (currentFace - faceNum) * -90;
 
 const isSkipWrapEdge = (currentFace: number, faceNum: number): boolean =>
-  (currentFace === MAX_FACE_PCS && faceNum === 1) ||
-  (currentFace === 1 && faceNum === MAX_FACE_PCS);
+  (currentFace === MAX_FACE_PCS && faceNum === 1) || (currentFace === 1 && faceNum === MAX_FACE_PCS);
 
 const applyAnimationType = (
   deg: number,
@@ -82,11 +81,7 @@ const classifyDeg = (deg: RotationDeg): DegBucket => {
 // Fixed geometry: translate uses changeHalf = (deg<0 ? -l : l)/2.
 // axis:Y — same formula for |deg|=90 and |deg|=270.
 // axis:X — |deg|=90 negates changeHalf for y; |deg|=270 does not.
-const calcFixedTranslate = (
-  deg: RotationDeg,
-  axis: Axis,
-  length: number,
-): [number, number, number] => {
+const calcFixedTranslate = (deg: RotationDeg, axis: Axis, length: number): [number, number, number] => {
   const abs = Math.abs(deg);
   if (abs === 0 || abs === 360) return [0, 0, 0];
   if (abs === 180) return [0, 0, length];
@@ -98,10 +93,7 @@ const calcFixedTranslate = (
 
 type VariableTranslateFactory = (l: number, e: number) => [number, number, number];
 
-const variableTranslateTable: Record<
-  Axis,
-  Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>
-> = {
+const variableTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
   Y: {
     odd: {
       zero: () => [0, 0, 0],
@@ -132,10 +124,7 @@ const variableTranslateTable: Record<
   },
 };
 
-const adjustTranslateTable: Record<
-  Axis,
-  Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>
-> = {
+const adjustTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
   Y: {
     odd: {
       zero: () => [0, 0, 0],
@@ -176,11 +165,7 @@ const lookupTranslate = (
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-export const calcFaceTransform = (
-  currentFace: number,
-  faceNum: number,
-  options: NormalizedOptions,
-): FaceTransform => {
+export const calcFaceTransform = (currentFace: number, faceNum: number, options: NormalizedOptions): FaceTransform => {
   const { geometry } = options;
   const deg = calcDeg(currentFace, faceNum, options);
   const [x, y, z] =
@@ -206,11 +191,8 @@ export const calcAdjustFaceTransform = (
   const deg = calcDeg(currentFace, faceNum, options);
   // adjust is only used for variable geometry (fixed geometry never reaches hasAdjust=true)
   const [x, y, z] =
-    geometry.kind === "variable"
-      ? lookupTranslate(adjustTranslateTable, deg, faceNum, geometry)
-      : [0, 0, 0];
-  const transformOrigin =
-    geometry.axis === "X" ? TRANSFORM_ORIGIN_TOP_EDGE : TRANSFORM_ORIGIN_LEFT_EDGE;
+    geometry.kind === "variable" ? lookupTranslate(adjustTranslateTable, deg, faceNum, geometry) : [0, 0, 0];
+  const transformOrigin = geometry.axis === "X" ? TRANSFORM_ORIGIN_TOP_EDGE : TRANSFORM_ORIGIN_LEFT_EDGE;
 
   return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
 };

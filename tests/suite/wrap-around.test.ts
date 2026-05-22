@@ -358,9 +358,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
       await adapter.advanceTime(300);
       adapter.next();
       // t=0, sync: incoming face1 is at +90° (not −270°)
-      expect(adapter.getFaceState(1).transform).toBe(
-        "rotateY(90deg) translate3d(100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(1).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
     });
 
     it("type:real axis:Y — next() 4→1: face1 target is 0° at ADJUST_TIME (not −360°)", async () => {
@@ -376,9 +374,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
       adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
       adapter.prev();
       // t=0, sync: incoming face4 is at −90° (not +270°)
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateY(-90deg) translate3d(-100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
     });
 
     it("type:real axis:Y — prev() 1→4: face4 target is 0° at ADJUST_TIME (not +360°)", async () => {
@@ -399,9 +395,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
       adapter.goTo(4);
       await adapter.advanceTime(300);
       adapter.next();
-      expect(adapter.getFaceState(1).transform).toBe(
-        "rotateY(-90deg) translate3d(-100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(1).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
     });
 
     it("type:real axis:Y — direction:negative next() 4→1: face1 target is 0° at ADJUST_TIME", async () => {
@@ -428,9 +422,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
         duration: 200,
       });
       adapter.prev();
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateY(90deg) translate3d(100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
     });
 
     it("type:real axis:Y — direction:negative prev() 1→4: face4 target is 0° at ADJUST_TIME", async () => {
@@ -466,9 +458,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
       adapter.next();
       await adapter.advanceTime(300);
       // currentFace=1: calcDeg(1,4)=(1-4)*-90=+270 — standard resting position for face4
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateY(270deg) translate3d(100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateY(270deg) translate3d(100px, 0px, 100px)");
     });
 
     it("type:real axis:Y — prev() 1→4: face4 at rotateY(0deg) after completion", async () => {
@@ -483,9 +473,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
       adapter = createAdapter({ facePcs: 4, type: "real", axis: "Y", duration: 200 });
       adapter.prev();
       await adapter.advanceTime(300);
-      expect(adapter.getFaceState(1).transform).toBe(
-        "rotateY(-270deg) translate3d(-100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(1).transform).toBe("rotateY(-270deg) translate3d(-100px, 0px, 100px)");
     });
 
     it("type:real axis:Y — consecutive wraps 1→4→1: transforms correct after each", async () => {

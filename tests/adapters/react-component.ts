@@ -13,15 +13,9 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
   const wrapper = document.createElement("div");
   document.body.appendChild(wrapper);
 
-  const faces = Array.from({ length: facePcs }, (_, i) =>
-    createElement(TurnBox.Face, { key: `face-${i + 1}` }),
-  );
+  const faces = Array.from({ length: facePcs }, (_, i) => createElement(TurnBox.Face, { key: `face-${i + 1}` }));
 
-  const rootEl = createElement(
-    TurnBox.Root,
-    { facePcs: facePcs as 2 | 3 | 4, ...rest, ref: rootRef },
-    ...faces,
-  );
+  const rootEl = createElement(TurnBox.Root, { facePcs: facePcs as 2 | 3 | 4, ...rest, ref: rootRef }, ...faces);
 
   let root: Root;
   act(() => {
@@ -92,9 +86,7 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
     },
 
     getAriaHidden(faceNum) {
-      return (
-        wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null
-      );
+      return wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null;
     },
 
     async advanceTime(ms) {

@@ -17,8 +17,7 @@ const faceLabels = ["Face 1", "Face 2", "Face 3", "Face 4"];
 
 const createContainer = (args: TurnBoxArgs): HTMLElement => {
   const wrapper = document.createElement("div");
-  wrapper.style.cssText =
-    "display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px;";
+  wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; gap:16px; padding:40px;";
 
   const scene = document.createElement("div");
   scene.style.cssText = `

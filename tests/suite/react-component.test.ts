@@ -25,13 +25,7 @@ const mountTurnBox = (facePcs: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}
 
   act(() => {
     const root = createRoot(wrapper);
-    root.render(
-      createElement(
-        StrictMode,
-        null,
-        createElement(TurnBox.Root, { facePcs, ...opts, ref }, ...faces),
-      ),
-    );
+    root.render(createElement(StrictMode, null, createElement(TurnBox.Root, { facePcs, ...opts, ref }, ...faces)));
   });
 
   const getHandle = () => {
@@ -82,16 +76,10 @@ describe("TurnBox.Button", () => {
 
     const faces = Array.from({ length: facePcs }, (_, i) => {
       const nextBtn =
-        i < facePcs - 1
-          ? createElement(TurnBox.Button, { "data-testid": `next-${i + 1}` }, "Next")
-          : null;
+        i < facePcs - 1 ? createElement(TurnBox.Button, { "data-testid": `next-${i + 1}` }, "Next") : null;
       const prevBtn =
         i > 0
-          ? createElement(
-              TurnBox.Button,
-              { direction: "prev" as const, "data-testid": `prev-${i + 1}` },
-              "Prev",
-            )
+          ? createElement(TurnBox.Button, { direction: "prev" as const, "data-testid": `prev-${i + 1}` }, "Prev")
           : null;
       return createElement(TurnBox.Face, { key: `face-${i + 1}` }, nextBtn, prevBtn);
     });
@@ -99,11 +87,7 @@ describe("TurnBox.Button", () => {
     act(() => {
       const root = createRoot(wrapper);
       root.render(
-        createElement(
-          StrictMode,
-          null,
-          createElement(TurnBox.Root, { facePcs, duration: 600, ref }, ...faces),
-        ),
+        createElement(StrictMode, null, createElement(TurnBox.Root, { facePcs, duration: 600, ref }, ...faces)),
       );
     });
 

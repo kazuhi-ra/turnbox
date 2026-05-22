@@ -60,9 +60,7 @@ const TurnBoxDemo = (args: TurnBoxArgs) => {
         }
       `}</style>
 
-      <div
-        style={{ width: args.width, height: args.height, perspective: 1000, position: "relative" }}
-      >
+      <div style={{ width: args.width, height: args.height, perspective: 1000, position: "relative" }}>
         <div
           ref={containerRef as React.RefObject<HTMLDivElement>}
           style={{

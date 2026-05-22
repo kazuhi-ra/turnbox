@@ -58,52 +58,48 @@ const TurnBoxDemo = defineComponent({
       }
     `;
 
-    return h(
-      "div",
-      { style: "display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px;" },
-      [
-        h("style", transitionStyle),
-        h(
-          "div",
-          {
-            style: `width:${this.width}px;height:${this.height}px;perspective:1000px;position:relative;`,
-          },
-          [
-            h(
-              "div",
-              {
-                ref: "containerRef",
-                style: `width:${this.width}px;height:${this.height}px;position:relative;transform-style:preserve-3d;`,
-              },
-              Array.from({ length: count }, (_, i) =>
-                h("div", {
-                  key: faceLabels[i],
-                  style: `position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:white;background:${faceColors[i]};border-radius:8px;box-sizing:border-box;`,
-                  innerHTML: faceLabels[i],
-                }),
-              ),
-            ),
-          ],
-        ),
-        h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;justify-content:center;" }, [
-          h("button", { style: btnStyle, type: "button", onClick: () => this.prev() }, "◀ Prev"),
-          h("button", { style: btnStyle, type: "button", onClick: () => this.next() }, "Next ▶"),
-          ...Array.from({ length: count }, (_, i) =>
-            h(
-              "button",
-              {
+    return h("div", { style: "display:flex;flex-direction:column;align-items:center;gap:16px;padding:40px;" }, [
+      h("style", transitionStyle),
+      h(
+        "div",
+        {
+          style: `width:${this.width}px;height:${this.height}px;perspective:1000px;position:relative;`,
+        },
+        [
+          h(
+            "div",
+            {
+              ref: "containerRef",
+              style: `width:${this.width}px;height:${this.height}px;position:relative;transform-style:preserve-3d;`,
+            },
+            Array.from({ length: count }, (_, i) =>
+              h("div", {
                 key: faceLabels[i],
-                style: btnStyle,
-                type: "button",
-                onClick: () => this.goTo(i + 1),
-              },
-              `Go ${i + 1}`,
+                style: `position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:white;background:${faceColors[i]};border-radius:8px;box-sizing:border-box;`,
+                innerHTML: faceLabels[i],
+              }),
             ),
           ),
-        ]),
-        h("div", { style: "font-size:14px;color:#666;" }, `Current face: ${this.currentFace}`),
-      ],
-    );
+        ],
+      ),
+      h("div", { style: "display:flex;gap:8px;flex-wrap:wrap;justify-content:center;" }, [
+        h("button", { style: btnStyle, type: "button", onClick: () => this.prev() }, "◀ Prev"),
+        h("button", { style: btnStyle, type: "button", onClick: () => this.next() }, "Next ▶"),
+        ...Array.from({ length: count }, (_, i) =>
+          h(
+            "button",
+            {
+              key: faceLabels[i],
+              style: btnStyle,
+              type: "button",
+              onClick: () => this.goTo(i + 1),
+            },
+            `Go ${i + 1}`,
+          ),
+        ),
+      ]),
+      h("div", { style: "font-size:14px;color:#666;" }, `Current face: ${this.currentFace}`),
+    ]);
   },
 });
 

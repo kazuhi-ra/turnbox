@@ -98,10 +98,7 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
     },
 
     getAriaHidden(faceNum) {
-      return (
-        getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ??
-        null
-      );
+      return getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
     },
 
     async advanceTime(ms) {

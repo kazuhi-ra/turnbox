@@ -43,12 +43,7 @@ export type AdjustAnimatingState = {
   faceOverrides: ReadonlyMap<number, string>;
 };
 
-export type TurnBoxState =
-  | IdleState
-  | PrePositioningState
-  | AnimatingState
-  | AdjustingState
-  | AdjustAnimatingState;
+export type TurnBoxState = IdleState | PrePositioningState | AnimatingState | AdjustingState | AdjustAnimatingState;
 
 // ─── Action types ─────────────────────────────────────────────────────────────
 
@@ -152,8 +147,7 @@ export const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): s
   const shortDeg = (via === VIRTUAL_NEXT_WRAP ? 90 : -90) * dirSign;
   const half = geometry.length / 2;
   const changeHalf = shortDeg < 0 ? -half : half;
-  const [x, y, z]: [number, number, number] =
-    geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
+  const [x, y, z]: [number, number, number] = geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
   return `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
 };
 

@@ -8,8 +8,7 @@ const TOTAL = DURATION + DELAY;
 
 const setup = (opts?: Parameters<typeof createTurnBox>[1]) => {
   const container = document.createElement("div");
-  for (let i = 0; i < (opts?.facePcs ?? 4); i++)
-    container.appendChild(document.createElement("div"));
+  for (let i = 0; i < (opts?.facePcs ?? 4); i++) container.appendChild(document.createElement("div"));
   document.body.appendChild(container);
 
   const onChange = vi.fn();

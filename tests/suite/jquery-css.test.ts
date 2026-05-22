@@ -54,8 +54,7 @@ describe("jQuery — CSS rules for 2/3/4-face boxes", () => {
     const sheet = (styleEl as HTMLStyleElement)?.sheet;
     if (!sheet) return false;
     return Array.from(sheet.cssRules).some(
-      (r) =>
-        r instanceof CSSStyleRule && r.selectorText.includes(`turnBoxCurrentFace${currentFace}`),
+      (r) => r instanceof CSSStyleRule && r.selectorText.includes(`turnBoxCurrentFace${currentFace}`),
     );
   };
 

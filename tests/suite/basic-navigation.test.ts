@@ -4,9 +4,7 @@ import type { TurnBoxTestAdapter } from "./adapter.js";
 import { sharedAdapters } from "../adapters/index.js";
 
 const onlyOneFaceShown = (adapter: TurnBoxTestAdapter, facePcs: number): void => {
-  const shownFaces = Array.from({ length: facePcs }, (_, i) => i + 1).filter((f) =>
-    adapter.isFaceShown(f),
-  );
+  const shownFaces = Array.from({ length: facePcs }, (_, i) => i + 1).filter((f) => adapter.isFaceShown(f));
   expect(shownFaces).toHaveLength(1);
 };
 

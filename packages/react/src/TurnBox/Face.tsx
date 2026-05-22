@@ -48,20 +48,13 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
     zIndex: ft?.zIndex ?? 0,
     opacity: shownFaces.has(_faceIndex) ? 1 : 0,
     backfaceVisibility: "visible",
-    transition: hasTransition(phase)
-      ? `transform ${opts.duration}ms ease ${opts.delay}ms`
-      : undefined,
+    transition: hasTransition(phase) ? `transform ${opts.duration}ms ease ${opts.delay}ms` : undefined,
   };
 
   const isShown = shownFaces.has(_faceIndex);
 
   return (
-    <div
-      data-face-index={_faceIndex}
-      className={className}
-      style={faceStyle}
-      aria-hidden={isShown ? undefined : true}
-    >
+    <div data-face-index={_faceIndex} className={className} style={faceStyle} aria-hidden={isShown ? undefined : true}>
       {children}
     </div>
   );

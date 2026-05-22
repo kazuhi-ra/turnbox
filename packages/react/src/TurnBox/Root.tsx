@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useReducer,
-  useRef,
-} from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef } from "react";
 import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE } from "@turnbox/core";
 import type { TurnBoxOptions, NormalizedOptions } from "@turnbox/core";
 import { resolveTransition } from "@turnbox/core/internal";
@@ -27,10 +20,7 @@ const DEFAULT_PERSPECTIVE = 1000;
 
 // ─── Module-scope helpers (Root-specific, not generic utils) ──────────────────
 
-const calcContainerDynStyle = (
-  state: TurnBoxState,
-  opts: NormalizedOptions,
-): React.CSSProperties => {
+const calcContainerDynStyle = (state: TurnBoxState, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
   if (geometry.kind !== "variable") return {};
   const isEven = state.displayFace % 2 === 0;
@@ -67,23 +57,7 @@ export type TurnBoxRootHandle = {
 };
 
 export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
-  (
-    {
-      facePcs,
-      axis,
-      direction,
-      type,
-      duration,
-      delay,
-      width,
-      height,
-      even,
-      children,
-      className,
-      style,
-    },
-    ref,
-  ) => {
+  ({ facePcs, axis, direction, type, duration, delay, width, height, even, children, className, style }, ref) => {
     // ── hooks ──────────────────────────────────────────────────────────────────
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
@@ -168,9 +142,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
             }, time);
             return;
           }
-          dispatch(
-            buildGoPrePositioningAction(transition.via, transition.landAt, state.displayFace, opts),
-          );
+          dispatch(buildGoPrePositioningAction(transition.via, transition.landAt, state.displayFace, opts));
           return;
         }
 
@@ -203,10 +175,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       [state.displayFace, opts, addTimeout],
     );
 
-    useImperativeHandle(ref, () => ({ go, getCurrentFace: () => state.displayFace }), [
-      go,
-      state.displayFace,
-    ]);
+    useImperativeHandle(ref, () => ({ go, getCurrentFace: () => state.displayFace }), [go, state.displayFace]);
 
     const ctx = useMemo(
       () => ({
@@ -247,9 +216,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
             ...containerDynStyle,
           }}
         >
-          <TurnBoxContext.Provider value={ctx}>
-            {buildIndexedChildren(children)}
-          </TurnBoxContext.Provider>
+          <TurnBoxContext.Provider value={ctx}>{buildIndexedChildren(children)}</TurnBoxContext.Provider>
         </div>
       </div>
     );

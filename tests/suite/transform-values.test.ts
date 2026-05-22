@@ -23,9 +23,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
 
     it("face2 is at top: rotateX(90deg) translate3d(0, -25px, 25px)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
-      expect(adapter.getFaceState(2).transform).toBe(
-        "rotateX(90deg) translate3d(0px, -25px, 25px)",
-      );
+      expect(adapter.getFaceState(2).transform).toBe("rotateX(90deg) translate3d(0px, -25px, 25px)");
     });
 
     it("face3 is at back: rotateX(180deg) translate3d(0, 0, 50px)", () => {
@@ -35,9 +33,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
 
     it("face4 is at bottom: rotateX(270deg) translate3d(0, 25px, 25px)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateX(270deg) translate3d(0px, 25px, 25px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateX(270deg) translate3d(0px, 25px, 25px)");
     });
   });
 
@@ -47,18 +43,14 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
       adapter.goTo(2);
       await adapter.advanceTime(300);
       expect(adapter.getFaceState(2).transform).toBe("rotateX(0deg) translate3d(0px, 0px, 0px)");
-      expect(adapter.getFaceState(1).transform).toBe(
-        "rotateX(-90deg) translate3d(0px, 25px, 25px)",
-      );
+      expect(adapter.getFaceState(1).transform).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
     });
 
     it("face3 is at top when at face2", async () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X" });
       adapter.goTo(2);
       await adapter.advanceTime(300);
-      expect(adapter.getFaceState(3).transform).toBe(
-        "rotateX(90deg) translate3d(0px, -25px, 25px)",
-      );
+      expect(adapter.getFaceState(3).transform).toBe("rotateX(90deg) translate3d(0px, -25px, 25px)");
     });
   });
 
@@ -72,23 +64,17 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
 
     it("face2 is at right: rotateY(90deg) translate3d(100px, 0, 100px)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(adapter.getFaceState(2).transform).toBe(
-        "rotateY(90deg) translate3d(100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(2).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
     });
 
     it("face3 is at back: rotateY(180deg) translate3d(0, 0, 200px)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(adapter.getFaceState(3).transform).toBe(
-        "rotateY(180deg) translate3d(0px, 0px, 200px)",
-      );
+      expect(adapter.getFaceState(3).transform).toBe("rotateY(180deg) translate3d(0px, 0px, 200px)");
     });
 
     it("face4 is at left: rotateY(270deg) translate3d(100px, 0, 100px)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "Y" });
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateY(270deg) translate3d(100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateY(270deg) translate3d(100px, 0px, 100px)");
     });
   });
 
@@ -98,9 +84,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
       adapter.goTo(2);
       await adapter.advanceTime(300);
       expect(adapter.getFaceState(2).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
-      expect(adapter.getFaceState(1).transform).toBe(
-        "rotateY(-90deg) translate3d(-100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(1).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
     });
   });
 
@@ -126,9 +110,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
         axis: "X",
         direction: "negative",
       });
-      expect(adapter.getFaceState(2).transform).toBe(
-        "rotateX(-90deg) translate3d(0px, 25px, 25px)",
-      );
+      expect(adapter.getFaceState(2).transform).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
     });
 
     it("face4 is at -270deg", () => {
@@ -139,9 +121,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
         axis: "X",
         direction: "negative",
       });
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateX(-270deg) translate3d(0px, -25px, 25px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateX(-270deg) translate3d(0px, -25px, 25px)");
     });
   });
 
@@ -154,9 +134,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
         axis: "Y",
         direction: "negative",
       });
-      expect(adapter.getFaceState(2).transform).toBe(
-        "rotateY(-90deg) translate3d(-100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(2).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
     });
 
     it("face3 is at -180deg: z-only translate unchanged from positive direction", () => {
@@ -167,9 +145,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
         axis: "Y",
         direction: "negative",
       });
-      expect(adapter.getFaceState(3).transform).toBe(
-        "rotateY(-180deg) translate3d(0px, 0px, 200px)",
-      );
+      expect(adapter.getFaceState(3).transform).toBe("rotateY(-180deg) translate3d(0px, 0px, 200px)");
     });
 
     it("face4 is at -270deg with negative x translate", () => {
@@ -180,9 +156,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
         axis: "Y",
         direction: "negative",
       });
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateY(-270deg) translate3d(-100px, 0px, 100px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateY(-270deg) translate3d(-100px, 0px, 100px)");
     });
   });
 
@@ -191,9 +165,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
   describe("type:repeat — positions at currentFace1 (axis:X)", () => {
     it("face4 is at 90deg (same as face2, NOT 270deg like type:real)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X", type: "repeat" });
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateX(90deg) translate3d(0px, -25px, 25px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateX(90deg) translate3d(0px, -25px, 25px)");
     });
 
     it("face2 and face4 share the same position (repeat pattern)", () => {
@@ -213,9 +185,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X", type: "repeat" });
       adapter.goTo(2);
       await adapter.advanceTime(300);
-      expect(adapter.getFaceState(3).transform).toBe(
-        "rotateX(-90deg) translate3d(0px, 25px, 25px)",
-      );
+      expect(adapter.getFaceState(3).transform).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
     });
 
     it("face1 and face3 share the same position at currentFace2", async () => {
@@ -231,16 +201,12 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
   describe("type:skip — positions at currentFace1 (axis:X)", () => {
     it("face3 is at 90deg (NOT 180deg like type:real)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X", type: "skip" });
-      expect(adapter.getFaceState(3).transform).toBe(
-        "rotateX(90deg) translate3d(0px, -25px, 25px)",
-      );
+      expect(adapter.getFaceState(3).transform).toBe("rotateX(90deg) translate3d(0px, -25px, 25px)");
     });
 
     it("face4 is at -90deg (NOT 270deg like type:real)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, axis: "X", type: "skip" });
-      expect(adapter.getFaceState(4).transform).toBe(
-        "rotateX(-90deg) translate3d(0px, 25px, 25px)",
-      );
+      expect(adapter.getFaceState(4).transform).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
     });
 
     it("no hidden face is at 180deg (skip means no passing through the back)", () => {
@@ -279,9 +245,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
     it("face2 uses even-based translate3d: rotateY(90deg) translate3d(30px, 0, 170px)", () => {
       adapter = createAdapter({ facePcs: 4, width: 200, height: 50, even: 30, axis: "Y" });
       // axis:Y variable path (face num=2 even, deg=90): x=even, z=-(even-length)=170 — contrast with axis:X where x=0, z=even
-      expect(adapter.getFaceState(2).transform).toBe(
-        "rotateY(90deg) translate3d(30px, 0px, 170px)",
-      );
+      expect(adapter.getFaceState(2).transform).toBe("rotateY(90deg) translate3d(30px, 0px, 170px)");
     });
   });
 });
@@ -309,9 +273,7 @@ describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
 //   Element Y=0 (top edge) maps to world (0, 200, 0) = face3 bottom. ✓
 // ──────────────────────────────────────────────────────────────────────────────
 
-describe.each(
-  modernAdapters,
-)("%s — variable geometry face positions (axis:X)", (_, createAdapter) => {
+describe.each(modernAdapters)("%s — variable geometry face positions (axis:X)", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -361,9 +323,7 @@ describe.each(
       });
       adapter.goTo(2, false);
       await adapter.advanceTime(25);
-      expect(adapter.getFaceState(3).transform).toBe(
-        "rotateX(90deg) translate3d(0px, -80px, 120px)",
-      );
+      expect(adapter.getFaceState(3).transform).toBe("rotateX(90deg) translate3d(0px, -80px, 120px)");
     });
   });
 
@@ -393,9 +353,7 @@ describe.each(
       });
       adapter.goTo(3, false);
       await adapter.advanceTime(25);
-      expect(adapter.getFaceState(2).transform).toBe(
-        "rotateX(-90deg) translate3d(0px, 120px, 80px)",
-      );
+      expect(adapter.getFaceState(2).transform).toBe("rotateX(-90deg) translate3d(0px, 120px, 80px)");
     });
   });
 });

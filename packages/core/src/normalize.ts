@@ -21,9 +21,7 @@ export const normalizeOptions = (options: TurnBoxOptions): NormalizedOptions => 
   const rawType = options.type ?? "real";
   const type = !fixed && rawType === "skip" ? "real" : rawType;
 
-  const geometry: Geometry = fixed
-    ? { kind: "fixed", axis, length }
-    : { kind: "variable", axis, length, even };
+  const geometry: Geometry = fixed ? { kind: "fixed", axis, length } : { kind: "variable", axis, length, even };
 
   return { facePcs, direction, type, duration, delay, geometry };
 };

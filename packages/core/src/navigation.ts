@@ -16,8 +16,7 @@ export const shouldAnimate = (
   return true;
 };
 
-const isVirtualWrapFace = (f: number): f is VirtualWrapFace =>
-  f === VIRTUAL_PREV_WRAP || f === VIRTUAL_NEXT_WRAP;
+const isVirtualWrapFace = (f: number): f is VirtualWrapFace => f === VIRTUAL_PREV_WRAP || f === VIRTUAL_NEXT_WRAP;
 
 const resolveVirtualLanding = (via: VirtualWrapFace): 1 | 4 => (via === VIRTUAL_PREV_WRAP ? 4 : 1);
 
@@ -86,8 +85,7 @@ export const resolveTransition = (
 
   if (isDirectWrap) {
     // type:repeat wrap: shouldAnimate rejects large diffs, so bypass it
-    const doAnimate =
-      opts.type === "repeat" ? animationFlag : shouldAnimate(from, to, opts, animationFlag);
+    const doAnimate = opts.type === "repeat" ? animationFlag : shouldAnimate(from, to, opts, animationFlag);
     return { kind: "direct-wrap", to, doAnimate };
   }
 
