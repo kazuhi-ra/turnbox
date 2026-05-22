@@ -1,6 +1,7 @@
 {
   "name": "@turnbox/core",
   "version": "0.1.0",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
@@ -14,7 +15,7 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": ["dist", "LICENSE"],
   "scripts": {
     "build": "tsup src/index.ts src/internal.ts --format esm --dts --out-dir dist"
   }
