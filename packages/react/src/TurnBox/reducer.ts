@@ -1,3 +1,5 @@
+import type { NormalizedOptions } from "@turnbox/core";
+import { VIRTUAL_NEXT_WRAP } from "@turnbox/core/internal";
 import type { AnimationPhase } from "./context.js";
 
 // ─── State types ──────────────────────────────────────────────────────────────
@@ -141,6 +143,55 @@ export const reducer = (state: TurnBoxState, action: TurnBoxAction): TurnBoxStat
       };
   }
 };
+
+// ─── Pre-position geometry ────────────────────────────────────────────────────
+
+export const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): string => {
+  const { geometry, direction } = opts;
+  const dirSign = direction === "negative" ? -1 : 1;
+  const shortDeg = (via === VIRTUAL_NEXT_WRAP ? 90 : -90) * dirSign;
+  const half = geometry.length / 2;
+  const changeHalf = shortDeg < 0 ? -half : half;
+  const [x, y, z]: [number, number, number] =
+    geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
+  return `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
+};
+
+// ─── Action builders ──────────────────────────────────────────────────────────
+
+export const buildGoInstantAction = (displayFace: number): TurnBoxAction => ({
+  type: "GO_INSTANT",
+  displayFace,
+});
+
+export const buildGoPrePositioningAction = (
+  via: 0 | 5,
+  landAt: 1 | 4,
+  currentFace: number,
+  opts: NormalizedOptions,
+): TurnBoxAction => {
+  const incoming = via === VIRTUAL_NEXT_WRAP ? 1 : 4;
+  return {
+    type: "GO_PRE_POSITIONING",
+    displayFace: currentFace,
+    via,
+    landAt,
+    faceOverrides: new Map([[incoming, calcPrePositionTransform(via, opts)]]),
+    shownFaces: new Set([currentFace, incoming]),
+  };
+};
+
+export const buildGoAdjustingAction = (to: number, currentFace: number): TurnBoxAction => ({
+  type: "GO_ADJUSTING",
+  to,
+  shownFaces: new Set([currentFace, to]),
+});
+
+export const buildGoStepAction = (to: number, currentFace: number): TurnBoxAction => ({
+  type: "GO_STEP",
+  to,
+  shownFaces: new Set([currentFace, to]),
+});
 
 // ─── Derive AnimationPhase from state ─────────────────────────────────────────
 

@@ -34,7 +34,10 @@ const setup = () => {
     return createElement(
       "div",
       { ref: containerRef },
-      createElement("div"), createElement("div"), createElement("div"), createElement("div"),
+      createElement("div"),
+      createElement("div"),
+      createElement("div"),
+      createElement("div"),
     );
   }
 

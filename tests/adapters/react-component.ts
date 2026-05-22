@@ -19,7 +19,7 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
 
   const rootEl = createElement(
     TurnBox.Root,
-    { options: { facePcs: facePcs as 2 | 3 | 4, ...rest }, ref: rootRef },
+    { facePcs: facePcs as 2 | 3 | 4, ...rest, ref: rootRef },
     ...faces,
   );
 

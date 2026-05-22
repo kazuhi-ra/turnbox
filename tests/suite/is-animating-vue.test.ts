@@ -22,7 +22,13 @@ const createWrapper = () => {
         delay: DELAY,
       });
       holder.next = next;
-      watch(isAnimating, (val) => { holder.isAnimating = val; }, { immediate: true });
+      watch(
+        isAnimating,
+        (val) => {
+          holder.isAnimating = val;
+        },
+        { immediate: true },
+      );
       return { containerRef };
     },
     render() {

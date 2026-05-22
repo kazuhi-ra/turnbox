@@ -8,9 +8,9 @@ export type FaceProps = {
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
-  // Internal: injected by Root via cloneElement
-  _faceIndex?: number;
 };
+
+type FaceInternalProps = FaceProps & { _faceIndex?: number };
 
 const faceDimStyle = (faceIndex: number, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
@@ -28,7 +28,7 @@ const hasTransition = (phase: AnimationPhase): boolean =>
 const usesFaceTransform = (phase: AnimationPhase): boolean =>
   phase.kind !== "adjusting" && phase.kind !== "adjust-animating";
 
-export const Face = ({ children, className, style, _faceIndex = 0 }: FaceProps) => {
+export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInternalProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
 
   const ft = usesFaceTransform(phase)

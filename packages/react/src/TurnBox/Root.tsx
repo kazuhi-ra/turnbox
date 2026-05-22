@@ -8,29 +8,52 @@ import React, {
 } from "react";
 import { normalizeOptions, calcFaceTransform } from "@turnbox/core";
 import type { TurnBoxOptions, NormalizedOptions } from "@turnbox/core";
-import { resolveTransition, VIRTUAL_NEXT_WRAP } from "@turnbox/core/internal";
+import { resolveTransition } from "@turnbox/core/internal";
 import { TurnBoxContext } from "./context.js";
 import { toTransformString } from "./utils.js";
 import { Face } from "./Face.js";
-import { reducer, toPhase, INITIAL_STATE } from "./reducer.js";
+import {
+  reducer,
+  toPhase,
+  INITIAL_STATE,
+  buildGoInstantAction,
+  buildGoPrePositioningAction,
+  buildGoAdjustingAction,
+  buildGoStepAction,
+} from "./reducer.js";
+import type { TurnBoxState } from "./reducer.js";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Module-scope helpers (Root-specific, not generic utils) ──────────────────
 
-const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): string => {
-  const { geometry, direction } = opts;
-  const dirSign = direction === "negative" ? -1 : 1;
-  const shortDeg = (via === VIRTUAL_NEXT_WRAP ? 90 : -90) * dirSign;
-  const half = geometry.length / 2;
-  const changeHalf = shortDeg < 0 ? -half : half;
-  const [x, y, z]: [number, number, number] =
-    geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
-  return `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
+const calcContainerDynStyle = (
+  state: TurnBoxState,
+  opts: NormalizedOptions,
+): React.CSSProperties => {
+  const { geometry } = opts;
+  if (geometry.kind !== "variable") return {};
+  const isEven = state.displayFace % 2 === 0;
+  const isAnimating = state.kind === "animating" || state.kind === "adjust-animating";
+  const transition = isAnimating
+    ? `${geometry.axis === "X" ? "height" : "left"} ${opts.duration}ms ease ${opts.delay}ms`
+    : undefined;
+  return geometry.axis === "X"
+    ? { height: isEven ? geometry.even : geometry.length, transition }
+    : { left: isEven ? (geometry.length - geometry.even) / 2 : 0, transition };
 };
+
+const buildIndexedChildren = (children: React.ReactNode): React.ReactNode =>
+  React.Children.map(children, (child, i) => {
+    if (React.isValidElement(child) && child.type === Face) {
+      return React.cloneElement(child as React.ReactElement<{ _faceIndex?: number }>, {
+        _faceIndex: i + 1,
+      });
+    }
+    return child;
+  });
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-type RootProps = {
-  options: TurnBoxOptions;
+type RootProps = TurnBoxOptions & {
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
@@ -42,9 +65,23 @@ export type TurnBoxRootHandle = {
 };
 
 export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
-  ({ options, children, className, style }, ref) => {
-    const { facePcs, axis, direction, type, duration, delay, width, height, even } = options;
-
+  (
+    {
+      facePcs,
+      axis,
+      direction,
+      type,
+      duration,
+      delay,
+      width,
+      height,
+      even,
+      children,
+      className,
+      style,
+    },
+    ref,
+  ) => {
     // ── hooks ──────────────────────────────────────────────────────────────────
     const opts = useMemo(
       () =>
@@ -62,7 +99,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     );
     const addTimeout = useCallback((fn: () => void, ms: number) => {
       const id = setTimeout(fn, ms);
-      pendingTimers.current.push(id);
+      pendingTimers.current = [...pendingTimers.current, id];
     }, []);
     // Handle 2-phase transitions: fires after browser paints the pre-phase
     useEffect(() => {
@@ -108,61 +145,50 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
         if (transition.kind === "virtual-wrap") {
           if (!transition.doAnimate) {
-            dispatch({ type: "GO_INSTANT", displayFace: transition.landAt });
+            dispatch(buildGoInstantAction(transition.landAt));
             addTimeout(() => {
               isAnimatingRef.current = false;
             }, time);
             return;
           }
-          const incoming = transition.via === VIRTUAL_NEXT_WRAP ? 1 : 4;
-          dispatch({
-            type: "GO_PRE_POSITIONING",
-            displayFace: state.displayFace,
-            via: transition.via,
-            landAt: transition.landAt,
-            faceOverrides: new Map([[incoming, calcPrePositionTransform(transition.via, opts)]]),
-            shownFaces: new Set([state.displayFace, incoming]),
-          });
+          dispatch(
+            buildGoPrePositioningAction(transition.via, transition.landAt, state.displayFace, opts),
+          );
           return;
         }
 
         if (transition.kind === "step" && transition.hasAdjust) {
           if (!transition.doAnimate) {
-            dispatch({ type: "GO_INSTANT", displayFace: transition.to });
+            dispatch(buildGoInstantAction(transition.to));
             addTimeout(() => {
               isAnimatingRef.current = false;
             }, time);
             return;
           }
-          dispatch({
-            type: "GO_ADJUSTING",
-            to: transition.to,
-            shownFaces: new Set([state.displayFace, transition.to]),
-          });
+          dispatch(buildGoAdjustingAction(transition.to, state.displayFace));
           return;
         }
 
-        const to = transition.to;
-        if (transition.doAnimate) {
-          dispatch({ type: "GO_STEP", to, shownFaces: new Set([state.displayFace, to]) });
-          addTimeout(() => {
-            dispatch({ type: "COMPLETE", displayFace: to });
-            isAnimatingRef.current = false;
-          }, time);
-        } else {
-          dispatch({ type: "GO_INSTANT", displayFace: to });
+        const { to, doAnimate } = transition;
+        if (!doAnimate) {
+          dispatch(buildGoInstantAction(to));
           addTimeout(() => {
             isAnimatingRef.current = false;
           }, time);
+          return;
         }
+        dispatch(buildGoStepAction(to, state.displayFace));
+        addTimeout(() => {
+          dispatch({ type: "COMPLETE", displayFace: to });
+          isAnimatingRef.current = false;
+        }, time);
       },
       [state.displayFace, opts, addTimeout],
     );
-    useImperativeHandle(
-      ref,
-      () => ({ go, getCurrentFace: () => state.displayFace }),
-      [go, state.displayFace],
-    );
+    useImperativeHandle(ref, () => ({ go, getCurrentFace: () => state.displayFace }), [
+      go,
+      state.displayFace,
+    ]);
     const ctx = useMemo(
       () => ({
         opts,
@@ -176,35 +202,9 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     );
 
     // ── derived values ─────────────────────────────────────────────────────────
-    const boxWidth = options.width ?? 200;
-    const boxHeight = options.height ?? 200;
-    const { geometry } = opts;
-    const isDisplayEven = state.displayFace % 2 === 0;
-    const isAnimating = state.kind === "animating" || state.kind === "adjust-animating";
-    const containerDynStyle: React.CSSProperties =
-      geometry.kind === "variable"
-        ? geometry.axis === "X"
-          ? {
-              height: isDisplayEven ? geometry.even : geometry.length,
-              transition: isAnimating
-                ? `height ${opts.duration}ms ease ${opts.delay}ms`
-                : undefined,
-            }
-          : {
-              left: isDisplayEven ? (geometry.length - geometry.even) / 2 : 0,
-              transition: isAnimating
-                ? `left ${opts.duration}ms ease ${opts.delay}ms`
-                : undefined,
-            }
-        : {};
-    const indexedChildren = React.Children.map(children, (child, i) => {
-      if (React.isValidElement(child) && child.type === Face) {
-        return React.cloneElement(child as React.ReactElement<{ _faceIndex?: number }>, {
-          _faceIndex: i + 1,
-        });
-      }
-      return child;
-    });
+    const boxWidth = width ?? 200;
+    const boxHeight = height ?? 200;
+    const containerDynStyle = calcContainerDynStyle(state, opts);
 
     return (
       <div
@@ -228,9 +228,13 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
             ...containerDynStyle,
           }}
         >
-          <TurnBoxContext.Provider value={ctx}>{indexedChildren}</TurnBoxContext.Provider>
+          <TurnBoxContext.Provider value={ctx}>
+            {buildIndexedChildren(children)}
+          </TurnBoxContext.Provider>
         </div>
       </div>
     );
   },
 );
+
+Root.displayName = "TurnBox.Root";

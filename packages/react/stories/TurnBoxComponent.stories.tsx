@@ -63,7 +63,7 @@ const TurnBoxComponentDemo = (args: TurnBoxArgs) => {
         padding: 40,
       }}
     >
-      <TurnBox.Root options={options}>
+      <TurnBox.Root {...options}>
         {Array.from({ length: count }, (_, i) => (
           <TurnBox.Face key={faceColors[i]} style={faceStyle(i)}>
             {faceLabels[i]}
@@ -140,7 +140,7 @@ export const SkipButtons: StoryObj<TurnBoxArgs> = {
     };
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 40 }}>
-        <TurnBox.Root options={options}>
+        <TurnBox.Root {...options}>
           {[0, 1, 2, 3].map((i) => (
             <TurnBox.Face key={faceColors[i]} style={faceStyle(i)}>
               {faceLabels[i]}

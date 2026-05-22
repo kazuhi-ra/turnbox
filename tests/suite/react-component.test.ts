@@ -29,7 +29,7 @@ const mountTurnBox = (facePcs: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}
       createElement(
         StrictMode,
         null,
-        createElement(TurnBox.Root, { options: { facePcs, ...opts }, ref }, ...faces),
+        createElement(TurnBox.Root, { facePcs, ...opts, ref }, ...faces),
       ),
     );
   });
@@ -39,8 +39,7 @@ const mountTurnBox = (facePcs: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}
     return ref.current;
   };
 
-  const getFaceEl = (n: number) =>
-    wrapper.querySelector<HTMLElement>(`[data-face-index="${n}"]`);
+  const getFaceEl = (n: number) => wrapper.querySelector<HTMLElement>(`[data-face-index="${n}"]`);
 
   return { wrapper, getHandle, getFaceEl };
 };
@@ -88,7 +87,11 @@ describe("TurnBox.Button", () => {
           : null;
       const prevBtn =
         i > 0
-          ? createElement(TurnBox.Button, { direction: "prev" as const, "data-testid": `prev-${i + 1}` }, "Prev")
+          ? createElement(
+              TurnBox.Button,
+              { direction: "prev" as const, "data-testid": `prev-${i + 1}` },
+              "Prev",
+            )
           : null;
       return createElement(TurnBox.Face, { key: `face-${i + 1}` }, nextBtn, prevBtn);
     });
@@ -99,7 +102,7 @@ describe("TurnBox.Button", () => {
         createElement(
           StrictMode,
           null,
-          createElement(TurnBox.Root, { options: { facePcs, duration: 600 }, ref }, ...faces),
+          createElement(TurnBox.Root, { facePcs, duration: 600, ref }, ...faces),
         ),
       );
     });
@@ -165,11 +168,7 @@ describe("TurnBox.Button to={N}", () => {
         createElement(
           StrictMode,
           null,
-          createElement(
-            TurnBox.Root,
-            { options: { facePcs: 4, type: "skip", duration: 600 }, ref },
-            ...faces,
-          ),
+          createElement(TurnBox.Root, { facePcs: 4, type: "skip", duration: 600, ref }, ...faces),
         ),
       );
     });
@@ -200,7 +199,7 @@ describe("TurnBox.Face style prop", () => {
           null,
           createElement(
             TurnBox.Root,
-            { options: { facePcs: 2 }, ref },
+            { facePcs: 2, ref },
             createElement(TurnBox.Face, { style: { background: "red" } }),
             createElement(TurnBox.Face, {}),
           ),
