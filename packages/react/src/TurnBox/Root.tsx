@@ -6,7 +6,7 @@ import React, {
   useReducer,
   useRef,
 } from "react";
-import { normalizeOptions, calcFaceTransform } from "@turnbox/core";
+import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE } from "@turnbox/core";
 import type { TurnBoxOptions, NormalizedOptions } from "@turnbox/core";
 import { resolveTransition } from "@turnbox/core/internal";
 import { TurnBoxContext } from "./context.js";
@@ -22,6 +22,8 @@ import {
   buildGoStepAction,
 } from "./reducer.js";
 import type { TurnBoxState } from "./reducer.js";
+
+const DEFAULT_PERSPECTIVE = 1000;
 
 // ─── Module-scope helpers (Root-specific, not generic utils) ──────────────────
 
@@ -202,15 +204,15 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     );
 
     // ── derived values ─────────────────────────────────────────────────────────
-    const boxWidth = width ?? 200;
-    const boxHeight = height ?? 200;
+    const boxWidth = width ?? DEFAULT_SIZE;
+    const boxHeight = height ?? DEFAULT_SIZE;
     const containerDynStyle = calcContainerDynStyle(state, opts);
 
     return (
       <div
         className={className}
         style={{
-          perspective: "1000px",
+          perspective: `${DEFAULT_PERSPECTIVE}px`,
           width: boxWidth,
           height: boxHeight,
           position: "relative",

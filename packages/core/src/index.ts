@@ -8,5 +8,5 @@ export type { Axis, Direction, AnimationType, FaceCount, TurnBoxOptions } from "
 export type { NormalizedOptions, Geometry, FaceTransform } from "./types.js";
 
 // Core functions
-export { normalizeOptions } from "./normalize.js";
+export { normalizeOptions, DEFAULT_DURATION, DEFAULT_DELAY, DEFAULT_SIZE } from "./normalize.js";
 export { calcFaceTransform, calcAdjustFaceTransform } from "./transform.js";

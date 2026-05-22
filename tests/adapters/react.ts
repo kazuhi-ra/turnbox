@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { createElement, StrictMode, useEffect, useRef } from "react";
+import { createElement, StrictMode, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { useTurnBox } from "@turnbox/react";
@@ -16,28 +16,34 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
     next: () => void;
     prev: () => void;
     container: HTMLElement | null;
+    getCurrentFace: () => number;
   } = {
     goTo: () => {},
     next: () => {},
     prev: () => {},
     container: null,
+    getCurrentFace: () => 1,
   };
 
   const wrapper = document.createElement("div");
   document.body.appendChild(wrapper);
 
   function TestComponent() {
-    const { containerRef, goTo, next, prev } = useTurnBox({ facePcs, ...turnBoxOptions });
+    const { containerRef, goTo, next, prev, currentFace } = useTurnBox({
+      facePcs,
+      ...turnBoxOptions,
+    });
 
-    const isFirstRender = useRef(true);
+    // goTo/next/prev are stable useCallbacks; update via effect after mount.
     useEffect(() => {
-      if (!isFirstRender.current) return;
-      isFirstRender.current = false;
       holder.goTo = goTo;
       holder.next = next;
       holder.prev = prev;
       if (containerRef.current) holder.container = containerRef.current;
     });
+
+    // currentFace changes with state; expose as a getter updated every render.
+    holder.getCurrentFace = () => currentFace;
 
     return createElement(
       "div",
@@ -71,9 +77,7 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
     },
 
     getCurrentFace() {
-      const container = getContainer();
-      const cls = Array.from(container.classList).find((c) => c.startsWith("turnBoxCurrentFace"));
-      return cls ? parseInt(cls.replace("turnBoxCurrentFace", ""), 10) : 1;
+      return holder.getCurrentFace();
     },
 
     isFaceShown(faceNum) {
@@ -99,6 +103,14 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
         inlineLeft: c.style.left,
         inlineTransition: c.style.transition,
       };
+    },
+
+    getAriaHidden(faceNum) {
+      return (
+        getContainer()
+          .querySelector(`.turnBoxFaceNum${faceNum}`)
+          ?.getAttribute("aria-hidden") ?? null
+      );
     },
 
     async advanceTime(ms) {

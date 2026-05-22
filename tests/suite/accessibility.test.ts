@@ -1,122 +1,118 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTurnBox } from "@turnbox/dom";
+import { modernAdapters } from "../adapters/index.js";
+import type { TurnBoxTestAdapter } from "./adapter.js";
 
 const DURATION = 200;
 const DELAY = 0;
-const ADJUST_TIME = 20;
 const TOTAL = DURATION + DELAY;
 
-const setup = (facePcs: 2 | 3 | 4 = 4) => {
-  const container = document.createElement("div");
-  const faceEls: HTMLElement[] = [];
-  for (let i = 0; i < facePcs; i++) {
-    const el = document.createElement("div");
-    container.appendChild(el);
-    faceEls.push(el);
-  }
-  document.body.appendChild(container);
-  const instance = createTurnBox(container, { facePcs, duration: DURATION, delay: DELAY });
-  return {
-    instance,
-    ariaHidden: (n: number) => faceEls[n - 1].getAttribute("aria-hidden"),
-    destroy() {
-      instance.destroy();
-      container.remove();
-    },
-  };
-};
+// ── adapter-based: covers DOM / React / Vue / React (Component) ───────────────
 
-describe("accessibility — aria-hidden", () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
+describe.each(modernAdapters)("%s — aria-hidden", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
 
-  // ── initial state ──────────────────────────────────────────────────────────
-
-  it("face 1 is not aria-hidden on init", () => {
-    const { ariaHidden, destroy } = setup();
-    expect(ariaHidden(1)).toBeNull();
-    destroy();
+  beforeEach(() => {
+    vi.useFakeTimers();
+    adapter = createAdapter({ facePcs: 4, duration: DURATION, delay: DELAY });
   });
 
-  it("faces 2–4 are aria-hidden on init", () => {
-    const { ariaHidden, destroy } = setup();
-    expect(ariaHidden(2)).toBe("true");
-    expect(ariaHidden(3)).toBe("true");
-    expect(ariaHidden(4)).toBe("true");
-    destroy();
+  afterEach(async () => {
+    adapter.destroy();
+    vi.useRealTimers();
   });
 
-  it("only shown face has no aria-hidden (2-face)", () => {
-    const { ariaHidden, destroy } = setup(2);
-    expect(ariaHidden(1)).toBeNull();
-    expect(ariaHidden(2)).toBe("true");
-    destroy();
+  // ── initial state ────────────────────────────────────────────────────────────
+
+  it("face 1 has no aria-hidden on init", () => {
+    expect(adapter.getAriaHidden(1)).toBeNull();
   });
 
-  // ── after transition ───────────────────────────────────────────────────────
+  it("faces 2–4 have aria-hidden on init", () => {
+    expect(adapter.getAriaHidden(2)).toBe("true");
+    expect(adapter.getAriaHidden(3)).toBe("true");
+    expect(adapter.getAriaHidden(4)).toBe("true");
+  });
+
+  it("only shown face has no aria-hidden (2-face)", async () => {
+    adapter.destroy();
+    adapter = createAdapter({ facePcs: 2, duration: DURATION, delay: DELAY });
+    expect(adapter.getAriaHidden(1)).toBeNull();
+    expect(adapter.getAriaHidden(2)).toBe("true");
+  });
+
+  // ── after transition ─────────────────────────────────────────────────────────
 
   it("target face loses aria-hidden after animation", async () => {
-    const { instance, ariaHidden, destroy } = setup();
-    instance.next();
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    expect(ariaHidden(2)).toBeNull();
-    destroy();
+    adapter.next();
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getAriaHidden(2)).toBeNull();
   });
 
   it("previous face gains aria-hidden after animation", async () => {
-    const { instance, ariaHidden, destroy } = setup();
-    instance.next();
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    expect(ariaHidden(1)).toBe("true");
-    destroy();
+    adapter.next();
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getAriaHidden(1)).toBe("true");
   });
 
-  it("only the current face has no aria-hidden after multiple transitions", async () => {
-    const { instance, ariaHidden, destroy } = setup();
-    instance.next();
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    instance.next();
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    expect(ariaHidden(1)).toBe("true");
-    expect(ariaHidden(2)).toBe("true");
-    expect(ariaHidden(3)).toBeNull();
-    expect(ariaHidden(4)).toBe("true");
-    destroy();
+  it("only current face has no aria-hidden after multiple transitions", async () => {
+    adapter.next();
+    await adapter.advanceTime(TOTAL + 50);
+    adapter.next();
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getAriaHidden(1)).toBe("true");
+    expect(adapter.getAriaHidden(2)).toBe("true");
+    expect(adapter.getAriaHidden(3)).toBeNull();
+    expect(adapter.getAriaHidden(4)).toBe("true");
   });
 
-  // ── no-animation ───────────────────────────────────────────────────────────
+  // ── no-animation ─────────────────────────────────────────────────────────────
 
   it("aria-hidden updates correctly for no-animation goTo", async () => {
-    const { instance, ariaHidden, destroy } = setup();
-    instance.goTo(3, false);
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    expect(ariaHidden(3)).toBeNull();
-    expect(ariaHidden(1)).toBe("true");
-    destroy();
+    adapter.goTo(3, false);
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getAriaHidden(3)).toBeNull();
+    expect(adapter.getAriaHidden(1)).toBe("true");
   });
 
-  // ── virtual-wrap ───────────────────────────────────────────────────────────
+  // ── virtual-wrap ─────────────────────────────────────────────────────────────
 
   it("aria-hidden is correct after virtual-wrap (face4→face1)", async () => {
-    const { instance, ariaHidden, destroy } = setup();
-    instance.goTo(4, false);
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    instance.next(); // face4 → face1 (virtual-wrap)
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
-    expect(ariaHidden(1)).toBeNull();
-    expect(ariaHidden(4)).toBe("true");
-    destroy();
+    adapter.goTo(4, false);
+    await adapter.advanceTime(TOTAL + 50);
+    adapter.next(); // face4 → face1 (virtual-wrap)
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getAriaHidden(1)).toBeNull();
+    expect(adapter.getAriaHidden(4)).toBe("true");
   });
+});
 
-  // ── destroy ────────────────────────────────────────────────────────────────
+// ── DOM only: destroy removes aria-hidden ─────────────────────────────────────
+// createTurnBox.destroy() explicitly removes aria-hidden from all faces so that
+// any code holding element references doesn't see stale attributes.
+// React/Vue adapters unmount and remove the DOM, so this guarantee doesn't apply.
+
+describe("DOM — destroy removes aria-hidden", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
 
   it("destroy removes aria-hidden from all faces", async () => {
-    const { instance, ariaHidden, destroy } = setup();
+    const container = document.createElement("div");
+    const faceEls: HTMLElement[] = [];
+    for (let i = 0; i < 4; i++) {
+      const el = document.createElement("div");
+      container.appendChild(el);
+      faceEls.push(el);
+    }
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, { facePcs: 4, duration: DURATION, delay: DELAY });
+
     instance.next();
-    await vi.advanceTimersByTimeAsync(ADJUST_TIME + TOTAL + 1);
+    await vi.advanceTimersByTimeAsync(TOTAL + 50);
+
     instance.destroy();
-    expect(ariaHidden(1)).toBeNull();
-    expect(ariaHidden(2)).toBeNull();
-    destroy();
+    expect(faceEls[0].getAttribute("aria-hidden")).toBeNull();
+    expect(faceEls[1].getAttribute("aria-hidden")).toBeNull();
+    container.remove();
   });
 });

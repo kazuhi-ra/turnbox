@@ -1,9 +1,9 @@
 import type { FaceCount, Geometry, NormalizedOptions, TurnBoxOptions } from "./types.js";
 
 export const MAX_FACE_PCS = 4;
-const DEFAULT_DURATION = 800;
-const DEFAULT_DELAY = 50;
-const DEFAULT_SIZE = 200;
+export const DEFAULT_DURATION = 800;
+export const DEFAULT_DELAY = 50;
+export const DEFAULT_SIZE = 200;
 
 export const normalizeOptions = (options: TurnBoxOptions): NormalizedOptions => {
   const facePcs = Math.min(options.facePcs, MAX_FACE_PCS) as FaceCount;

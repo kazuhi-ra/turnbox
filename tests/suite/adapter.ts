@@ -32,6 +32,7 @@ export type TurnBoxTestAdapter = {
   isFaceShown(faceNum: number): boolean;
   getFaceState(faceNum: number): FaceState;
   getContainerState(): ContainerState;
+  getAriaHidden(faceNum: number): string | null;
   advanceTime(ms: number): Promise<void>;
   destroy(): void;
 };

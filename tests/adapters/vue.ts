@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { defineComponent, h, nextTick } from "vue";
+import { defineComponent, h, nextTick, type Ref } from "vue";
 import { mount } from "@vue/test-utils";
 import { useTurnBox } from "@turnbox/vue";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
@@ -15,20 +15,26 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
     next: () => void;
     prev: () => void;
     container: HTMLElement | null;
+    currentFace: Ref<number> | null;
   } = {
     goTo: () => {},
     next: () => {},
     prev: () => {},
     container: null,
+    currentFace: null,
   };
 
   const TestComponent = defineComponent({
     setup() {
-      const { containerRef, goTo, next, prev } = useTurnBox({ facePcs, ...turnBoxOptions });
+      const { containerRef, goTo, next, prev, currentFace } = useTurnBox({
+        facePcs,
+        ...turnBoxOptions,
+      });
 
       holder.goTo = goTo;
       holder.next = next;
       holder.prev = prev;
+      holder.currentFace = currentFace;
 
       return { containerRef };
     },
@@ -63,9 +69,7 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
     },
 
     getCurrentFace() {
-      const container = getContainer();
-      const cls = Array.from(container.classList).find((c) => c.startsWith("turnBoxCurrentFace"));
-      return cls ? parseInt(cls.replace("turnBoxCurrentFace", ""), 10) : 1;
+      return holder.currentFace?.value ?? 1;
     },
 
     isFaceShown(faceNum) {
@@ -91,6 +95,14 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
         inlineLeft: c.style.left,
         inlineTransition: c.style.transition,
       };
+    },
+
+    getAriaHidden(faceNum) {
+      return (
+        getContainer()
+          .querySelector(`.turnBoxFaceNum${faceNum}`)
+          ?.getAttribute("aria-hidden") ?? null
+      );
     },
 
     async advanceTime(ms) {

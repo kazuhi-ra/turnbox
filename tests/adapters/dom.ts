@@ -59,6 +59,12 @@ export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
       };
     },
 
+    getAriaHidden(faceNum) {
+      return (
+        container.querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null
+      );
+    },
+
     async advanceTime(ms) {
       await vi.advanceTimersByTimeAsync(ms);
     },
