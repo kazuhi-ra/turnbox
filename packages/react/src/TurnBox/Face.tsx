@@ -14,7 +14,7 @@ export type FaceProps = {
 
 const faceDimStyle = (faceIndex: number, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
-  if (geometry.kind !== "variable") return { width: "100%", height: "100%" };
+  if (geometry.kind !== "variable") return { inset: 0 };
   const isEven = faceIndex % 2 === 0;
   if (geometry.axis === "X") {
     return { width: "100%", height: isEven ? geometry.even : geometry.length };
@@ -54,7 +54,7 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceProps) 
   };
 
   return (
-    <div className={className} style={faceStyle}>
+    <div data-face-index={_faceIndex} className={className} style={faceStyle}>
       {children}
     </div>
   );

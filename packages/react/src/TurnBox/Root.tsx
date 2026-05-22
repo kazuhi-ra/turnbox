@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { normalizeOptions, calcFaceTransform } from "@turnbox/core";
 import type { TurnBoxOptions } from "@turnbox/core";
 import { resolveTransition, VIRTUAL_NEXT_WRAP } from "@turnbox/core/internal";
@@ -15,6 +15,11 @@ type RootProps = {
   style?: React.CSSProperties;
 };
 
+export type TurnBoxRootHandle = {
+  go(rawTarget: number, animation: boolean): void;
+  getCurrentFace(): number;
+};
+
 const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): string => {
   const { geometry, direction } = opts;
   const dirSign = direction === "negative" ? -1 : 1;
@@ -26,7 +31,8 @@ const calcPrePositionTransform = (via: 0 | 5, opts: NormalizedOptions): string =
   return `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
 };
 
-export const Root = ({ options, children, className, style }: RootProps) => {
+export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
+  ({ options, children, className, style }, ref) => {
   const { facePcs, axis, direction, type, duration, delay, width, height, even } = options;
   const opts = useMemo(
     () =>
@@ -67,20 +73,26 @@ export const Root = ({ options, children, className, style }: RootProps) => {
       const currentOpts = optsRef.current;
       const restingTransform = toTransformString(calcFaceTransform(landAt, landAt, currentOpts));
 
-      setFaceOverrides(new Map([[landAt, restingTransform]]));
-      setPhase({ kind: "animating" });
-      setDisplayFace(via);
-      setShownFaces((s) => new Set([...s, landAt]));
-      currentFaceRef.current = via;
+      // rAF defers the transition start until the next paint, so the pre-position
+      // is observable at t=0 (required by tests and correct browser behavior).
+      const rafId = requestAnimationFrame(() => {
+        setFaceOverrides(new Map([[landAt, restingTransform]]));
+        setPhase({ kind: "animating" });
+        setDisplayFace(via);
+        setShownFaces((s) => new Set([...s, landAt]));
+        currentFaceRef.current = via;
 
-      addTimeout(() => {
-        setPhase({ kind: "idle" });
-        setDisplayFace(landAt);
-        setShownFaces(new Set([landAt]));
-        setFaceOverrides(new Map());
-        currentFaceRef.current = landAt;
-        isAnimatingRef.current = false;
-      }, currentOpts.duration + currentOpts.delay);
+        addTimeout(() => {
+          setPhase({ kind: "idle" });
+          setDisplayFace(landAt);
+          setShownFaces(new Set([landAt]));
+          setFaceOverrides(new Map());
+          currentFaceRef.current = landAt;
+          isAnimatingRef.current = false;
+        }, currentOpts.duration + currentOpts.delay);
+      });
+
+      return () => cancelAnimationFrame(rafId);
     } else if (phase.kind === "adjusting") {
       const { to } = phase;
       const currentOpts = optsRef.current;
@@ -114,7 +126,9 @@ export const Root = ({ options, children, className, style }: RootProps) => {
           setDisplayFace(transition.landAt);
           setShownFaces(new Set([transition.landAt]));
           currentFaceRef.current = transition.landAt;
-          isAnimatingRef.current = false;
+          addTimeout(() => {
+            isAnimatingRef.current = false;
+          }, time);
           return;
         }
         const incoming = transition.via === VIRTUAL_NEXT_WRAP ? 1 : 4;
@@ -130,7 +144,9 @@ export const Root = ({ options, children, className, style }: RootProps) => {
           setDisplayFace(transition.to);
           setShownFaces(new Set([transition.to]));
           currentFaceRef.current = transition.to;
-          isAnimatingRef.current = false;
+          addTimeout(() => {
+            isAnimatingRef.current = false;
+          }, time);
           return;
         }
         setShownFaces((s) => new Set([...s, transition.to]));
@@ -154,11 +170,15 @@ export const Root = ({ options, children, className, style }: RootProps) => {
         setDisplayFace(to);
         setShownFaces(new Set([to]));
         currentFaceRef.current = to;
-        isAnimatingRef.current = false;
+        addTimeout(() => {
+          isAnimatingRef.current = false;
+        }, time);
       }
     },
     [addTimeout],
   );
+
+  useImperativeHandle(ref, () => ({ go, getCurrentFace: () => currentFaceRef.current }), [go]);
 
   const { geometry } = opts;
   const isDisplayEven = displayFace % 2 === 0;
@@ -198,13 +218,15 @@ export const Root = ({ options, children, className, style }: RootProps) => {
   return (
     <div
       className={className}
-      style={{ perspective: "1000px", width: boxWidth, height: boxHeight, ...style }}
+      style={{ perspective: "1000px", width: boxWidth, height: boxHeight, position: "relative", ...style }}
     >
       <div
+        data-turnbox-box
         style={{
           width: boxWidth,
-          height: boxHeight,
-          position: "relative",
+          position: "absolute",
+          top: 0,
+          bottom: 0,
           transformStyle: "preserve-3d",
           ...containerDynStyle,
         }}
@@ -213,4 +235,4 @@ export const Root = ({ options, children, className, style }: RootProps) => {
       </div>
     </div>
   );
-};
+});

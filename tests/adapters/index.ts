@@ -2,6 +2,7 @@ import { createJQueryAdapter } from "./jquery.js";
 import { createDomAdapter } from "./dom.js";
 import { createReactAdapter } from "./react.js";
 import { createVueAdapter } from "./vue.js";
+import { createReactComponentAdapter } from "./react-component.js";
 import type { AdapterFactory } from "../suite/adapter.js";
 
 // jQuery + DOM: 旧実装と新実装の振る舞いが一致することを検証するテスト用
@@ -15,4 +16,5 @@ export const modernAdapters: [string, AdapterFactory][] = [
   ["DOM", createDomAdapter],
   ["React", createReactAdapter],
   ["Vue", createVueAdapter],
+  ["React (Component)", createReactComponentAdapter],
 ];
