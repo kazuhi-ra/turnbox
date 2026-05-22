@@ -41,6 +41,8 @@ export type TurnBoxOptions = {
   width?: number;
   height?: number;
   even?: number;
+  onChange?: (face: number) => void;
+  onAnimationEnd?: (face: number) => void;
 };
 
 export type NormalizedOptions = {

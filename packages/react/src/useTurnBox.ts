@@ -17,6 +17,12 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
   const instanceRef = useRef<TurnBoxInstance | null>(null);
   const [currentFace, setCurrentFace] = useState(1);
 
+  // Always call the latest callbacks without re-initializing the instance
+  const onChangeRef = useRef(options.onChange);
+  const onAnimationEndRef = useRef(options.onAnimationEnd);
+  onChangeRef.current = options.onChange;
+  onAnimationEndRef.current = options.onAnimationEnd;
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -31,17 +37,18 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       width,
       height,
       even,
+      onChange: (face) => {
+        setCurrentFace(face);
+        onChangeRef.current?.(face);
+      },
+      onAnimationEnd: (face) => {
+        onAnimationEndRef.current?.(face);
+      },
     });
     instanceRef.current = instance;
     setCurrentFace(instance.getCurrentFace());
 
-    const observer = new MutationObserver(() => {
-      setCurrentFace(instance.getCurrentFace());
-    });
-    observer.observe(el, { attributes: true, attributeFilter: ["class"] });
-
     return () => {
-      observer.disconnect();
       instance.destroy();
       instanceRef.current = null;
     };

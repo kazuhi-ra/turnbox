@@ -14,24 +14,25 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
   const containerRef = ref<HTMLElement | null>(null);
   const currentFace = ref(1);
   let instance: TurnBoxInstance | null = null;
-  let observer: MutationObserver | null = null;
 
   const init = (): void => {
     const el = containerRef.value;
     if (!el) return;
 
-    instance = createTurnBox(el, options);
-    currentFace.value = instance.getCurrentFace();
-
-    observer = new MutationObserver(() => {
-      currentFace.value = instance?.getCurrentFace() ?? currentFace.value;
+    instance = createTurnBox(el, {
+      ...options,
+      onChange: (face) => {
+        currentFace.value = face;
+        options.onChange?.(face);
+      },
+      onAnimationEnd: (face) => {
+        options.onAnimationEnd?.(face);
+      },
     });
-    observer.observe(el, { attributes: true, attributeFilter: ["class"] });
+    currentFace.value = instance.getCurrentFace();
   };
 
   const cleanup = (): void => {
-    observer?.disconnect();
-    observer = null;
     instance?.destroy();
     instance = null;
   };
@@ -39,7 +40,6 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
   onMounted(init);
   onUnmounted(cleanup);
 
-  // Recreate instance when options change
   watch(
     () => [
       options.facePcs,

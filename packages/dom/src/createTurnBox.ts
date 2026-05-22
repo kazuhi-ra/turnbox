@@ -148,6 +148,8 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
     const time = opts.duration + opts.delay;
     const from = currentFace;
     const hasAdjust = transition.kind === "step" && transition.hasAdjust;
+    const finalFace: number =
+      transition.kind === "virtual-wrap" ? transition.landAt : transition.to;
 
     if (hasAdjust) {
       container.classList.add("turnBoxAdjust");
@@ -157,6 +159,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
           container.classList.remove("turnBoxAdjust");
           applyFaceTransforms(faces, currentFace, opts);
           isAnimating = false;
+          options.onAnimationEnd?.(finalFace);
         },
         time + ADJUST_TIME * 2,
       );
@@ -181,6 +184,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
 
       showFace(targetFace);
       setCurrentFace(targetFace);
+      options.onChange?.(finalFace);
 
       if (hasAdjust) {
         applyAdjustTransforms(faces, targetFace, opts);
@@ -207,7 +211,10 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
           applyFaceTransforms(faces, transition.landAt, opts);
         }
 
-        if (!hasAdjust) isAnimating = false;
+        if (!hasAdjust) {
+          isAnimating = false;
+          options.onAnimationEnd?.(finalFace);
+        }
       }, time);
     }, ADJUST_TIME);
   };
