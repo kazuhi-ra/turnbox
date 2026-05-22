@@ -14,6 +14,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 (globalThis as unknown as Record<string, unknown>).$ = jQuery;
 
 // Load turnBox.js as a script to avoid ESM strict mode issues with the IIFE
-const turnBoxPath = resolve(__dirname, "../turnBox.js");
+const turnBoxPath = resolve(__dirname, "../legacy/turnBox.js");
 const turnBoxSource = readFileSync(turnBoxPath, "utf8");
 runInThisContext(turnBoxSource);
