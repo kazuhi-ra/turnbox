@@ -225,17 +225,19 @@ describe("useTurnBoxContext outside Root", () => {
     const wrapper = document.createElement("div");
     document.body.appendChild(wrapper);
 
-    expect(() => {
-      act(() => {
-        const root = createRoot(wrapper);
-        // suppress React's error boundary console.error
-        const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-        try {
+    const onError = (e: ErrorEvent) => e.preventDefault();
+    window.addEventListener("error", onError);
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      expect(() => {
+        act(() => {
+          const root = createRoot(wrapper);
           root.render(createElement(BadComponent));
-        } finally {
-          spy.mockRestore();
-        }
-      });
-    }).toThrow();
+        });
+      }).toThrow();
+    } finally {
+      spy.mockRestore();
+      window.removeEventListener("error", onError);
+    }
   });
 });
