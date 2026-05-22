@@ -14,6 +14,7 @@ type TurnBoxArgs = {
 };
 
 const faceColors = ["#e74c3c", "#3498db", "#2ecc71", "#f39c12"];
+const faceLabels = ["Face 1", "Face 2", "Face 3", "Face 4"];
 
 const btnStyle: React.CSSProperties = {
   padding: "6px 14px",
@@ -21,9 +22,23 @@ const btnStyle: React.CSSProperties = {
   borderRadius: "4px",
   cursor: "pointer",
   fontSize: "13px",
-  background: "rgba(0,0,0,0.55)",
+  background: "rgba(0,0,0,0.45)",
   color: "white",
 };
+
+const faceStyle = (i: number): React.CSSProperties => ({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 10,
+  background: faceColors[i],
+  color: "white",
+  fontSize: 22,
+  fontWeight: "bold",
+  borderRadius: 8,
+  boxSizing: "border-box",
+});
 
 const TurnBoxComponentDemo = (args: TurnBoxArgs) => {
   const count = Math.min(args.facePcs, 4) as 2 | 3 | 4;
@@ -50,30 +65,15 @@ const TurnBoxComponentDemo = (args: TurnBoxArgs) => {
     >
       <TurnBox.Root options={options}>
         {Array.from({ length: count }, (_, i) => (
-          <TurnBox.Face
-            key={faceColors[i]}
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              background: faceColors[i],
-              borderRadius: 8,
-              color: "white",
-              fontSize: 20,
-              fontWeight: "bold",
-              boxSizing: "border-box",
-            }}
-          >
-            Face {i + 1}
+          <TurnBox.Face key={faceColors[i]} style={faceStyle(i)}>
+            {faceLabels[i]}
             <div style={{ display: "flex", gap: 6 }}>
               {i > 0 && (
                 <TurnBox.Button style={btnStyle} direction="prev">
-                  ◀
+                  ◀ Prev
                 </TurnBox.Button>
               )}
-              {i < count - 1 && <TurnBox.Button style={btnStyle}>▶</TurnBox.Button>}
+              {i < count - 1 && <TurnBox.Button style={btnStyle}>Next ▶</TurnBox.Button>}
             </div>
           </TurnBox.Face>
         ))}
@@ -124,7 +124,7 @@ export const UnevenGeometry: StoryObj<TurnBoxArgs> = {
   args: { ...defaultArgs, height: 200, even: 120 },
 };
 
-// Shows the "to" prop — skip to arbitrary face
+// TurnBox.Button の to={N} prop を使ったスキップ例
 export const SkipButtons: StoryObj<TurnBoxArgs> = {
   name: "Skip Buttons (to=N)",
   args: { ...defaultArgs, type: "skip" },
@@ -142,29 +142,14 @@ export const SkipButtons: StoryObj<TurnBoxArgs> = {
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 40 }}>
         <TurnBox.Root options={options}>
           {[0, 1, 2, 3].map((i) => (
-            <TurnBox.Face
-              key={faceColors[i]}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 8,
-                background: faceColors[i],
-                borderRadius: 8,
-                color: "white",
-                fontSize: 20,
-                fontWeight: "bold",
-                boxSizing: "border-box",
-              }}
-            >
-              Face {i + 1}
+            <TurnBox.Face key={faceColors[i]} style={faceStyle(i)}>
+              {faceLabels[i]}
               <div style={{ display: "flex", gap: 4 }}>
                 {[1, 2, 3, 4]
                   .filter((n) => n !== i + 1)
                   .map((n) => (
                     <TurnBox.Button key={n} style={btnStyle} to={n}>
-                      {n}
+                      to {n}
                     </TurnBox.Button>
                   ))}
               </div>

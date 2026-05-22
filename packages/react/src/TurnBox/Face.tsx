@@ -7,6 +7,7 @@ import { toTransformString } from "./utils.js";
 export type FaceProps = {
   children?: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   // Internal: injected by Root via cloneElement
   _faceIndex?: number;
 };
@@ -27,7 +28,7 @@ const hasTransition = (phase: AnimationPhase): boolean =>
 const usesFaceTransform = (phase: AnimationPhase): boolean =>
   phase.kind !== "adjusting" && phase.kind !== "adjust-animating";
 
-export const Face = ({ children, className, _faceIndex = 0 }: FaceProps) => {
+export const Face = ({ children, className, style, _faceIndex = 0 }: FaceProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
 
   const ft = usesFaceTransform(phase)
@@ -38,6 +39,8 @@ export const Face = ({ children, className, _faceIndex = 0 }: FaceProps) => {
   const transformStr = override ?? toTransformString(ft);
 
   const faceStyle: React.CSSProperties = {
+    // user styles first so component's required properties take precedence
+    ...style,
     position: "absolute",
     ...faceDimStyle(_faceIndex, opts),
     transform: transformStr,
