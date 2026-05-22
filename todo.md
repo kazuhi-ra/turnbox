@@ -116,8 +116,8 @@ packages/\* に作成
 
 ## TODO
 
-- [ ] React compound component（`TurnBox.Root / Face`）にアクセシビリティテストを追加
-  - `accessibility.test.ts` と同じ観点（初期状態・遷移後・no-animation・virtual-wrap・destroy）をカバー
+- [x] React compound component（`TurnBox.Root / Face`）にアクセシビリティテストを追加
+  - `accessibility.test.ts` を `describe.each(modernAdapters)` に統合し、DOM / React / Vue / React (Component) の全 4 アダプターで検証
 
 ---
 

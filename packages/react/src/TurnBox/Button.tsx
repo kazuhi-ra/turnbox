@@ -25,3 +25,5 @@ export const Button = ({ direction = "next", to, children, ...rest }: ButtonProp
     </button>
   );
 };
+
+Button.displayName = "TurnBox.Button";

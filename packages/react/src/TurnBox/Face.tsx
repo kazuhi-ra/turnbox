@@ -66,3 +66,5 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
     </div>
   );
 };
+
+Face.displayName = "TurnBox.Face";

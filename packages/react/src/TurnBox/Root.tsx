@@ -85,24 +85,38 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     ref,
   ) => {
     // ── hooks ──────────────────────────────────────────────────────────────────
-    const opts = useMemo(
-      () =>
-        normalizeOptions({ facePcs, axis, direction, type, duration, delay, width, height, even }),
-      [facePcs, axis, direction, type, duration, delay, width, height, even],
-    );
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
     const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+    const opts = useMemo(
+      () =>
+        normalizeOptions({
+          facePcs,
+          axis,
+          direction,
+          type,
+          duration,
+          delay,
+          width,
+          height,
+          even,
+        }),
+      [facePcs, axis, direction, type, duration, delay, width, height, even],
+    );
+
+    const addTimeout = useCallback((fn: () => void, ms: number) => {
+      const id = setTimeout(fn, ms);
+      pendingTimers.current = [...pendingTimers.current, id];
+    }, []);
+
     useEffect(
       () => () => {
         for (const id of pendingTimers.current) clearTimeout(id);
       },
       [],
     );
-    const addTimeout = useCallback((fn: () => void, ms: number) => {
-      const id = setTimeout(fn, ms);
-      pendingTimers.current = [...pendingTimers.current, id];
-    }, []);
+
     // Handle 2-phase transitions: fires after browser paints the pre-phase
     useEffect(() => {
       if (state.kind === "pre-positioning") {
@@ -135,6 +149,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         }, opts.duration + opts.delay);
       }
     }, [state, opts, addTimeout]);
+
     const go = useCallback(
       (rawTarget: number, animationFlag: boolean) => {
         if (isAnimatingRef.current) return;
@@ -187,10 +202,12 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       },
       [state.displayFace, opts, addTimeout],
     );
+
     useImperativeHandle(ref, () => ({ go, getCurrentFace: () => state.displayFace }), [
       go,
       state.displayFace,
     ]);
+
     const ctx = useMemo(
       () => ({
         opts,
