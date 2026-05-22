@@ -107,9 +107,8 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
 
     getAriaHidden(faceNum) {
       return (
-        getContainer()
-          .querySelector(`.turnBoxFaceNum${faceNum}`)
-          ?.getAttribute("aria-hidden") ?? null
+        getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ??
+        null
       );
     },
 

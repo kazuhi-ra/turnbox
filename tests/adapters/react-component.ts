@@ -92,7 +92,9 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
     },
 
     getAriaHidden(faceNum) {
-      return wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null;
+      return (
+        wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null
+      );
     },
 
     async advanceTime(ms) {
