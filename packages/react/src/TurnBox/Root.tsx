@@ -44,32 +44,26 @@ export type TurnBoxRootHandle = {
 export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
   ({ options, children, className, style }, ref) => {
     const { facePcs, axis, direction, type, duration, delay, width, height, even } = options;
+
+    // ── hooks ──────────────────────────────────────────────────────────────────
     const opts = useMemo(
       () =>
         normalizeOptions({ facePcs, axis, direction, type, duration, delay, width, height, even }),
       [facePcs, axis, direction, type, duration, delay, width, height, even],
     );
-
-    const boxWidth = options.width ?? 200;
-    const boxHeight = options.height ?? 200;
-
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-
     const isAnimatingRef = useRef(false);
     const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-
     useEffect(
       () => () => {
         for (const id of pendingTimers.current) clearTimeout(id);
       },
       [],
     );
-
     const addTimeout = useCallback((fn: () => void, ms: number) => {
       const id = setTimeout(fn, ms);
       pendingTimers.current.push(id);
     }, []);
-
     // Handle 2-phase transitions: fires after browser paints the pre-phase
     useEffect(() => {
       if (state.kind === "pre-positioning") {
@@ -102,7 +96,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         }, opts.duration + opts.delay);
       }
     }, [state, opts, addTimeout]);
-
     const go = useCallback(
       (rawTarget: number, animationFlag: boolean) => {
         if (isAnimatingRef.current) return;
@@ -165,13 +158,26 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       },
       [state.displayFace, opts, addTimeout],
     );
-
     useImperativeHandle(
       ref,
       () => ({ go, getCurrentFace: () => state.displayFace }),
       [go, state.displayFace],
     );
+    const ctx = useMemo(
+      () => ({
+        opts,
+        displayFace: state.displayFace,
+        phase: toPhase(state),
+        shownFaces: state.shownFaces,
+        faceOverrides: state.faceOverrides,
+        go,
+      }),
+      [opts, state, go],
+    );
 
+    // ── derived values ─────────────────────────────────────────────────────────
+    const boxWidth = options.width ?? 200;
+    const boxHeight = options.height ?? 200;
     const { geometry } = opts;
     const isDisplayEven = state.displayFace % 2 === 0;
     const isAnimating = state.kind === "animating" || state.kind === "adjust-animating";
@@ -191,7 +197,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
                 : undefined,
             }
         : {};
-
     const indexedChildren = React.Children.map(children, (child, i) => {
       if (React.isValidElement(child) && child.type === Face) {
         return React.cloneElement(child as React.ReactElement<{ _faceIndex?: number }>, {
@@ -200,18 +205,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       }
       return child;
     });
-
-    const ctx = useMemo(
-      () => ({
-        opts,
-        displayFace: state.displayFace,
-        phase: toPhase(state),
-        shownFaces: state.shownFaces,
-        faceOverrides: state.faceOverrides,
-        go,
-      }),
-      [opts, state, go],
-    );
 
     return (
       <div
