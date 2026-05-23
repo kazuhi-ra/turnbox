@@ -17,4 +17,6 @@ packages/*/.turbo
 
 # internal working docs
 old-manual.md
+CLAUDE.md
+todo.md
 
