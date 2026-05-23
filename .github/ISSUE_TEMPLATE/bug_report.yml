@@ -1,0 +1,43 @@
+name: Bug Report
+description: Something isn't working as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a bug!
+
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - "@kazuhi-ra/turnbox-dom"
+        - "@kazuhi-ra/turnbox-react"
+        - "@kazuhi-ra/turnbox-vue"
+        - "@kazuhi-ra/turnbox-core"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened? What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal code or steps to reproduce the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Package version, browser/Node version, framework version.
+    validations:
+      required: true
