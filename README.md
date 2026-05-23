@@ -105,7 +105,7 @@ These options are shared across `createTurnBox` / `useTurnBox` / `TurnBox.Root` 
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `faces` | `2 \| 3 \| 4` | — | Number of faces. **Required** |
+| `faces` | `2 \| 3 \| 4` | | Number of faces. **Required** |
 | `axis` | `"X" \| "Y"` | `"X"` | Rotation axis. `"X"` rotates vertically, `"Y"` horizontally |
 | `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction. `"negative"` reverses it |
 | `type` | `"real" \| "repeat" \| "skip"` | `"real"` | Animation style (see below) |
@@ -116,8 +116,8 @@ These options are shared across `createTurnBox` / `useTurnBox` / `TurnBox.Root` 
 | `width` | `number` | `200` | Box width (px) |
 | `height` | `number` | `50` | Box height (px) |
 | `even` | `number` | same as `height` or `width` | Size of even-numbered faces along the rotation axis (px). Omit for uniform faces |
-| `onChange` | `(face: number) => void` | — | Called when a transition starts. Argument is the destination face number |
-| `onAnimationEnd` | `(face: number) => void` | — | Called when the animation completes. Argument is the destination face number |
+| `onChange` | `(face: number) => void` | | Called when a transition starts. Argument is the destination face number |
+| `onAnimationEnd` | `(face: number) => void` | | Called when the animation completes. Argument is the destination face number |
 
 ### `type` option
 
