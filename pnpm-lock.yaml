@@ -61,16 +61,16 @@ importers:
 
   packages/dom:
     dependencies:
-      '@turnbox/core':
+      '@kazuhi-ra/turnbox-core':
         specifier: workspace:*
         version: link:../core
 
   packages/react:
     dependencies:
-      '@turnbox/core':
+      '@kazuhi-ra/turnbox-core':
         specifier: workspace:^
         version: link:../core
-      '@turnbox/dom':
+      '@kazuhi-ra/turnbox-dom':
         specifier: workspace:*
         version: link:../dom
     devDependencies:
@@ -86,10 +86,10 @@ importers:
 
   packages/vue:
     dependencies:
-      '@turnbox/core':
+      '@kazuhi-ra/turnbox-core':
         specifier: workspace:^
         version: link:../core
-      '@turnbox/dom':
+      '@kazuhi-ra/turnbox-dom':
         specifier: workspace:*
         version: link:../dom
     devDependencies:
