@@ -1,0 +1,49 @@
+{
+  "name": "@turnbox/dom",
+  "version": "0.1.0",
+  "description": "Vanilla JS TurnBox — CSS3 3D box flip animation for the browser",
+  "keywords": [
+    "3d",
+    "animation",
+    "css3",
+    "transform",
+    "turnbox",
+    "vanilla",
+    "dom"
+  ],
+  "license": "MIT",
+  "author": "kazuhi-ra",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazuhi-ra/turnbox.git",
+    "directory": "packages/dom"
+  },
+  "homepage": "https://github.com/kazuhi-ra/turnbox#readme",
+  "bugs": {
+    "url": "https://github.com/kazuhi-ra/turnbox/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@turnbox/core": "workspace:*"
+  }
+}
