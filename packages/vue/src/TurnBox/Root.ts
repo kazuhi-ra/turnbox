@@ -77,8 +77,8 @@ export const Root = defineComponent({
     const pendingTimers: ReturnType<typeof setTimeout>[] = [];
     let pendingRaf: number | null = null;
 
-    const opts = computed(() =>
-      normalizeOptions({
+    const opts = computed(() => {
+      const base = normalizeOptions({
         faces: props.faces,
         axis: props.axis,
         direction: props.direction,
@@ -90,8 +90,12 @@ export const Root = defineComponent({
         width: props.width,
         height: props.height,
         even: props.even,
-      }),
-    );
+      });
+      if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        return { ...base, duration: 0, delay: 0 };
+      }
+      return base;
+    });
 
     const addTimeout = (fn: () => void, ms: number) => {
       const id = setTimeout(fn, ms);
@@ -297,6 +301,25 @@ export const Root = defineComponent({
               },
             },
             indexedChildren,
+          ),
+          h(
+            "div",
+            {
+              "aria-live": "polite",
+              "aria-atomic": "true",
+              style: {
+                position: "absolute",
+                width: "1px",
+                height: "1px",
+                padding: "0",
+                margin: "-1px",
+                overflow: "hidden",
+                clip: "rect(0,0,0,0)",
+                whiteSpace: "nowrap",
+                border: "0",
+              },
+            },
+            `Face ${displayFace.value} of ${opts.value.faces}`,
           ),
         ],
       );

@@ -53,9 +53,16 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
   };
 
   const isShown = shownFaces.has(_faceIndex);
+  const isCurrent = _faceIndex === displayFace;
 
   return (
-    <div data-face-index={_faceIndex} className={className} style={faceStyle} aria-hidden={isShown ? undefined : true}>
+    <div
+      data-face-index={_faceIndex}
+      className={className}
+      style={faceStyle}
+      aria-hidden={isShown ? undefined : true}
+      aria-current={isCurrent ? "true" : undefined}
+    >
       {children}
     </div>
   );

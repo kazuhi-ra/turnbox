@@ -72,6 +72,7 @@ export const Face = defineComponent({
           "data-face-index": faceIndex,
           style: faceStyle,
           "aria-hidden": isShown ? undefined : true,
+          "aria-current": displayFace.value === faceIndex ? "true" : undefined,
         },
         slots.default?.(),
       );

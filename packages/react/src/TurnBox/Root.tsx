@@ -91,23 +91,13 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     onChangeRef.current = onChange;
     onAnimationEndRef.current = onAnimationEnd;
 
-    const opts = useMemo(
-      () =>
-        normalizeOptions({
-          faces,
-          axis,
-          direction,
-          type,
-          duration,
-          delay,
-          easing,
-          perspective,
-          width,
-          height,
-          even,
-        }),
-      [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even],
-    );
+    const opts = useMemo(() => {
+      const base = normalizeOptions({ faces, axis, direction, type, duration, delay, easing, perspective, width, height, even });
+      if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        return { ...base, duration: 0, delay: 0 };
+      }
+      return base;
+    }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even]);
 
     const addTimeout = useCallback((fn: () => void, ms: number) => {
       const id = setTimeout(fn, ms);
@@ -265,6 +255,23 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           }}
         >
           <TurnBoxContext.Provider value={ctx}>{buildIndexedChildren(children, opts.faces)}</TurnBoxContext.Provider>
+        </div>
+        <div
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: "absolute",
+            width: 1,
+            height: 1,
+            padding: 0,
+            margin: -1,
+            overflow: "hidden",
+            clip: "rect(0,0,0,0)",
+            whiteSpace: "nowrap",
+            border: 0,
+          }}
+        >
+          {`Face ${state.displayFace} of ${opts.faces}`}
         </div>
       </div>
     );
