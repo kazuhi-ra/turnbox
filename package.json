@@ -18,7 +18,8 @@
     "format:check": "biome format packages/ tests/ package.json packages/*/package.json",
     "typecheck": "pnpm -r exec tsc --noEmit",
     "prerelease": "pnpm run build && pnpm run lint && pnpm run format:check && pnpm run typecheck && pnpm test",
-    "release": "pnpm -r publish --access public"
+    "release": "pnpm -r publish --access public",
+    "build-storybook": "storybook build"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",

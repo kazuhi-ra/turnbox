@@ -105,7 +105,7 @@ These options are shared across all adapters (createTurnBox, useTurnBox, TurnBox
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `faces` | `2 \| 3 \| 4` | | Number of faces. **Required** |
+| `faces` | `2 \| 3 \| 4` | | Number of faces. **Required.** Limited to 2–4 by the 3D box geometry |
 | `axis` | `"X" \| "Y"` | `"X"` | Rotation axis. "X" rotates vertically, "Y" horizontally |
 | `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction. "negative" reverses it |
 | `type` | `"real" \| "repeat" \| "skip"` | `"real"` | Animation style (see below) |
