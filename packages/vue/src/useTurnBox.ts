@@ -1,0 +1,75 @@
+import { onMounted, onUnmounted, ref, watch, type Ref } from "vue";
+import { createTurnBox, type TurnBoxInstance } from "@turnbox/dom";
+import type { TurnBoxOptions } from "@turnbox/core";
+
+export type UseTurnBoxReturn = {
+  containerRef: Ref<HTMLElement | null>;
+  currentFace: Ref<number>;
+  isAnimating: Ref<boolean>;
+  goTo(face: number, animation?: boolean): void;
+  next(): void;
+  prev(): void;
+};
+
+export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
+  const containerRef = ref<HTMLElement | null>(null);
+  const currentFace = ref(1);
+  const isAnimating = ref(false);
+  let instance: TurnBoxInstance | null = null;
+
+  const init = (): void => {
+    const el = containerRef.value;
+    if (!el) return;
+
+    instance = createTurnBox(el, {
+      ...options,
+      onChange: (face) => {
+        currentFace.value = face;
+        isAnimating.value = true;
+        options.onChange?.(face);
+      },
+      onAnimationEnd: (face) => {
+        isAnimating.value = false;
+        options.onAnimationEnd?.(face);
+      },
+    });
+    currentFace.value = instance.getCurrentFace();
+  };
+
+  const cleanup = (): void => {
+    instance?.destroy();
+    instance = null;
+  };
+
+  onMounted(init);
+  onUnmounted(cleanup);
+
+  watch(
+    () => [
+      options.faces,
+      options.axis,
+      options.direction,
+      options.type,
+      options.duration,
+      options.delay,
+      options.easing,
+      options.perspective,
+      options.width,
+      options.height,
+      options.even,
+    ],
+    () => {
+      cleanup();
+      init();
+    },
+  );
+
+  return {
+    containerRef,
+    currentFace,
+    isAnimating,
+    goTo: (face, animation = true) => instance?.goTo(face, animation),
+    next: () => instance?.next(),
+    prev: () => instance?.prev(),
+  };
+};

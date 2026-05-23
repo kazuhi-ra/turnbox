@@ -1,0 +1,58 @@
+{
+  "name": "@turnbox/vue",
+  "version": "0.1.0",
+  "description": "Vue TurnBox — CSS3 3D box flip animation compound component and composable for Vue 3",
+  "keywords": [
+    "3d",
+    "animation",
+    "css3",
+    "transform",
+    "turnbox",
+    "vue",
+    "composable",
+    "component"
+  ],
+  "license": "MIT",
+  "author": "kazuhi-ra",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazuhi-ra/turnbox.git",
+    "directory": "packages/vue"
+  },
+  "homepage": "https://github.com/kazuhi-ra/turnbox#readme",
+  "bugs": {
+    "url": "https://github.com/kazuhi-ra/turnbox/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "vue": ">=3"
+  },
+  "dependencies": {
+    "@turnbox/core": "workspace:^",
+    "@turnbox/dom": "workspace:*"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2",
+    "vue": "^3"
+  }
+}
