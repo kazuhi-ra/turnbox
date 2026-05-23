@@ -1,0 +1,20 @@
+/node_modules
+/coverage
+/test-results
+/playwright-report
+
+# package build outputs
+packages/*/dist
+packages/*/node_modules
+
+*storybook.log
+storybook-static
+/.turbo
+packages/*/.turbo
+
+# Claude Code project memory
+.claude/
+
+# internal working docs
+old-manual.md
+
