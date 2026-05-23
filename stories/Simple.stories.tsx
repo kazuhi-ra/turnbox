@@ -31,7 +31,6 @@ const Simple = () => {
                 fontSize: 22,
                 fontWeight: "bold",
                 color: "white",
-                borderRadius: 8,
               }}
             >
               {faceLabels[i]}
