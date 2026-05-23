@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { act } from "react";
 import { TurnBox } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
+import { useTurnBoxContext } from "../src/TurnBox/context.js";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
@@ -184,6 +185,31 @@ describe("TurnBox.Button to={N}", () => {
 
     expect(ref.current?.getCurrentFace()).toBe(3);
     container.remove();
+  });
+});
+
+describe("useTurnBoxContext outside Root", () => {
+  it("throws when used outside TurnBox.Root", () => {
+    const BadComponent = () => {
+      useTurnBoxContext();
+      return null;
+    };
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const suppressWindowError = (e: ErrorEvent) => e.preventDefault();
+    window.addEventListener("error", suppressWindowError);
+    try {
+      expect(() => {
+        act(() => {
+          createRoot(container).render(createElement(BadComponent));
+        });
+      }).toThrow("TurnBox components must be used within <TurnBox.Root>");
+    } finally {
+      errorSpy.mockRestore();
+      window.removeEventListener("error", suppressWindowError);
+      container.remove();
+    }
   });
 });
 

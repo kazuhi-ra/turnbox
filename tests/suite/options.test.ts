@@ -117,6 +117,43 @@ describe.each(sharedAdapters)("%s — options", (_, createAdapter) => {
   });
 });
 
+describe.each(modernAdapters)("%s — delay", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    adapter.destroy();
+    vi.useRealTimers();
+  });
+
+  // duration: 50, delay: 30
+  // onAnimationEnd fires at ~(duration + delay) after the transition starts.
+  // delay only affects the CSS animation timing, not the internal state update.
+
+  it("delay is reflected in inline transition style", async () => {
+    adapter = createAdapter({ faces: 4, duration: 50, delay: 30 });
+    adapter.goTo(2);
+    await adapter.waitForRender();
+    await adapter.advanceTime(25); // past DOM's ADJUST_TIME
+    expect(adapter.getFaceState(1).inlineTransition).toContain("30ms");
+  });
+
+  it("onAnimationEnd fires after duration + delay, not after duration alone", async () => {
+    const onAnimationEnd = vi.fn();
+    adapter = createAdapter({ faces: 4, duration: 50, delay: 30, onAnimationEnd });
+    adapter.goTo(2);
+    // 60ms from goTo: past duration (50) but before duration + delay (~100ms) → not yet fired
+    await adapter.advanceTime(60);
+    expect(onAnimationEnd).not.toHaveBeenCalled();
+    // 120ms from goTo: past duration + delay → should have fired
+    await adapter.advanceTime(60);
+    expect(onAnimationEnd).toHaveBeenCalledWith(2);
+  });
+});
+
 describe.each(modernAdapters)("%s — easing / perspective", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 

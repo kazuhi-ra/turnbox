@@ -117,6 +117,28 @@ describe("DOM — destroy removes aria-hidden", () => {
   });
 });
 
+describe("DOM — destroy removes turnBoxShow class", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("destroy removes turnBoxShow from the active face", () => {
+    const container = document.createElement("div");
+    const faceEls: HTMLElement[] = [];
+    for (let i = 0; i < 4; i++) {
+      const el = document.createElement("div");
+      container.appendChild(el);
+      faceEls.push(el);
+    }
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, { faces: 4, duration: DURATION, delay: DELAY });
+
+    expect(faceEls[0].classList.contains("turnBoxShow")).toBe(true);
+    instance.destroy();
+    expect(faceEls[0].classList.contains("turnBoxShow")).toBe(false);
+    container.remove();
+  });
+});
+
 describe("DOM — destroy mid-animation clears inline transition", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
@@ -142,6 +164,28 @@ describe("DOM — destroy mid-animation clears inline transition", () => {
     for (const face of faceEls) {
       expect(face.style.transition).toBe("");
     }
+    container.remove();
+  });
+
+  it("container style.transition is cleared after destroy() during variable-geometry animation", async () => {
+    const container = document.createElement("div");
+    for (let i = 0; i < 4; i++) container.appendChild(document.createElement("div"));
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, {
+      faces: 4,
+      duration: DURATION,
+      delay: DELAY,
+      axis: "X",
+      height: 200,
+      even: 120,
+    });
+
+    instance.next();
+    await vi.advanceTimersByTimeAsync(30); // mid-animation, container has transition set
+    expect(container.style.transition).not.toBe("");
+
+    instance.destroy();
+    expect(container.style.transition).toBe("");
     container.remove();
   });
 });
