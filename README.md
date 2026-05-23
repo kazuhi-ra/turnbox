@@ -2,6 +2,8 @@
 
 CSS3 3D box-flip animation library for Vanilla JS, React, and Vue.
 
+> Modern monorepo reimplementation of the jQuery plugin originally published at [nohtcoltd/turnbox_js](https://github.com/nohtcoltd/turnbox_js).
+
 **[Demo →](https://kazuhi-ra.github.io/turnbox)**
 
 ## Packages
