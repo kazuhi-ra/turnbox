@@ -1,8 +1,10 @@
 # TURNBOX.js
 
-CSS3 3D box-flip animation library for Vanilla JS, React, and Vue.
+Flat design UI to perform 3D animation — for Vanilla JS, React, and Vue.
 
 > Modern monorepo reimplementation of the jQuery plugin originally published at [nohtcoltd/turnbox_js](https://github.com/nohtcoltd/turnbox_js).
+
+<img width="214" height="206" alt="turnbox" src="https://github.com/user-attachments/assets/10c33429-6819-433e-82c6-da3aba6af580" />
 
 **[Demo](https://kazuhi-ra.github.io/turnbox)**
 
