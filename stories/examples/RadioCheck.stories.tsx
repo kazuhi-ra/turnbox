@@ -122,7 +122,6 @@ export const Default: StoryObj = {
         alignItems: "center",
         justifyContent: "center",
         height: "100vh",
-        background: "#3a3a3a",
       }}
     >
       <RadioCheck />
