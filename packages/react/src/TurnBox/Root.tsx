@@ -271,7 +271,9 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
             border: 0,
           }}
         >
-          {`Face ${state.displayFace} of ${opts.faces}`}
+          {state.displayFace >= 1 && state.displayFace <= opts.faces
+            ? `Face ${state.displayFace} of ${opts.faces}`
+            : ""}
         </div>
       </div>
     );

@@ -319,7 +319,9 @@ export const Root = defineComponent({
                 border: "0",
               },
             },
-            `Face ${displayFace.value} of ${opts.value.faces}`,
+            displayFace.value >= 1 && displayFace.value <= opts.value.faces
+              ? `Face ${displayFace.value} of ${opts.value.faces}`
+              : "",
           ),
         ],
       );
