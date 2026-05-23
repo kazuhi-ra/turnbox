@@ -94,7 +94,7 @@ const ReactHookDemo = (args: Args) => {
 };
 
 const meta: Meta<Args> = {
-  title: "react",
+  title: "packages/react",
   render: (args) => <ReactHookDemo key={args.faces} {...args} />,
   argTypes: {
     faces: { control: { type: "select" }, options: [2, 3, 4] },

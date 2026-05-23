@@ -44,7 +44,7 @@ const Simple = () => {
 };
 
 const meta: Meta = {
-  title: "simple",
+  title: "packages/simple",
   parameters: { controls: { disable: true } },
 };
 

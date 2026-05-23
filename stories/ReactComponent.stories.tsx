@@ -83,7 +83,7 @@ const ReactComponentDemo = (args: Args) => {
 };
 
 const meta: Meta<Args> = {
-  title: "react-component",
+  title: "packages/react-component",
   render: (args) => <ReactComponentDemo key={args.faces} {...args} />,
   argTypes: {
     faces: { control: { type: "select" }, options: [2, 3, 4] },

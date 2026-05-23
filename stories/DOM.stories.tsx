@@ -106,7 +106,7 @@ const DomDemo = (args: Args) => {
 };
 
 const meta: Meta<Args> = {
-  title: "dom",
+  title: "packages/dom",
   render: (args) => <DomDemo key={JSON.stringify(args)} {...args} />,
   argTypes: {
     faces: { control: { type: "select" }, options: [2, 3, 4] },

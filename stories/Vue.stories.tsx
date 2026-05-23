@@ -105,7 +105,7 @@ const VueWrapper = ({ args }: { args: Args }) => {
 };
 
 const meta: Meta<Args> = {
-  title: "vue",
+  title: "packages/vue",
   render: (args) => <VueWrapper key={JSON.stringify(args)} args={args} />,
   argTypes: {
     faces: { control: { type: "select" }, options: [2, 3, 4] },
