@@ -1,25 +1,25 @@
 # TURNBOX.js
 
-> このリポジトリは [nohtcoltd/turnbox_js](https://github.com/nohtcoltd/turnbox_js) の jQuery プラグインを、フレームワーク非依存のモノレポとして再実装したものです。
+> This repository is a modern monorepo reimplementation of the jQuery plugin originally published at [nohtcoltd/turnbox_js](https://github.com/nohtcoltd/turnbox_js).
 
-CSS3 3D transform を使ったボックス反転アニメーションライブラリです。  
-トグル・タブ・カードフリップなど、面を「めくる」ような UI に使えます。
+A CSS3 3D transform library for box-flip animations.  
+Perfect for toggles, tabs, card flips, and any UI that "turns" between faces.
 
-## パッケージ
+## Packages
 
-| パッケージ | 説明 | README |
+| Package | Description | README |
 | --- | --- | --- |
-| `@turnbox/dom` | バニラJS用。`createTurnBox()` を提供 | [詳細](packages/dom/README.md) |
-| `@turnbox/react` | React フック・compound component を提供 | [詳細](packages/react/README.md) |
-| `@turnbox/vue` | Vue コンポーザブル・compound component を提供 | [詳細](packages/vue/README.md) |
-| `@turnbox/core` | 純粋関数群（DOM依存なし）。カスタムレンダラー向け | [詳細](packages/core/README.md) |
+| `@turnbox/dom` | Vanilla JS. Provides `createTurnBox()` | [Details](packages/dom/README.md) |
+| `@turnbox/react` | React hook and compound component | [Details](packages/react/README.md) |
+| `@turnbox/vue` | Vue composable and compound component | [Details](packages/vue/README.md) |
+| `@turnbox/core` | Pure functions (no DOM dependency). For custom renderers | [Details](packages/core/README.md) |
 
 ---
 
-## インストール
+## Installation
 
 ```bash
-# バニラJS
+# Vanilla JS
 npm install @turnbox/dom
 
 # React
@@ -31,16 +31,16 @@ npm install @turnbox/vue
 
 ---
 
-## クイックスタート
+## Quick Start
 
-### バニラJS
+### Vanilla JS
 
 ```html
 <div id="box">
-  <div>面 1</div>
-  <div>面 2</div>
-  <div>面 3</div>
-  <div>面 4</div>
+  <div>Face 1</div>
+  <div>Face 2</div>
+  <div>Face 3</div>
+  <div>Face 4</div>
 </div>
 ```
 
@@ -52,9 +52,9 @@ const box = createTurnBox(document.getElementById("box"), {
   duration: 400,
 });
 
-box.next();    // 次の面へ
-box.prev();    // 前の面へ
-box.goTo(3);   // 面3へ直接移動
+box.next();    // go to next face
+box.prev();    // go to previous face
+box.goTo(3);   // jump to face 3
 ```
 
 ### React
@@ -65,13 +65,13 @@ import { TurnBox } from "@turnbox/react";
 const FlipCard = () => (
   <TurnBox.Root faces={4} duration={400}>
     <TurnBox.Face>
-      面 1<TurnBox.Button>次へ</TurnBox.Button>
+      Face 1<TurnBox.Button>Next</TurnBox.Button>
     </TurnBox.Face>
     <TurnBox.Face>
-      <TurnBox.Button direction="prev">戻る</TurnBox.Button>面 2
+      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 2
     </TurnBox.Face>
-    <TurnBox.Face>面 3</TurnBox.Face>
-    <TurnBox.Face>面 4</TurnBox.Face>
+    <TurnBox.Face>Face 3</TurnBox.Face>
+    <TurnBox.Face>Face 4</TurnBox.Face>
   </TurnBox.Root>
 );
 ```
@@ -82,13 +82,13 @@ const FlipCard = () => (
 <template>
   <TurnBox.Root :faces="4" :duration="400">
     <TurnBox.Face>
-      面 1<TurnBox.Button>次へ</TurnBox.Button>
+      Face 1<TurnBox.Button>Next</TurnBox.Button>
     </TurnBox.Face>
     <TurnBox.Face>
-      <TurnBox.Button direction="prev">戻る</TurnBox.Button>面 2
+      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 2
     </TurnBox.Face>
-    <TurnBox.Face>面 3</TurnBox.Face>
-    <TurnBox.Face>面 4</TurnBox.Face>
+    <TurnBox.Face>Face 3</TurnBox.Face>
+    <TurnBox.Face>Face 4</TurnBox.Face>
   </TurnBox.Root>
 </template>
 
@@ -99,41 +99,41 @@ import { TurnBox } from "@turnbox/vue";
 
 ---
 
-## オプション
+## Options
 
-`createTurnBox` / `useTurnBox` / `TurnBox.Root` に共通の `TurnBoxOptions` です。
+These options are shared across `createTurnBox` / `useTurnBox` / `TurnBox.Root` as `TurnBoxOptions`.
 
-| オプション | 型 | デフォルト | 説明 |
+| Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `faces` | `2 \| 3 \| 4` | — | 面の枚数。**必須** |
-| `axis` | `"X" \| "Y"` | `"X"` | 回転軸。`"X"` で縦回転、`"Y"` で横回転 |
-| `direction` | `"positive" \| "negative"` | `"positive"` | 回転方向。`"negative"` で逆向きになる |
-| `type` | `"real" \| "repeat" \| "skip"` | `"real"` | アニメーションの種類（後述） |
-| `duration` | `number` | `200` | アニメーション時間（ms） |
-| `delay` | `number` | `0` | アニメーション開始前の遅延（ms） |
-| `easing` | `string` | `"linear"` | CSS easing 関数 |
-| `perspective` | `number` | `800` | 透視距離（px） |
-| `width` | `number` | `200` | ボックスの幅（px） |
-| `height` | `number` | `50` | ボックスの高さ（px） |
-| `even` | `number` | `height` または `width` と同値 | 偶数番目の面の回転軸方向サイズ（px）。省略時は全面同サイズ |
-| `onChange` | `(face: number) => void` | — | 遷移開始時のコールバック。引数は遷移先の面番号 |
-| `onAnimationEnd` | `(face: number) => void` | — | アニメーション完了時のコールバック。引数は遷移先の面番号 |
+| `faces` | `2 \| 3 \| 4` | — | Number of faces. **Required** |
+| `axis` | `"X" \| "Y"` | `"X"` | Rotation axis. `"X"` rotates vertically, `"Y"` horizontally |
+| `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction. `"negative"` reverses it |
+| `type` | `"real" \| "repeat" \| "skip"` | `"real"` | Animation style (see below) |
+| `duration` | `number` | `200` | Animation duration (ms) |
+| `delay` | `number` | `0` | Delay before animation starts (ms) |
+| `easing` | `string` | `"linear"` | CSS easing function |
+| `perspective` | `number` | `800` | Perspective distance (px) |
+| `width` | `number` | `200` | Box width (px) |
+| `height` | `number` | `50` | Box height (px) |
+| `even` | `number` | same as `height` or `width` | Size of even-numbered faces along the rotation axis (px). Omit for uniform faces |
+| `onChange` | `(face: number) => void` | — | Called when a transition starts. Argument is the destination face number |
+| `onAnimationEnd` | `(face: number) => void` | — | Called when the animation completes. Argument is the destination face number |
 
-### `type` オプション
+### `type` option
 
-**`"real"`（デフォルト）**  
-実際の箱のように90°ずつ回転します。4面の場合、面4→面1・面1→面4は折り返しアニメーションになります。
+**`"real"` (default)**  
+Rotates like a physical box, 90° per step. With 4 faces, transitions between face 4 and face 1 wrap around.
 
 **`"repeat"`**  
-面1↔面2のアニメーションを面3↔面4でも同じモーションで繰り返します。
+The face 1↔2 animation motion is repeated for face 3↔4.
 
 **`"skip"`**  
-現在の面と指定面が隣接していなくても、常に90°アニメーションで遷移します。`even` 指定時は `"real"` に強制されます。
+Always animates with a single 90° turn regardless of how far apart the faces are. Forced to `"real"` when `even` is specified.
 
-### `even` オプション（非対称ボックス）
+### `even` option (asymmetric box)
 
-奇数番目の面と偶数番目の面でサイズが異なるボックスを作れます。  
-`axis: "X"` なら高さ方向、`axis: "Y"` なら幅方向を偶数面だけ別サイズにします。
+Allows odd-numbered and even-numbered faces to have different sizes.  
+With `axis: "X"`, the height of even faces differs; with `axis: "Y"`, the width differs.
 
 ```js
 createTurnBox(container, {
@@ -146,6 +146,6 @@ createTurnBox(container, {
 
 ---
 
-## ライセンス
+## License
 
 MIT
