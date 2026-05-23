@@ -101,13 +101,13 @@ import { TurnBox } from "@turnbox/vue";
 
 ## Options
 
-These options are shared across `createTurnBox` / `useTurnBox` / `TurnBox.Root` as `TurnBoxOptions`.
+These options are shared across all adapters (createTurnBox, useTurnBox, TurnBox.Root).
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
 | `faces` | `2 \| 3 \| 4` | | Number of faces. **Required** |
-| `axis` | `"X" \| "Y"` | `"X"` | Rotation axis. `"X"` rotates vertically, `"Y"` horizontally |
-| `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction. `"negative"` reverses it |
+| `axis` | `"X" \| "Y"` | `"X"` | Rotation axis. "X" rotates vertically, "Y" horizontally |
+| `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction. "negative" reverses it |
 | `type` | `"real" \| "repeat" \| "skip"` | `"real"` | Animation style (see below) |
 | `duration` | `number` | `200` | Animation duration (ms) |
 | `delay` | `number` | `0` | Delay before animation starts (ms) |
@@ -115,22 +115,22 @@ These options are shared across `createTurnBox` / `useTurnBox` / `TurnBox.Root` 
 | `perspective` | `number` | `800` | Perspective distance (px) |
 | `width` | `number` | `200` | Box width (px) |
 | `height` | `number` | `50` | Box height (px) |
-| `even` | `number` | same as `height` or `width` | Size of even-numbered faces along the rotation axis (px). Omit for uniform faces |
+| `even` | `number` | same as height or width | Size of even-numbered faces along the rotation axis (px). Omit for uniform faces |
 | `onChange` | `(face: number) => void` | | Called when a transition starts. Argument is the destination face number |
 | `onAnimationEnd` | `(face: number) => void` | | Called when the animation completes. Argument is the destination face number |
 
-### `type` option
+### type
 
-**`"real"` (default)**  
+**real** (default)  
 Rotates like a physical box, 90° per step. With 4 faces, transitions between face 4 and face 1 wrap around.
 
-**`"repeat"`**  
+**repeat**  
 The face 1↔2 animation motion is repeated for face 3↔4.
 
-**`"skip"`**  
-Always animates with a single 90° turn regardless of how far apart the faces are. Forced to `"real"` when `even` is specified.
+**skip**  
+Always animates with a single 90° turn regardless of how far apart the faces are. Forced to "real" when `even` is specified.
 
-### `even` option (asymmetric box)
+### even (asymmetric box)
 
 Allows odd-numbered and even-numbered faces to have different sizes.  
 With `axis: "X"`, the height of even faces differs; with `axis: "Y"`, the width differs.
