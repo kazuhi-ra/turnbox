@@ -19,7 +19,7 @@ const Simple = () => {
       }}
     >
       <div style={{ cursor: "pointer" }} onClick={() => ref.current?.next()}>
-        <TurnBox.Root faces={4} duration={600} ref={ref}>
+        <TurnBox.Root faces={4} axis="Y" width={200} height={200} duration={600} ref={ref}>
           {faceColors.map((color, i) => (
             <TurnBox.Face
               key={color}
@@ -28,7 +28,7 @@ const Simple = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: "bold",
                 color: "white",
                 borderRadius: 8,
