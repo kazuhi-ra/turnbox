@@ -1,4 +1,6 @@
-import { defineComponent, h, type PropType, type CSSProperties } from "vue";
+import { defineComponent, h, ref, computed, watch, onMounted, type PropType, type CSSProperties } from "vue";
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
@@ -35,6 +37,15 @@ export const Face = defineComponent({
   },
   setup(props, { slots, attrs }) {
     const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
+    const faceEl = ref<HTMLElement | null>(null);
+
+    const isCurrent = computed(() => props._faceIndex === displayFace.value && phase.value.kind === "idle");
+    let mounted = false;
+    onMounted(() => { mounted = true; });
+    watch(isCurrent, (val) => {
+      if (!mounted || !val || !faceEl.value) return;
+      faceEl.value.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+    });
 
     return () => {
       const faceIndex = props._faceIndex;
@@ -69,10 +80,10 @@ export const Face = defineComponent({
         "div",
         {
           ...attrs,
+          ref: faceEl,
           "data-face-index": faceIndex,
           style: faceStyle,
           "aria-hidden": isShown ? undefined : true,
-          "aria-current": displayFace.value === faceIndex ? "true" : undefined,
         },
         slots.default?.(),
       );

@@ -88,14 +88,6 @@ export const createJQueryAdapter = (options: CreateAdapterOptions): TurnBoxTestA
       return null;
     },
 
-    getAriaCurrent(_faceNum) {
-      return null;
-    },
-
-    getLiveRegionText() {
-      return "";
-    },
-
     waitForRender() {
       return Promise.resolve();
     },

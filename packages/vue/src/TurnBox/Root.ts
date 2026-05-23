@@ -67,6 +67,7 @@ export const Root = defineComponent({
     even: { type: Number },
     onChange: { type: Function as PropType<(face: number) => void> },
     onAnimationEnd: { type: Function as PropType<(face: number) => void> },
+    ariaLabel: { type: String },
   },
   setup(props, { slots, expose }) {
     const displayFace = ref(1);
@@ -279,6 +280,8 @@ export const Root = defineComponent({
       return h(
         "div",
         {
+          role: "region",
+          "aria-label": props.ariaLabel,
           style: {
             perspective: `${opts.value.perspective}px`,
             width: `${boxWidth}px`,
@@ -301,27 +304,6 @@ export const Root = defineComponent({
               },
             },
             indexedChildren,
-          ),
-          h(
-            "div",
-            {
-              "aria-live": "polite",
-              "aria-atomic": "true",
-              style: {
-                position: "absolute",
-                width: "1px",
-                height: "1px",
-                padding: "0",
-                margin: "-1px",
-                overflow: "hidden",
-                clip: "rect(0,0,0,0)",
-                whiteSpace: "nowrap",
-                border: "0",
-              },
-            },
-            displayFace.value >= 1 && displayFace.value <= opts.value.faces
-              ? `Face ${displayFace.value} of ${opts.value.faces}`
-              : "",
           ),
         ],
       );

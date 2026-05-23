@@ -1,9 +1,12 @@
+import { useEffect, useRef } from "react";
 import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";
+
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export type FaceProps = {
   children?: React.ReactNode;
@@ -31,6 +34,15 @@ const usesFaceTransform = (phase: AnimationPhase): boolean =>
 
 export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInternalProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
+  const divRef = useRef<HTMLDivElement>(null);
+  const didMountRef = useRef(false);
+
+  const isCurrent = _faceIndex === displayFace && phase.kind === "idle";
+  useEffect(() => {
+    if (!didMountRef.current) { didMountRef.current = true; return; }
+    if (!isCurrent || !divRef.current) return;
+    divRef.current.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+  }, [isCurrent]);
 
   const ft = usesFaceTransform(phase)
     ? calcFaceTransform(displayFace, _faceIndex, opts)
@@ -53,15 +65,14 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
   };
 
   const isShown = shownFaces.has(_faceIndex);
-  const isCurrent = _faceIndex === displayFace;
 
   return (
     <div
+      ref={divRef}
       data-face-index={_faceIndex}
       className={className}
       style={faceStyle}
       aria-hidden={isShown ? undefined : true}
-      aria-current={isCurrent ? "true" : undefined}
     >
       {children}
     </div>
