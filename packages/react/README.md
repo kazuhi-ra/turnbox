@@ -1,7 +1,8 @@
 # @kazuhi-ra/turnbox-react
 
-React package for TURNBOX.js.  
-Provides two APIs: a declarative **compound component** (`TurnBox.Root / Face / Button`) and a headless **`useTurnBox` hook**.
+React adapter for TURNBOX.js. Compound component and `useTurnBox` hook.
+
+Requires React 18 or later.
 
 ## Installation
 
@@ -9,13 +10,7 @@ Provides two APIs: a declarative **compound component** (`TurnBox.Root / Face / 
 npm install @kazuhi-ra/turnbox-react
 ```
 
-Requires React 18 or later.
-
----
-
 ## Compound Component
-
-Place `TurnBox.Button` inside faces to wire up navigation declaratively.
 
 ```tsx
 import { TurnBox } from "@kazuhi-ra/turnbox-react";
@@ -35,8 +30,6 @@ const FlipCard = () => (
 ```
 
 ### External control via ref
-
-Use a ref to control navigation programmatically.
 
 ```tsx
 import { useRef } from "react";
@@ -66,24 +59,19 @@ const FlipCard = () => {
 | --- | --- |
 | `next()` | Go to the next face |
 | `prev()` | Go to the previous face |
-| `goTo(face, animation?)` | Go to the specified face. Pass `false` to skip animation (default: `true`) |
-| `getCurrentFace()` | Returns the current face number (1-based) |
+| `goTo(face, animation?)` | Go to the specified face (`animation` defaults to `true`) |
+| `getCurrentFace()` | Current face number (1-based) |
 
 ### TurnBox.Button props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `direction` | `"next" \| "prev"` | `"next"` | Go to the next or previous face |
-| `to` | `number` | | Jump directly to the specified face number (takes priority over direction) |
+| `to` | `number` | | Jump to a specific face (takes priority over `direction`) |
 
-`TurnBox.Button` renders a native `<button>` element. Standard props like `className` and `style` are forwarded.
-
----
+Forwards standard props (`className`, `style`, etc.) to the native `<button>`.
 
 ## useTurnBox hook
-
-Binds a DOM element via ref and controls animation imperatively.  
-Use this when you want full control over styling or prefer not to use the compound component.
 
 ```tsx
 import { useTurnBox } from "@kazuhi-ra/turnbox-react";
@@ -114,14 +102,9 @@ const FlipCard = () => {
 | `prev()` | `() => void` | Go to the previous face |
 | `goTo(face, animation?)` | `(face: number, animation?: boolean) => void` | Go to the specified face |
 
----
-
 ## Options
 
-`TurnBox.Root` and `useTurnBox` share the same `TurnBoxOptions`.  
-See [shared options](../../README.md#options) for the full reference.
-
----
+See [shared options](../../README.md#options).
 
 ## License
 

@@ -1,7 +1,8 @@
 # @kazuhi-ra/turnbox-vue
 
-Vue package for TURNBOX.js.  
-Provides two APIs: a declarative **compound component** (`TurnBox.Root / Face / Button`) and a headless **`useTurnBox` composable**.
+Vue adapter for TURNBOX.js. Compound component and `useTurnBox` composable.
+
+Requires Vue 3 or later.
 
 ## Installation
 
@@ -9,13 +10,7 @@ Provides two APIs: a declarative **compound component** (`TurnBox.Root / Face / 
 npm install @kazuhi-ra/turnbox-vue
 ```
 
-Requires Vue 3 or later.
-
----
-
 ## Compound Component
-
-Place `TurnBox.Button` inside faces to wire up navigation declaratively.
 
 ```vue
 <template>
@@ -37,8 +32,6 @@ import { TurnBox } from "@kazuhi-ra/turnbox-vue";
 ```
 
 ### External control via ref
-
-Use a ref to control navigation programmatically.
 
 ```vue
 <template>
@@ -66,24 +59,19 @@ const handle = ref<TurnBoxRootHandle | null>(null);
 | --- | --- |
 | `next()` | Go to the next face |
 | `prev()` | Go to the previous face |
-| `goTo(face, animation?)` | Go to the specified face. Pass `false` to skip animation (default: `true`) |
-| `getCurrentFace()` | Returns the current face number (1-based) |
+| `goTo(face, animation?)` | Go to the specified face (`animation` defaults to `true`) |
+| `getCurrentFace()` | Current face number (1-based) |
 
 ### TurnBox.Button props
 
 | Prop | Type | Default | Description |
 | --- | --- | --- | --- |
 | `direction` | `"next" \| "prev"` | `"next"` | Go to the next or previous face |
-| `to` | `number` | | Jump directly to the specified face number (takes priority over direction) |
+| `to` | `number` | | Jump to a specific face (takes priority over `direction`) |
 
-`TurnBox.Button` renders a native `<button>` element. Standard attrs like `class` and `style` are forwarded.
-
----
+Forwards standard attrs (`class`, `style`, etc.) to the native `<button>`.
 
 ## useTurnBox composable
-
-Binds a DOM element via ref and controls animation imperatively.  
-Use this when you want full control over styling or prefer not to use the compound component.
 
 ```vue
 <script setup>
@@ -114,14 +102,9 @@ const { containerRef, currentFace, isAnimating, next, prev, goTo } = useTurnBox(
 | `prev()` | `() => void` | Go to the previous face |
 | `goTo(face, animation?)` | `(face: number, animation?: boolean) => void` | Go to the specified face |
 
----
-
 ## Options
 
-`TurnBox.Root` and `useTurnBox` share the same `TurnBoxOptions`.  
-See [shared options](../../README.md#options) for the full reference.
-
----
+See [shared options](../../README.md#options).
 
 ## License
 
