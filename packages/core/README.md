@@ -36,7 +36,7 @@ import { normalizeOptions, calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 
 const opts = normalizeOptions({ faces: 4 });
 const transform = calcFaceTransform(1, 2, opts);
-// { axis: "X", deg: -90, x: 0, y: 45, z: 25, zIndex: 10, transformOrigin: "50% 50%" }
+// { axis: "X", deg: 90, x: 0, y: -25, z: 25, zIndex: 10, transformOrigin: "50% 50%" }
 ```
 
 To convert the returned `FaceTransform` into a CSS string:

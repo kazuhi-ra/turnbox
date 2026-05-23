@@ -11,7 +11,7 @@ type JQueryInstance = {
   turnBoxAnimate(options: { face: number; animation?: boolean }): JQueryInstance;
 };
 
-// globalThis.$ を取得する遅延評価ラッパー
+// Lazy accessor for globalThis.$
 const $$ = (): JQueryStatic => (globalThis as unknown as Record<string, JQueryStatic>).$;
 
 let counter = 0;

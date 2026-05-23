@@ -3,9 +3,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { TurnBoxTestAdapter } from "./adapter.js";
 import { modernAdapters } from "../adapters/index.js";
 
-// ── アニメーション中は操作を無視する ─────────────────────────────────────────
-// アニメーションが完了する前に next()/prev()/goTo() を呼んでも no-op になること。
-// 完了後は通常通り動作すること。
+// ── calls during animation are ignored ───────────────────────────────────────
+// next()/prev()/goTo() called before animation completes must be no-ops.
+// After completion, navigation must work normally again.
 
 describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
@@ -21,10 +21,10 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
 
   it("next() during animation is ignored: stays at face 2, not face 3", async () => {
     adapter = createAdapter({ faces: 4, duration: 200 });
-    adapter.next(); // face1 → face2 アニメーション開始
-    await adapter.advanceTime(50); // アニメーション中 (duration=200 なので未完了)
-    adapter.next(); // 無視されるべき
-    await adapter.advanceTime(300); // 最初のアニメーション完了
+    adapter.next(); // start face1 → face2 animation
+    await adapter.advanceTime(50); // mid-animation (duration=200, not yet complete)
+    adapter.next(); // should be ignored
+    await adapter.advanceTime(300); // first animation completes
     expect(adapter.getCurrentFace()).toBe(2);
   });
 
@@ -32,7 +32,7 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
     adapter = createAdapter({ faces: 4, duration: 200 });
     adapter.next(); // face1 → face2
     await adapter.advanceTime(50);
-    adapter.prev(); // 無視されるべき
+    adapter.prev(); // should be ignored
     await adapter.advanceTime(300);
     expect(adapter.getCurrentFace()).toBe(2);
     expect(adapter.isFaceShown(2)).toBe(true);
@@ -43,7 +43,7 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
     adapter = createAdapter({ faces: 4, duration: 200 });
     adapter.next(); // face1 → face2
     await adapter.advanceTime(50);
-    adapter.goTo(4); // 無視されるべき
+    adapter.goTo(4); // should be ignored
     await adapter.advanceTime(300);
     expect(adapter.getCurrentFace()).toBe(2);
   });
@@ -51,9 +51,9 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
   it("after animation completes, next() works normally", async () => {
     adapter = createAdapter({ faces: 4, duration: 200 });
     adapter.next(); // face1 → face2
-    await adapter.advanceTime(300); // 完了
+    await adapter.advanceTime(300); // animation complete
     expect(adapter.getCurrentFace()).toBe(2);
-    adapter.next(); // face2 → face3 (ガード解除済み)
+    adapter.next(); // face2 → face3 (guard released)
     await adapter.advanceTime(300);
     expect(adapter.getCurrentFace()).toBe(3);
   });
@@ -62,20 +62,20 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
     adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
     adapter.goTo(4);
     await adapter.advanceTime(300);
-    adapter.next(); // face4 → face1 wrap アニメーション開始
+    adapter.next(); // start face4 → face1 wrap animation
     await adapter.advanceTime(50);
-    adapter.next(); // 無視されるべき
+    adapter.next(); // should be ignored
     await adapter.advanceTime(300);
     expect(adapter.getCurrentFace()).toBe(1);
   });
 
-  // ── 連続複数操作はキューに積まれない ──────────────────────────────────────
+  // ── rapid calls are not queued ───────────────────────────────────────────────
 
   it("three rapid next() calls result in only one step", async () => {
     adapter = createAdapter({ faces: 4, duration: 200 });
-    adapter.next(); // face1 → face2 開始
-    adapter.next(); // 無視
-    adapter.next(); // 無視
+    adapter.next(); // start face1 → face2
+    adapter.next(); // ignored
+    adapter.next(); // ignored
     await adapter.advanceTime(300);
     expect(adapter.getCurrentFace()).toBe(2);
   });
@@ -88,17 +88,17 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
     expect(adapter.isFaceShown(2)).toBe(true);
   });
 
-  // ── animation=false でもガードが効く ─────────────────────────────────────
+  // ── guard applies even when animation=false ───────────────────────────────────
 
   it("goTo(face, false) blocks subsequent calls during its own timeouts", async () => {
     adapter = createAdapter({ faces: 4, duration: 200 });
-    adapter.goTo(3, false); // instant (no CSS transition) だが状態更新は非同期
-    adapter.next(); // 無視されるべき
+    adapter.goTo(3, false); // no CSS transition, but state update is still async
+    adapter.next(); // should be ignored
     await adapter.advanceTime(300);
     expect(adapter.getCurrentFace()).toBe(3);
   });
 
-  // ── ガード解除後は正常に動作する ─────────────────────────────────────────
+  // ── all navigation methods work normally after guard releases ────────────────
 
   it("all navigation methods work after guard releases", async () => {
     adapter = createAdapter({ faces: 4, duration: 200 });
@@ -114,8 +114,8 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
     expect(adapter.isFaceShown(4)).toBe(true);
   });
 
-  // ── even≠length (fixed=false) + ガード ───────────────────────────────────
-  // shouldAddAdjust が有効な場合、adjust cleanup まで isAnimating=true のまま
+  // ── even≠length (fixed=false) + guard ────────────────────────────────────────
+  // When hasAdjust=true, isAnimating remains true until adjust cleanup completes.
 
   it("even≠height: operation during adjust cleanup window is ignored", async () => {
     // duration=200, delay=50 → time=250. adjust cleanup は 250+20+20=290ms に発火
@@ -128,9 +128,9 @@ describe.each(modernAdapters)("%s — animation guard", (_, createAdapter) => {
       duration: 200,
     });
     adapter.next(); // face1 → face2 (shouldAddAdjust=false for this pair, guard releases at ~270ms)
-    await adapter.advanceTime(150); // アニメーション中
-    adapter.next(); // 無視されるべき
-    await adapter.advanceTime(200); // 完了
+    await adapter.advanceTime(150); // mid-animation
+    adapter.next(); // should be ignored
+    await adapter.advanceTime(200); // animation complete
     expect(adapter.getCurrentFace()).toBe(2);
   });
 });

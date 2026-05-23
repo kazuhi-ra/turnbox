@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createJQueryAdapter } from "../adapters/jquery.js";
 
 // ── jQuery adapter: double-init guard ─────────────────────────────────────────
-// turnBox.js は初期化済み要素を再度 turnBox() しても状態をリセットしない。
+// turnBox.js does not reset state when turnBox() is called again on an already-initialized element.
 
 describe("jQuery — double-init guard", () => {
   let adapter: ReturnType<typeof createJQueryAdapter>;

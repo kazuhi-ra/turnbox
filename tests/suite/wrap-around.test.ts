@@ -4,7 +4,7 @@ import type { TurnBoxTestAdapter } from "./adapter.js";
 import { sharedAdapters, modernAdapters } from "../adapters/index.js";
 import { createJQueryAdapter } from "../adapters/jquery.js";
 
-// ── shared: jQuery と DOM 両方で同じ挙動 ─────────────────────────────────────
+// ── shared: same behavior across jQuery and DOM ───────────────────────────────
 
 describe.each(sharedAdapters)("%s — wrap-around", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
@@ -47,9 +47,9 @@ describe.each(sharedAdapters)("%s — wrap-around", (_, createAdapter) => {
   });
 });
 
-// ── jQuery — turnBox.js 固有の挙動 ──────────────────────────────────────────
-// turnBoxAnimate が face > faces をクランプするため next() wrap は不可。
-// non-real の prev() は face 0 → face_pcs リマップで wrap する。
+// ── jQuery — turnBox.js-specific behavior ────────────────────────────────────
+// turnBoxAnimate clamps face > faces, so next() wrap is impossible.
+// For non-real types, prev() wraps via face 0 → face_pcs remap.
 
 describe("jQuery — wrap-around", () => {
   let adapter: ReturnType<typeof createJQueryAdapter>;
@@ -63,7 +63,7 @@ describe("jQuery — wrap-around", () => {
     vi.useRealTimers();
   });
 
-  // turnBoxAnimate が face > faces をクランプするため、全 type で next() wrap は不可。
+  // turnBoxAnimate clamps face > faces, so next() wrap is impossible for all types.
 
   describe("next() from face 4 is no-op (all types: turnBoxAnimate clamps to faces)", () => {
     it("type:real", async () => {
@@ -94,7 +94,7 @@ describe("jQuery — wrap-around", () => {
     });
   });
 
-  // face 0 → face_pcs リマップにより type:repeat / type:skip の prev() は wrap する。
+  // face 0 → face_pcs remap makes prev() wrap for type:repeat and type:skip.
 
   describe("prev() from face 1 wraps to face 4 (type:repeat and type:skip)", () => {
     it("type:repeat", async () => {
@@ -115,7 +115,7 @@ describe("jQuery — wrap-around", () => {
   });
 });
 
-// ── impl: DOM / React / Vue — jQuery の制約を持たない正しい実装の挙動 ─────────
+// ── impl: DOM / React / Vue — correct behavior without jQuery's constraints ───
 
 describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
@@ -129,7 +129,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
     vi.useRealTimers();
   });
 
-  // type:real — 両方向 wrap
+  // type:real — bidirectional wrap
 
   describe("type:real — wrap (4-face only)", () => {
     it("next() from face 4 wraps to face 1", async () => {
@@ -200,7 +200,7 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
     });
   });
 
-  // type:repeat — 両方向 wrap (4-face only)
+  // type:repeat — bidirectional wrap (4-face only)
 
   describe("type:repeat — wrap (4-face only)", () => {
     it("next() from face 4 wraps to face 1", async () => {
@@ -258,8 +258,8 @@ describe.each(modernAdapters)("%s — wrap-around", (_, createAdapter) => {
     });
   });
 
-  // type:skip — 両方向 wrap (4-face only)
-  // skip は virtual face を使わず face5→1 / face0→4 を直接リマップして wrap する。
+  // type:skip — bidirectional wrap (4-face only)
+  // skip wraps by remapping face5→1 / face0→4 directly, without passing through a virtual face.
 
   describe("type:skip — wrap (4-face only)", () => {
     it("next() from face 4 wraps to face 1", async () => {

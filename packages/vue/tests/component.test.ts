@@ -94,7 +94,7 @@ describe("TurnBox.Face positional indexing", () => {
   it("Face components wrapped in a Fragment (v-for pattern) are correctly indexed", () => {
     const TestComponent = defineComponent({
       render() {
-        // v-for がテンプレートコンパイル後に生成する Fragment を手動で再現
+        // Manually reproduce the Fragment structure that v-for generates after template compilation
         const fragment = h(
           Fragment,
           null,

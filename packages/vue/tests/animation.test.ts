@@ -36,7 +36,7 @@ const mountTurnBox = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) 
 
   const getFaceEl = (n: number) => wrapper.element.querySelector<HTMLElement>(`[data-face-index="${n}"]`);
 
-  // goTo(N, false) 後、isAnimatingFlag を解除するまで待つ
+  // Navigates without animation and waits until isAnimatingFlag is released
   const navigateTo = async (face: number, duration: number) => {
     getHandle().goTo(face, false);
     await nextTick();
@@ -49,7 +49,7 @@ const mountTurnBox = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) 
 
 // ──────────────────────────────────────────────────────────
 // simple step: step.doAnimate=true, hasAdjust=false
-// 初期状態（face 1）から直接 next() するため setup 不要
+// Starts from face 1; no setup needed.
 // ──────────────────────────────────────────────────────────
 describe("simple step animation: transition CSS before transform change", () => {
   it("displayFace does not advance before rAF fires (next)", async () => {
@@ -96,8 +96,8 @@ describe("simple step animation: transition CSS before transform change", () => 
 });
 
 // ──────────────────────────────────────────────────────────
-// direct-wrap: type="repeat" で face4→face1 折り返し
-// navigation.ts が { kind: "direct-wrap" } を返し、goTo() 末尾の共通パスに fall-through
+// direct-wrap: face4→face1 wrap with type="repeat"
+// navigation.ts returns { kind: "direct-wrap" }, which falls through to the common goTo() tail.
 // ──────────────────────────────────────────────────────────
 describe("direct-wrap animation: transition CSS before transform change", () => {
   it("displayFace stays at 4 before rAF fires when wrapping face4 → face1", async () => {
@@ -127,8 +127,8 @@ describe("direct-wrap animation: transition CSS before transform change", () => 
 
 // ──────────────────────────────────────────────────────────
 // adjusting: step.hasAdjust=true, doAnimate=true
-// even + type="real" + direction="positive" で face2→face3 が ADJUST_PAIRS に該当
-// watch(phase, { flush: "post" }) ハンドラで displayFace と phase を同時変更している
+// even + type="real" + direction="positive" makes face2→face3 hit ADJUST_PAIRS.
+// The watch(phase, { flush: "post" }) handler updates displayFace and phase together.
 // ──────────────────────────────────────────────────────────
 describe("adjusting animation: transition CSS before transform change", () => {
   const adjustOpts = { height: 30, even: 60, type: "real", direction: "positive", duration: 200 };

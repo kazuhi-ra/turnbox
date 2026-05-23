@@ -6,13 +6,13 @@ import { createReactComponentAdapter } from "./react-component.js";
 import { createVueComponentAdapter } from "./vue-component.js";
 import type { AdapterFactory } from "../suite/adapter.js";
 
-// jQuery + DOM: 旧実装と新実装の振る舞いが一致することを検証するテスト用
+// jQuery + DOM: verifies behavioral parity between the legacy and modern implementations
 export const sharedAdapters: [string, AdapterFactory][] = [
   ["jQuery", createJQueryAdapter],
   ["DOM", createDomAdapter],
 ];
 
-// DOM + React + Vue: jQuery の制約を持たない新実装固有の振る舞いを検証するテスト用
+// DOM + React + Vue: verifies modern-implementation-specific behavior not constrained by jQuery
 export const modernAdapters: [string, AdapterFactory][] = [
   ["DOM", createDomAdapter],
   ["React", createReactAdapter],
@@ -21,7 +21,7 @@ export const modernAdapters: [string, AdapterFactory][] = [
   ["Vue (Component)", createVueComponentAdapter],
 ];
 
-// DOM + React hook + Vue hook: isAnimating を公開するアダプターのみ
+// DOM + React hook + Vue hook: only adapters that expose isAnimating
 export const animatingAdapters: [string, AdapterFactory][] = [
   ["DOM", createDomAdapter],
   ["React", createReactAdapter],
