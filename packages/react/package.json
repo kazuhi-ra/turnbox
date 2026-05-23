@@ -1,0 +1,59 @@
+{
+  "name": "@turnbox/react",
+  "version": "0.1.0",
+  "description": "React TurnBox — CSS3 3D box flip animation compound component and hook for React 18+",
+  "keywords": [
+    "3d",
+    "animation",
+    "css3",
+    "transform",
+    "turnbox",
+    "react",
+    "hook",
+    "component"
+  ],
+  "license": "MIT",
+  "author": "kazuhi-ra",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazuhi-ra/turnbox.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/kazuhi-ra/turnbox#readme",
+  "bugs": {
+    "url": "https://github.com/kazuhi-ra/turnbox/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --out-dir dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "dependencies": {
+    "@turnbox/core": "workspace:^",
+    "@turnbox/dom": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18",
+    "react": "^18",
+    "react-dom": "^18"
+  }
+}
