@@ -1,35 +1,23 @@
 # TURNBOX.js
 
-> This repository is a modern monorepo reimplementation of the jQuery plugin originally published at [nohtcoltd/turnbox_js](https://github.com/nohtcoltd/turnbox_js).
-
-A CSS3 3D transform library for box-flip animations.  
-Perfect for toggles, tabs, card flips, and any UI that "turns" between faces.
+CSS3 3D box-flip animation library for Vanilla JS, React, and Vue.
 
 ## Packages
 
-| Package | Description | README |
+| Package | | README |
 | --- | --- | --- |
-| `@kazuhi-ra/turnbox-dom` | Vanilla JS. Provides `createTurnBox()` | [Details](packages/dom/README.md) |
-| `@kazuhi-ra/turnbox-react` | React hook and compound component | [Details](packages/react/README.md) |
-| `@kazuhi-ra/turnbox-vue` | Vue composable and compound component | [Details](packages/vue/README.md) |
-| `@kazuhi-ra/turnbox-core` | Pure functions (no DOM dependency). For custom renderers | [Details](packages/core/README.md) |
-
----
+| `@kazuhi-ra/turnbox-dom` | Vanilla JS | [→](packages/dom/README.md) |
+| `@kazuhi-ra/turnbox-react` | React | [→](packages/react/README.md) |
+| `@kazuhi-ra/turnbox-vue` | Vue | [→](packages/vue/README.md) |
+| `@kazuhi-ra/turnbox-core` | Pure functions, no DOM dependency | [→](packages/core/README.md) |
 
 ## Installation
 
 ```bash
-# Vanilla JS
-npm install @kazuhi-ra/turnbox-dom
-
-# React
-npm install @kazuhi-ra/turnbox-react
-
-# Vue
-npm install @kazuhi-ra/turnbox-vue
+npm install @kazuhi-ra/turnbox-dom    # Vanilla JS
+npm install @kazuhi-ra/turnbox-react  # React
+npm install @kazuhi-ra/turnbox-vue    # Vue
 ```
-
----
 
 ## Quick Start
 
@@ -47,14 +35,11 @@ npm install @kazuhi-ra/turnbox-vue
 ```js
 import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 
-const box = createTurnBox(document.getElementById("box"), {
-  faces: 4,
-  duration: 400,
-});
+const box = createTurnBox(document.getElementById("box"), { faces: 4, duration: 400 });
 
-box.next();    // go to next face
-box.prev();    // go to previous face
-box.goTo(3);   // jump to face 3
+box.next();
+box.prev();
+box.goTo(3);
 ```
 
 ### React
@@ -97,54 +82,41 @@ import { TurnBox } from "@kazuhi-ra/turnbox-vue";
 </script>
 ```
 
----
-
 ## Options
 
-These options are shared across all adapters (createTurnBox, useTurnBox, TurnBox.Root).
+Shared across `createTurnBox`, `useTurnBox`, and `TurnBox.Root`.
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `faces` | `2 \| 3 \| 4` | | Number of faces. **Required.** Limited to 2–4 by the 3D box geometry |
-| `axis` | `"X" \| "Y"` | `"X"` | Rotation axis. "X" rotates vertically, "Y" horizontally |
-| `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction. "negative" reverses it |
+| `faces` | `2 \| 3 \| 4` | | **Required.** Limited to 2–4 by the 3D box geometry |
+| `axis` | `"X" \| "Y"` | `"X"` | `"X"` rotates top/bottom, `"Y"` rotates left/right |
+| `direction` | `"positive" \| "negative"` | `"positive"` | Rotation direction |
 | `type` | `"real" \| "repeat" \| "skip"` | `"real"` | Animation style (see below) |
 | `duration` | `number` | `200` | Animation duration (ms) |
-| `delay` | `number` | `0` | Delay before animation starts (ms) |
+| `delay` | `number` | `0` | CSS animation delay (ms) |
 | `easing` | `string` | `"linear"` | CSS easing function |
 | `perspective` | `number` | `800` | Perspective distance (px) |
 | `width` | `number` | `200` | Box width (px) |
 | `height` | `number` | `50` | Box height (px) |
-| `even` | `number` | same as height or width | Size of even-numbered faces along the rotation axis (px). Omit for uniform faces |
-| `onChange` | `(face: number) => void` | | Called when a transition starts. Argument is the destination face number |
-| `onAnimationEnd` | `(face: number) => void` | | Called when the animation completes. Argument is the destination face number |
+| `even` | `number` | same as `height` / `width` | Size of even-numbered faces along the rotation axis. Omit for a uniform box |
+| `onChange` | `(face: number) => void` | | Called when navigation starts |
+| `onAnimationEnd` | `(face: number) => void` | | Called when animation completes |
 
 ### type
 
-**real** (default)  
-Rotates like a physical box, 90° per step. With 4 faces, transitions between face 4 and face 1 wrap around.
+**real** (default) — Each step rotates 90°. Face 4 and face 1 wrap around continuously.
 
-**repeat**  
-The face 1↔2 animation motion is repeated for face 3↔4.
+**repeat** — Face 3↔4 uses the same animation direction as face 1↔2.
 
-**skip**  
-Always animates with a single 90° turn regardless of how far apart the faces are. Forced to "real" when `even` is specified.
+**skip** — Always animates with a single 90° turn, regardless of distance. Ignored when `even` is set.
 
-### even (asymmetric box)
+### even
 
-Allows odd-numbered and even-numbered faces to have different sizes.  
-With `axis: "X"`, the height of even faces differs; with `axis: "Y"`, the width differs.
+Sets a different size for even-numbered faces along the rotation axis (`height` for `axis: "X"`, `width` for `axis: "Y"`).
 
 ```js
-createTurnBox(container, {
-  faces: 4,
-  axis: "X",
-  height: 50,
-  even: 30,
-});
+createTurnBox(container, { faces: 4, axis: "X", height: 50, even: 30 });
 ```
-
----
 
 ## License
 
