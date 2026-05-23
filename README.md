@@ -1,5 +1,7 @@
 # TURNBOX.js
 
+> このリポジトリは [nohtcoltd/turnbox_js](https://github.com/nohtcoltd/turnbox_js) の jQuery プラグインを、フレームワーク非依存のモノレポとして再実装したものです。
+
 CSS3 3D transform を使ったボックス反転アニメーションライブラリです。  
 トグル・タブ・カードフリップなど、面を「めくる」ような UI に使えます。
 
