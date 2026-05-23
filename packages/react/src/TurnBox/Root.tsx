@@ -54,7 +54,7 @@ type RootProps = TurnBoxOptions & {
 };
 
 export type TurnBoxRootHandle = {
-  goTo(rawTarget: number, animation?: boolean): void;
+  goTo(face: number, animation?: boolean): void;
   getCurrentFace(): number;
   next(): void;
   prev(): void;

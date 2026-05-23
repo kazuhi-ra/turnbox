@@ -224,6 +224,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
       faces.forEach((face) => {
         face.classList.remove(
           "turnBoxFace",
+          "turnBoxShow",
           ...Array.from(face.classList).filter((c) => c.startsWith("turnBoxFaceNum")),
         );
         face.style.transform = "";
@@ -240,6 +241,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
       );
       container.style.height = "";
       container.style.left = "";
+      container.style.transition = "";
       container.style.perspective = "";
     },
   };

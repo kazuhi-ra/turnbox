@@ -45,7 +45,7 @@ const calcContainerDynStyle = (
 };
 
 export type TurnBoxRootHandle = {
-  goTo(rawTarget: number, animation?: boolean): void;
+  goTo(face: number, animation?: boolean): void;
   getCurrentFace(): number;
   next(): void;
   prev(): void;
@@ -134,10 +134,10 @@ export const Root = defineComponent({
           });
         } else if (newPhase.kind === "adjusting") {
           const { to } = newPhase;
-          phase.value = { kind: "adjust-animating" }; // Frame 1: transition CSS を付与
+          phase.value = { kind: "adjust-animating" }; // frame 1: apply transition CSS
 
           pendingRaf = scheduleRaf(() => {
-            // Frame 2: transform を変更
+            // frame 2: update transform
             pendingRaf = null;
             displayFace.value = to;
 
@@ -223,10 +223,10 @@ export const Root = defineComponent({
       const currentFace = displayFace.value;
       shownFaces.value = new Set([currentFace, to]);
       faceOverrides.value = EMPTY_MAP;
-      phase.value = { kind: "animating" }; // Frame 1: transition CSS を付与
+      phase.value = { kind: "animating" }; // frame 1: apply transition CSS
 
       pendingRaf = scheduleRaf(() => {
-        // Frame 2: transform を変更
+        // frame 2: update transform
         pendingRaf = null;
         displayFace.value = to;
 
