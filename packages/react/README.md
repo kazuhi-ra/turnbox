@@ -1,4 +1,4 @@
-# @turnbox/react
+# @kazuhi-ra/turnbox-react
 
 React 向けの TURNBOX.js パッケージです。  
 宣言的な **compound component**（`TurnBox.Root / Face / Button`）と、DOM を直接操作する **`useTurnBox` フック**の2つのAPIを提供します。
@@ -6,7 +6,7 @@ React 向けの TURNBOX.js パッケージです。
 ## インストール
 
 ```bash
-npm install @turnbox/react
+npm install @kazuhi-ra/turnbox-react
 ```
 
 React 18 以上が必要です。
@@ -18,7 +18,7 @@ React 18 以上が必要です。
 `TurnBox.Button` を面の中に置くことで、ナビゲーションを宣言的に記述できます。
 
 ```tsx
-import { TurnBox } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
 
 const FlipCard = () => (
   <TurnBox.Root faces={4} duration={400}>
@@ -40,7 +40,7 @@ const FlipCard = () => (
 
 ```tsx
 import { useRef } from "react";
-import { TurnBox, type TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox, type TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 const FlipCard = () => {
   const ref = useRef<TurnBoxRootHandle>(null);
@@ -86,7 +86,7 @@ DOM 要素を `ref` でバインドし、命令的にアニメーションを制
 スタイルを自由に組みたい場合や、ライブラリの UI コンポーネントを使わない場合に使います。
 
 ```tsx
-import { useTurnBox } from "@turnbox/react";
+import { useTurnBox } from "@kazuhi-ra/turnbox-react";
 
 const FlipCard = () => {
   const { containerRef, currentFace, isAnimating, next, prev, goTo } = useTurnBox({

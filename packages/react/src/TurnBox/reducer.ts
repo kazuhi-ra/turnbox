@@ -1,5 +1,5 @@
-import type { NormalizedOptions } from "@turnbox/core";
-import { calcPrePositionTransform, VIRTUAL_NEXT_WRAP } from "@turnbox/core/internal";
+import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
+import { calcPrePositionTransform, VIRTUAL_NEXT_WRAP } from "@kazuhi-ra/turnbox-core/internal";
 import type { AnimationPhase } from "./context.js";
 
 // ─── State types ──────────────────────────────────────────────────────────────

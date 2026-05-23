@@ -8,11 +8,11 @@ const config: StorybookConfig = {
   framework: { name: "@storybook/react-vite", options: {} },
   async viteFinal(config) {
     const aliases = [
-      { find: "@turnbox/core/internal", replacement: r("packages/core/src/internal.ts") },
-      { find: "@turnbox/core", replacement: r("packages/core/src/index.ts") },
-      { find: "@turnbox/dom", replacement: r("packages/dom/src/index.ts") },
-      { find: "@turnbox/react", replacement: r("packages/react/src/index.ts") },
-      { find: "@turnbox/vue", replacement: r("packages/vue/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-core/internal", replacement: r("packages/core/src/internal.ts") },
+      { find: "@kazuhi-ra/turnbox-core", replacement: r("packages/core/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-dom", replacement: r("packages/dom/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-react", replacement: r("packages/react/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-vue", replacement: r("packages/vue/src/index.ts") },
     ];
     config.resolve ??= {};
     config.resolve.alias = [

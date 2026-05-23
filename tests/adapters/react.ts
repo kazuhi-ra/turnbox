@@ -2,7 +2,7 @@ import { vi } from "vitest";
 import { createElement, StrictMode, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
-import { useTurnBox } from "@turnbox/react";
+import { useTurnBox } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 let counter = 0;

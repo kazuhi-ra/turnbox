@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 const Uploader = () => {
   const rootRef = useRef<TurnBoxRootHandle>(null);

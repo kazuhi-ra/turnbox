@@ -1,6 +1,6 @@
 import { inject } from "vue";
 import type { ComputedRef, InjectionKey, Ref, ShallowRef } from "vue";
-import type { NormalizedOptions } from "@turnbox/core";
+import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 
 export type AnimationPhase =
   | { kind: "idle" }

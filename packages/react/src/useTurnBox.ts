@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createTurnBox, type TurnBoxInstance } from "@turnbox/dom";
-import type { TurnBoxOptions } from "@turnbox/core";
+import { createTurnBox, type TurnBoxInstance } from "@kazuhi-ra/turnbox-dom";
+import type { TurnBoxOptions } from "@kazuhi-ra/turnbox-core";
 
 export type UseTurnBoxReturn = {
   containerRef: React.RefObject<HTMLElement | null>;

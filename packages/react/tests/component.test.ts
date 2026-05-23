@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createElement, createRef } from "react";
 import { createRoot } from "react-dom/client";
 import { act } from "react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());

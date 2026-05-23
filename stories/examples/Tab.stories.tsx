@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 const TAB_LABELS = ["TAB1", "TAB2", "TAB3"];
 const CONTENT_LABELS = ["CONTENT 1", "CONTENT 2", "CONTENT 3"];

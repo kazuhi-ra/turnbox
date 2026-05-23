@@ -1,5 +1,5 @@
 {
-  "name": "@turnbox/react",
+  "name": "@kazuhi-ra/turnbox-react",
   "version": "0.1.0",
   "description": "React TurnBox — CSS3 3D box flip animation compound component and hook for React 18+",
   "keywords": [
@@ -48,8 +48,8 @@
     "react": ">=18"
   },
   "dependencies": {
-    "@turnbox/core": "workspace:^",
-    "@turnbox/dom": "workspace:*"
+    "@kazuhi-ra/turnbox-core": "workspace:^",
+    "@kazuhi-ra/turnbox-dom": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18",

@@ -1,4 +1,4 @@
-# @turnbox/vue
+# @kazuhi-ra/turnbox-vue
 
 Vue 向けの TURNBOX.js パッケージです。  
 宣言的な **compound component**（`TurnBox.Root / Face / Button`）と、DOM を直接操作する **`useTurnBox` コンポーザブル**の2つのAPIを提供します。
@@ -6,7 +6,7 @@ Vue 向けの TURNBOX.js パッケージです。
 ## インストール
 
 ```bash
-npm install @turnbox/vue
+npm install @kazuhi-ra/turnbox-vue
 ```
 
 Vue 3 以上が必要です。
@@ -32,7 +32,7 @@ Vue 3 以上が必要です。
 </template>
 
 <script setup>
-import { TurnBox } from "@turnbox/vue";
+import { TurnBox } from "@kazuhi-ra/turnbox-vue";
 </script>
 ```
 
@@ -54,7 +54,7 @@ import { TurnBox } from "@turnbox/vue";
 
 <script setup>
 import { ref } from "vue";
-import { TurnBox, type TurnBoxRootHandle } from "@turnbox/vue";
+import { TurnBox, type TurnBoxRootHandle } from "@kazuhi-ra/turnbox-vue";
 
 const handle = ref<TurnBoxRootHandle | null>(null);
 </script>
@@ -87,7 +87,7 @@ DOM 要素を `ref` でバインドし、命令的にアニメーションを制
 
 ```vue
 <script setup>
-import { useTurnBox } from "@turnbox/vue";
+import { useTurnBox } from "@kazuhi-ra/turnbox-vue";
 
 const { containerRef, currentFace, isAnimating, next, prev, goTo } = useTurnBox({
   faces: 2,

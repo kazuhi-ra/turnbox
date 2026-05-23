@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { createTurnBox } from "@turnbox/dom";
+import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 let counter = 0;

@@ -69,10 +69,10 @@ packages/\* に作成
 - [x] `typescript` / `tsup` を root devDependencies に追加
 - [x] `packages/core/package.json` / `tsconfig.json` 作成
 - [x] `packages/dom/package.json` / `tsconfig.json` 作成
-- [x] `vitest.config.js` に `@turnbox/core` / `@turnbox/dom` alias 追加
+- [x] `vitest.config.js` に `@kazuhi-ra/turnbox-core` / `@kazuhi-ra/turnbox-dom` alias 追加
 - [x] `biome.json` / `package.json` scripts に `tests/` を追加
 
-## フェーズ3: packages/core 実装 (@turnbox/core)
+## フェーズ3: packages/core 実装 (@kazuhi-ra/turnbox-core)
 
 - [x] `src/types.ts` — TurnBoxOptions / NormalizedOptions / FaceTransform 型定義
 - [x] `src/normalize.ts` — normalizeOptions（facePcs cap・fixed 判定・type:skip 強制）
@@ -80,7 +80,7 @@ packages/\* に作成
 - [x] `src/navigation.ts` — resolveTargetFace / shouldAnimate
 - [x] ビルド確認（tsup ESM + DTS）
 
-## フェーズ4: packages/dom 実装 (@turnbox/dom)
+## フェーズ4: packages/dom 実装 (@kazuhi-ra/turnbox-dom)
 
 - [x] `src/css.ts` — toTransformString（FaceTransform → CSS 文字列）
 - [x] `src/createTurnBox.ts` — createTurnBox（init・goTo/next/prev・animate lifecycle・destroy）
@@ -90,7 +90,7 @@ packages/\* に作成
 
 ---
 
-## フェーズ5: packages/react 実装 (@turnbox/react)
+## フェーズ5: packages/react 実装 (@kazuhi-ra/turnbox-react)
 
 - [x] `src/useTurnBox.ts` — useTurnBox フック実装
 - [x] `tests/adapters/react.ts` — React アダプター実装
@@ -99,7 +99,7 @@ packages/\* に作成
 
 ---
 
-## フェーズ6: packages/vue 実装 (@turnbox/vue)
+## フェーズ6: packages/vue 実装 (@kazuhi-ra/turnbox-vue)
 
 - [x] `src/useTurnBox.ts` — useTurnBox コンポーザブル実装
 - [x] `tests/adapters/vue.ts` — Vue アダプター実装
@@ -160,7 +160,7 @@ packages/\* に作成
 - [x] バグ修正: `type:real` で `goTo(4)` / `goTo(1)` が virtual-wrap を経由してアニメーションされない問題 → `resolveVirtualWrapVia` を `navigation.ts` に追加
 - [x] `facePcs` → `faces` リネーム（全パッケージ・全テスト）
 - [x] `RootProps` の `onChange` / `onAnimationEnd` 重複定義を削除（`TurnBoxOptions` で一元定義）
-- [x] `calcAdjustFaceTransform` を `@turnbox/core` public から削除し `@turnbox/core/internal` へ移動
+- [x] `calcAdjustFaceTransform` を `@kazuhi-ra/turnbox-core` public から削除し `@kazuhi-ra/turnbox-core/internal` へ移動
 - [x] `is-animating` テストを 3 ファイルから `is-animating.test.ts` 1 ファイルに統合（`animatingAdapters` 導入）
 - [x] `callbacks.test.ts` に DOM 精度タイミングテストを追加（±1ms 境界検証）
 - [x] 814テスト ALL GREEN

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React, { useRef } from "react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 const faceColors = ["#e74c3c", "#3498db", "#2ecc71", "#f39c12"];
 const faceLabels = ["Face 1", "Face 2", "Face 3", "Face 4"];

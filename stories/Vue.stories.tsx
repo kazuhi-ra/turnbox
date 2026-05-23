@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { createApp, defineComponent, h } from "vue";
-import { useTurnBox } from "@turnbox/vue";
+import { useTurnBox } from "@kazuhi-ra/turnbox-vue";
 
 type Args = {
   faces: 2 | 3 | 4;

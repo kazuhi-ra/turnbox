@@ -1,3 +1,3 @@
 export { createTurnBox } from "./createTurnBox.js";
 export type { TurnBoxInstance } from "./createTurnBox.js";
-export type { TurnBoxOptions } from "@turnbox/core";
+export type { TurnBoxOptions } from "@kazuhi-ra/turnbox-core";

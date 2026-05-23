@@ -2,8 +2,8 @@ import { vi } from "vitest";
 import { createElement, createRef, StrictMode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createReactComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {

@@ -1,5 +1,5 @@
 {
-  "name": "@turnbox/vue",
+  "name": "@kazuhi-ra/turnbox-vue",
   "version": "0.1.0",
   "description": "Vue TurnBox — CSS3 3D box flip animation compound component and composable for Vue 3",
   "keywords": [
@@ -48,8 +48,8 @@
     "vue": ">=3"
   },
   "dependencies": {
-    "@turnbox/core": "workspace:^",
-    "@turnbox/dom": "workspace:*"
+    "@kazuhi-ra/turnbox-core": "workspace:^",
+    "@kazuhi-ra/turnbox-dom": "workspace:*"
   },
   "devDependencies": {
     "@vue/test-utils": "^2",

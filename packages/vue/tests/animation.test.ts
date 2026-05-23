@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { defineComponent, h, nextTick, shallowRef } from "vue";
 import { mount } from "@vue/test-utils";
-import { TurnBox } from "@turnbox/vue";
-import type { TurnBoxRootHandle } from "@turnbox/vue";
+import { TurnBox } from "@kazuhi-ra/turnbox-vue";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-vue";
 
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());

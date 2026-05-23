@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 const PALETTE = [
   "#e74c3c", "#c0392b", "#e67e22", "#d35400", "#f1c40f", "#f39c12",

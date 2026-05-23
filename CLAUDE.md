@@ -6,7 +6,7 @@ TURNBOX.js は CSS3 3D transform を使ったボックスアニメーション j
 現在、以下の目標でモダン化作業を進めている。
 
 1. **フェーズ1**: 現行 `turnBox.js` に対してテストを追加し、振る舞いを仕様として固定する
-2. **フェーズ2以降**: モノレポとして再構築（`@turnbox/core` / `@turnbox/dom` / `@turnbox/react` / `@turnbox/vue`）
+2. **フェーズ2以降**: モノレポとして再構築（`@kazuhi-ra/turnbox-core` / `@kazuhi-ra/turnbox-dom` / `@kazuhi-ra/turnbox-react` / `@kazuhi-ra/turnbox-vue`）
 
 作業の詳細なチェックリストは `todo.md` を参照すること。
 
@@ -24,7 +24,7 @@ TURNBOX.js は CSS3 3D transform を使ったボックスアニメーション j
 - **イミュータブル優先**: `const` をデフォルト。`let`/`var` は本当に再代入が必要な場合のみ
 - **破壊的変更の前に自問**: 「新しい値を返すだけでは駄目か？」
 - **スプレッド・`map/filter/reduce` を積極活用**
-- **副作用は境界に閉じ込める**: DOM操作・スタイル適用は `@turnbox/dom` の責務
+- **副作用は境界に閉じ込める**: DOM操作・スタイル適用は `@kazuhi-ra/turnbox-dom` の責務
 - **関数はアロー関数で書く**（`const foo = () => ...`）
 - **型は `type` エイリアスで書く**（`interface` は使わない）
 
@@ -47,15 +47,15 @@ pnpm format      # biome format --write packages/
 
 | パッケージ       | 役割                                             |
 | ---------------- | ------------------------------------------------ |
-| `@turnbox/core`  | 純粋関数群（DOM依存なし）: CSS計算・状態ロジック |
-| `@turnbox/dom`   | バニラJS用: DOM操作 + core をバンドル            |
-| `@turnbox/react` | React コンポーネント（core を依存）              |
-| `@turnbox/vue`   | Vue SFC（core を依存）                           |
+| `@kazuhi-ra/turnbox-core`  | 純粋関数群（DOM依存なし）: CSS計算・状態ロジック |
+| `@kazuhi-ra/turnbox-dom`   | バニラJS用: DOM操作 + core をバンドル            |
+| `@kazuhi-ra/turnbox-react` | React コンポーネント（core を依存）              |
+| `@kazuhi-ra/turnbox-vue`   | Vue SFC（core を依存）                           |
 
 ### スタイル適用方針
 
 - **インラインスタイル**（`element.style.*`）で適用。`<head>` への style injection は廃止
-- `@turnbox/core` は CSS文字列ではなく **計算済みの値**（deg, translate3d, zIndex）を返す
+- `@kazuhi-ra/turnbox-core` は CSS文字列ではなく **計算済みの値**（deg, translate3d, zIndex）を返す
 - React/Vue は返り値をそのまま `style` prop / `:style` binding に渡せる
 
 ---

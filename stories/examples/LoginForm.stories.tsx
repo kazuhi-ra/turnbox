@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 const SNS_LABELS = ["G+", "tw", "fb", "gh"];
 const SNS_COLORS = ["#dd4b39", "#1da1f2", "#1877f2", "#333"];

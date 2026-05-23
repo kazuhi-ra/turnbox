@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
 
 const Confirm = () => {
   const [current, setCurrent] = useState(1);

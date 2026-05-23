@@ -1,16 +1,16 @@
-# @turnbox/core
+# @kazuhi-ra/turnbox-core
 
 TURNBOX.js のコアロジックパッケージです。  
 DOM に依存しない純粋関数のみで構成されており、独自のレンダラーを実装したい場合に使います。
 
-通常は `@turnbox/dom` / `@turnbox/react` / `@turnbox/vue` を使ってください。
+通常は `@kazuhi-ra/turnbox-dom` / `@kazuhi-ra/turnbox-react` / `@kazuhi-ra/turnbox-vue` を使ってください。
 
 ---
 
 ## インストール
 
 ```bash
-npm install @turnbox/core
+npm install @kazuhi-ra/turnbox-core
 ```
 
 ---
@@ -22,7 +22,7 @@ npm install @turnbox/core
 `TurnBoxOptions` を受け取り、デフォルト値を補完した `NormalizedOptions` を返します。
 
 ```ts
-import { normalizeOptions } from "@turnbox/core";
+import { normalizeOptions } from "@kazuhi-ra/turnbox-core";
 
 const opts = normalizeOptions({ faces: 4, duration: 400 });
 ```
@@ -32,7 +32,7 @@ const opts = normalizeOptions({ faces: 4, duration: 400 });
 現在の表示面（`currentFace`）から見た、各面（`faceNum`）の CSS transform 値を計算します。
 
 ```ts
-import { normalizeOptions, calcFaceTransform } from "@turnbox/core";
+import { normalizeOptions, calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 
 const opts = normalizeOptions({ faces: 4 });
 const transform = calcFaceTransform(1, 2, opts);
@@ -50,7 +50,7 @@ const cssTransform = `rotate${transform.axis}(${transform.deg}deg) translate3d($
 デフォルトのボックスサイズ定数です。
 
 ```ts
-import { DEFAULT_SIZE, DEFAULT_HEIGHT } from "@turnbox/core";
+import { DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 // DEFAULT_SIZE = 200  (幅のデフォルト値)
 // DEFAULT_HEIGHT = 50 (高さのデフォルト値)
 ```
@@ -59,7 +59,7 @@ import { DEFAULT_SIZE, DEFAULT_HEIGHT } from "@turnbox/core";
 
 ## Internal API
 
-`@turnbox/core/internal` は `@turnbox/*` パッケージ間で共有する内部 API です。  
+`@kazuhi-ra/turnbox-core/internal` は `@kazuhi-ra/turnbox-*` パッケージ間で共有する内部 API です。  
 マイナーバージョンで破壊的変更が入る可能性があるため、外部からの直接利用は推奨しません。
 
 ---

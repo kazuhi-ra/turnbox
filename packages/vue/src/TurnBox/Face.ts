@@ -1,7 +1,7 @@
 import { defineComponent, h, type PropType, type CSSProperties } from "vue";
-import { calcFaceTransform } from "@turnbox/core";
-import { calcAdjustFaceTransform } from "@turnbox/core/internal";
-import type { NormalizedOptions } from "@turnbox/core";
+import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
+import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
+import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";

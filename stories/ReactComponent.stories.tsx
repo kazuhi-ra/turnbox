@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@turnbox/react";
-import type { TurnBoxOptions, TurnBoxRootHandle } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxOptions, TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 
 type Args = {
   faces: 2 | 3 | 4;

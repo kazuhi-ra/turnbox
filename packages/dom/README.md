@@ -1,4 +1,4 @@
-# @turnbox/dom
+# @kazuhi-ra/turnbox-dom
 
 バニラJS（フレームワークなし）向けの TURNBOX.js パッケージです。  
 `createTurnBox()` 1関数で、CSS3 3D transform によるボックス反転アニメーションを実装できます。
@@ -6,7 +6,7 @@
 ## インストール
 
 ```bash
-npm install @turnbox/dom
+npm install @kazuhi-ra/turnbox-dom
 ```
 
 ---
@@ -29,7 +29,7 @@ npm install @turnbox/dom
 ### JavaScript
 
 ```js
-import { createTurnBox } from "@turnbox/dom";
+import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 
 const box = createTurnBox(document.getElementById("box"), {
   faces: 4,
@@ -70,7 +70,7 @@ box.goTo(2, false);   // 面2へ（アニメーションなし）
 
 ## CSS クラス
 
-`@turnbox/dom` はインラインスタイルに加え、以下の CSS クラスを付与します。  
+`@kazuhi-ra/turnbox-dom` はインラインスタイルに加え、以下の CSS クラスを付与します。  
 スタイリングやステート管理に活用できます。
 
 ### コンテナに付与されるクラス

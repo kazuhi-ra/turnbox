@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import { defineComponent, h, nextTick, type Ref } from "vue";
 import { mount } from "@vue/test-utils";
-import { useTurnBox } from "@turnbox/vue";
+import { useTurnBox } from "@kazuhi-ra/turnbox-vue";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 let counter = 0;

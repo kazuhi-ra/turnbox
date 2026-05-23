@@ -5,11 +5,11 @@ export default defineConfig({
   resolve: {
     alias: [
       // subpath must come before the base package entry
-      { find: "@turnbox/core/internal", replacement: resolve("./packages/core/src/internal.ts") },
-      { find: "@turnbox/core", replacement: resolve("./packages/core/src/index.ts") },
-      { find: "@turnbox/dom", replacement: resolve("./packages/dom/src/index.ts") },
-      { find: "@turnbox/react", replacement: resolve("./packages/react/src/index.ts") },
-      { find: "@turnbox/vue", replacement: resolve("./packages/vue/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-core/internal", replacement: resolve("./packages/core/src/internal.ts") },
+      { find: "@kazuhi-ra/turnbox-core", replacement: resolve("./packages/core/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-dom", replacement: resolve("./packages/dom/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-react", replacement: resolve("./packages/react/src/index.ts") },
+      { find: "@kazuhi-ra/turnbox-vue", replacement: resolve("./packages/vue/src/index.ts") },
     ],
   },
   test: {

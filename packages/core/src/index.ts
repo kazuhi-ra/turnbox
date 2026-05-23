@@ -1,5 +1,5 @@
-// Public API — intended for users of @turnbox/dom, @turnbox/react, @turnbox/vue,
-// and authors building custom renderers on top of @turnbox/core.
+// Public API — intended for users of @kazuhi-ra/turnbox-dom, @kazuhi-ra/turnbox-react, @kazuhi-ra/turnbox-vue,
+// and authors building custom renderers on top of @kazuhi-ra/turnbox-core.
 
 // Option types
 export type { Axis, Direction, AnimationType, FaceCount, TurnBoxOptions } from "./types.js";

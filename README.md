@@ -9,10 +9,10 @@ Perfect for toggles, tabs, card flips, and any UI that "turns" between faces.
 
 | Package | Description | README |
 | --- | --- | --- |
-| `@turnbox/dom` | Vanilla JS. Provides `createTurnBox()` | [Details](packages/dom/README.md) |
-| `@turnbox/react` | React hook and compound component | [Details](packages/react/README.md) |
-| `@turnbox/vue` | Vue composable and compound component | [Details](packages/vue/README.md) |
-| `@turnbox/core` | Pure functions (no DOM dependency). For custom renderers | [Details](packages/core/README.md) |
+| `@kazuhi-ra/turnbox-dom` | Vanilla JS. Provides `createTurnBox()` | [Details](packages/dom/README.md) |
+| `@kazuhi-ra/turnbox-react` | React hook and compound component | [Details](packages/react/README.md) |
+| `@kazuhi-ra/turnbox-vue` | Vue composable and compound component | [Details](packages/vue/README.md) |
+| `@kazuhi-ra/turnbox-core` | Pure functions (no DOM dependency). For custom renderers | [Details](packages/core/README.md) |
 
 ---
 
@@ -20,13 +20,13 @@ Perfect for toggles, tabs, card flips, and any UI that "turns" between faces.
 
 ```bash
 # Vanilla JS
-npm install @turnbox/dom
+npm install @kazuhi-ra/turnbox-dom
 
 # React
-npm install @turnbox/react
+npm install @kazuhi-ra/turnbox-react
 
 # Vue
-npm install @turnbox/vue
+npm install @kazuhi-ra/turnbox-vue
 ```
 
 ---
@@ -45,7 +45,7 @@ npm install @turnbox/vue
 ```
 
 ```js
-import { createTurnBox } from "@turnbox/dom";
+import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 
 const box = createTurnBox(document.getElementById("box"), {
   faces: 4,
@@ -60,7 +60,7 @@ box.goTo(3);   // jump to face 3
 ### React
 
 ```tsx
-import { TurnBox } from "@turnbox/react";
+import { TurnBox } from "@kazuhi-ra/turnbox-react";
 
 const FlipCard = () => (
   <TurnBox.Root faces={4} duration={400}>
@@ -93,7 +93,7 @@ const FlipCard = () => (
 </template>
 
 <script setup>
-import { TurnBox } from "@turnbox/vue";
+import { TurnBox } from "@kazuhi-ra/turnbox-vue";
 </script>
 ```
 

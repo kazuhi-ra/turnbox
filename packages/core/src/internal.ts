@@ -1,4 +1,4 @@
-// Internal API — for use by @turnbox/* packages. Not part of the public contract.
+// Internal API — for use by @kazuhi-ra/turnbox-* packages. Not part of the public contract.
 // Anything exported here may change between minor versions.
 
 export * from "./index.js";

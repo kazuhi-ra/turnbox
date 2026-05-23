@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { createTurnBox } from "@turnbox/dom";
+import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 import { modernAdapters } from "../adapters/index.js";
 import type { TurnBoxTestAdapter } from "./adapter.js";
 

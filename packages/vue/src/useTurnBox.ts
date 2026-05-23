@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted, ref, watch, type Ref } from "vue";
-import { createTurnBox, type TurnBoxInstance } from "@turnbox/dom";
-import type { TurnBoxOptions } from "@turnbox/core";
+import { createTurnBox, type TurnBoxInstance } from "@kazuhi-ra/turnbox-dom";
+import type { TurnBoxOptions } from "@kazuhi-ra/turnbox-core";
 
 export type UseTurnBoxReturn = {
   containerRef: Ref<HTMLElement | null>;

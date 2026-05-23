@@ -8,7 +8,7 @@ import {
   VIRTUAL_NEXT_WRAP,
   type TurnBoxOptions,
   type NormalizedOptions,
-} from "@turnbox/core/internal";
+} from "@kazuhi-ra/turnbox-core/internal";
 import { toTransformString } from "./css.js";
 
 export type TurnBoxInstance = {
