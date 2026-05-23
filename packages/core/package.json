@@ -1,0 +1,49 @@
+{
+  "name": "@turnbox/core",
+  "version": "0.1.0",
+  "description": "Core logic for TurnBox — pure functions for 3D box animation geometry, state, and transitions (no DOM dependency)",
+  "keywords": [
+    "3d",
+    "animation",
+    "css3",
+    "transform",
+    "turnbox",
+    "pure"
+  ],
+  "license": "MIT",
+  "author": "kazuhi-ra",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazuhi-ra/turnbox.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/kazuhi-ra/turnbox#readme",
+  "bugs": {
+    "url": "https://github.com/kazuhi-ra/turnbox/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./internal": {
+      "import": "./dist/internal.js",
+      "types": "./dist/internal.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts src/internal.ts --format esm --dts --out-dir dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
