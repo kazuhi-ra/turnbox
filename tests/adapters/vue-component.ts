@@ -95,6 +95,14 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
       return getFaceEl(faceNum)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getAriaCurrent(faceNum) {
+      return getFaceEl(faceNum)?.getAttribute("aria-current") ?? null;
+    },
+
+    getLiveRegionText() {
+      return wrapper.element.querySelector("[aria-live]")?.textContent ?? "";
+    },
+
     async waitForRender() {
       await nextTick();
     },

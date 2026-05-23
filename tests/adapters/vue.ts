@@ -110,6 +110,14 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
       return getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getAriaCurrent(faceNum) {
+      return getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-current") ?? null;
+    },
+
+    getLiveRegionText() {
+      return getContainer().querySelector("[aria-live]")?.textContent ?? "";
+    },
+
     async waitForRender() {
       await nextTick();
     },

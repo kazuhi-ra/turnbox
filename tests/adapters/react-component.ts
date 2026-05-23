@@ -95,6 +95,14 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
       return wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getAriaCurrent(faceNum) {
+      return wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-current") ?? null;
+    },
+
+    getLiveRegionText() {
+      return wrapper.querySelector("[aria-live]")?.textContent ?? "";
+    },
+
     waitForRender() {
       return Promise.resolve();
     },

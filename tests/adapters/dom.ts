@@ -69,6 +69,14 @@ export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
       return container.querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getAriaCurrent(faceNum) {
+      return container.querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-current") ?? null;
+    },
+
+    getLiveRegionText() {
+      return container.querySelector("[aria-live]")?.textContent ?? "";
+    },
+
     waitForRender() {
       return Promise.resolve();
     },

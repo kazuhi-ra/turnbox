@@ -84,6 +84,18 @@ export const createJQueryAdapter = (options: CreateAdapterOptions): TurnBoxTestA
       };
     },
 
+    getAriaHidden(_faceNum) {
+      return null;
+    },
+
+    getAriaCurrent(_faceNum) {
+      return null;
+    },
+
+    getLiveRegionText() {
+      return "";
+    },
+
     waitForRender() {
       return Promise.resolve();
     },
