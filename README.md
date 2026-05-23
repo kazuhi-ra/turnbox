@@ -10,10 +10,10 @@ CSS3 3D box-flip animation library for Vanilla JS, React, and Vue.
 
 | Package | | README |
 | --- | --- | --- |
-| `@kazuhi-ra/turnbox-dom` | Vanilla JS | [→](packages/dom/README.md) |
-| `@kazuhi-ra/turnbox-react` | React | [→](packages/react/README.md) |
-| `@kazuhi-ra/turnbox-vue` | Vue | [→](packages/vue/README.md) |
-| `@kazuhi-ra/turnbox-core` | Pure functions, no DOM dependency | [→](packages/core/README.md) |
+| `@kazuhi-ra/turnbox-dom` | Vanilla JS | [README](packages/dom/README.md) |
+| `@kazuhi-ra/turnbox-react` | React | [README](packages/react/README.md) |
+| `@kazuhi-ra/turnbox-vue` | Vue | [README](packages/vue/README.md) |
+| `@kazuhi-ra/turnbox-core` | Pure functions, no DOM dependency | [README](packages/core/README.md) |
 
 ## Installation
 
