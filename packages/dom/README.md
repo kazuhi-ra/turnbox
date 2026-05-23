@@ -1,9 +1,9 @@
 # @kazuhi-ra/turnbox-dom
 
-バニラJS（フレームワークなし）向けの TURNBOX.js パッケージです。  
-`createTurnBox()` 1関数で、CSS3 3D transform によるボックス反転アニメーションを実装できます。
+Vanilla JS package for TURNBOX.js.  
+A single `createTurnBox()` function adds CSS3 3D box-flip animation to any container element.
 
-## インストール
+## Installation
 
 ```bash
 npm install @kazuhi-ra/turnbox-dom
@@ -11,18 +11,18 @@ npm install @kazuhi-ra/turnbox-dom
 
 ---
 
-## 基本的な使い方
+## Basic Usage
 
 ### HTML
 
-コンテナ要素の直下に面要素を並べます。
+Place face elements as direct children of the container.
 
 ```html
 <div id="box">
-  <div>面 1</div>
-  <div>面 2</div>
-  <div>面 3</div>
-  <div>面 4</div>
+  <div>Face 1</div>
+  <div>Face 2</div>
+  <div>Face 3</div>
+  <div>Face 4</div>
 </div>
 ```
 
@@ -36,66 +36,66 @@ const box = createTurnBox(document.getElementById("box"), {
   duration: 400,
 });
 
-box.next();           // 次の面へ
-box.prev();           // 前の面へ
-box.goTo(3);          // 面3へ（アニメーションあり）
-box.goTo(2, false);   // 面2へ（アニメーションなし）
+box.next();           // go to next face
+box.prev();           // go to previous face
+box.goTo(3);          // go to face 3 (animated)
+box.goTo(2, false);   // go to face 2 (no animation)
 ```
 
 ---
 
 ## API
 
-### `createTurnBox(container, options)`
+### createTurnBox(container, options)
 
-| 引数 | 型 | 説明 |
+| Argument | Type | Description |
 | --- | --- | --- |
-| `container` | `HTMLElement` | ボックスのコンテナ要素 |
-| `options` | `TurnBoxOptions` | オプション（[共通オプション参照](../../README.md#オプション)） |
+| `container` | `HTMLElement` | The container element |
+| `options` | `TurnBoxOptions` | Options (see [shared options](../../README.md#options)) |
 
-戻り値は `TurnBoxInstance` です。
+Returns a `TurnBoxInstance`.
 
-### `TurnBoxInstance`
+### TurnBoxInstance
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `next()` | 次の面へ移動する |
-| `prev()` | 前の面へ移動する |
-| `goTo(face, animation?)` | 指定した面へ移動する。`animation` を `false` にするとアニメーションなし（デフォルト `true`） |
-| `getCurrentFace()` | 現在の面番号を返す（1始まり） |
-| `isAnimating()` | アニメーション中かどうかを返す |
-| `destroy()` | すべてのスタイル・クラス・タイマーを削除してクリーンアップする |
+| `next()` | Go to the next face |
+| `prev()` | Go to the previous face |
+| `goTo(face, animation?)` | Go to the specified face. Pass `false` as the second argument to skip animation (default: `true`) |
+| `getCurrentFace()` | Returns the current face number (1-based) |
+| `isAnimating()` | Returns whether an animation is in progress |
+| `destroy()` | Remove all inline styles, classes, and timers |
 
 ---
 
-## CSS クラス
+## CSS Classes
 
-`@kazuhi-ra/turnbox-dom` はインラインスタイルに加え、以下の CSS クラスを付与します。  
-スタイリングやステート管理に活用できます。
+In addition to inline styles, `@kazuhi-ra/turnbox-dom` applies the following CSS classes.  
+Use them for styling or state-driven logic.
 
-### コンテナに付与されるクラス
+### Container classes
 
-| クラス | 説明 |
+| Class | Description |
 | --- | --- |
-| `turnBoxContainer` | 初期化時に付与 |
-| `turnBoxCurrentFace1` 〜 `turnBoxCurrentFace4` | 現在表示中の面番号に対応するクラス |
+| `turnBoxContainer` | Added on initialization |
+| `turnBoxCurrentFace1` – `turnBoxCurrentFace4` | Reflects the currently visible face number |
 
-### 各面要素に付与されるクラス
+### Face element classes
 
-| クラス | 説明 |
+| Class | Description |
 | --- | --- |
-| `turnBoxFace` | 全面に付与 |
-| `turnBoxFaceNum1` 〜 `turnBoxFaceNum4` | 面番号ごとのクラス |
-| `turnBoxShow` | 現在表示中の面に付与 |
+| `turnBoxFace` | Added to all faces |
+| `turnBoxFaceNum1` – `turnBoxFaceNum4` | Identifies each face by number |
+| `turnBoxShow` | Added to the currently visible face |
 
-### 使用例
+### Example
 
 ```css
-/* 面ごとに背景色を変える */
+/* different background per face */
 .turnBoxFaceNum1 { background: #ffffff; }
 .turnBoxFaceNum2 { background: #f5f5f5; }
 
-/* 現在の面に影をつける */
+/* shadow on the active face */
 .turnBoxContainer.turnBoxCurrentFace2 .turnBoxFaceNum2 {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
 }
@@ -103,6 +103,6 @@ box.goTo(2, false);   // 面2へ（アニメーションなし）
 
 ---
 
-## ライセンス
+## License
 
 MIT

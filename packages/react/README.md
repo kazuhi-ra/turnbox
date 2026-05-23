@@ -1,21 +1,21 @@
 # @kazuhi-ra/turnbox-react
 
-React 向けの TURNBOX.js パッケージです。  
-宣言的な **compound component**（`TurnBox.Root / Face / Button`）と、DOM を直接操作する **`useTurnBox` フック**の2つのAPIを提供します。
+React package for TURNBOX.js.  
+Provides two APIs: a declarative **compound component** (`TurnBox.Root / Face / Button`) and a headless **`useTurnBox` hook**.
 
-## インストール
+## Installation
 
 ```bash
 npm install @kazuhi-ra/turnbox-react
 ```
 
-React 18 以上が必要です。
+Requires React 18 or later.
 
 ---
 
 ## Compound Component
 
-`TurnBox.Button` を面の中に置くことで、ナビゲーションを宣言的に記述できます。
+Place `TurnBox.Button` inside faces to wire up navigation declaratively.
 
 ```tsx
 import { TurnBox } from "@kazuhi-ra/turnbox-react";
@@ -23,20 +23,20 @@ import { TurnBox } from "@kazuhi-ra/turnbox-react";
 const FlipCard = () => (
   <TurnBox.Root faces={4} duration={400}>
     <TurnBox.Face>
-      面 1<TurnBox.Button>次へ</TurnBox.Button>
+      Face 1<TurnBox.Button>Next</TurnBox.Button>
     </TurnBox.Face>
     <TurnBox.Face>
-      <TurnBox.Button direction="prev">戻る</TurnBox.Button>面 2
+      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 2
     </TurnBox.Face>
-    <TurnBox.Face>面 3</TurnBox.Face>
-    <TurnBox.Face>面 4</TurnBox.Face>
+    <TurnBox.Face>Face 3</TurnBox.Face>
+    <TurnBox.Face>Face 4</TurnBox.Face>
   </TurnBox.Root>
 );
 ```
 
-### 外部から制御する（`ref`）
+### External control via ref
 
-プログラムからナビゲーションを操作したい場合は `ref` を使います。
+Use a ref to control navigation programmatically.
 
 ```tsx
 import { useRef } from "react";
@@ -48,42 +48,42 @@ const FlipCard = () => {
   return (
     <>
       <TurnBox.Root faces={4} duration={400} ref={ref}>
-        <TurnBox.Face>面 1</TurnBox.Face>
-        <TurnBox.Face>面 2</TurnBox.Face>
-        <TurnBox.Face>面 3</TurnBox.Face>
-        <TurnBox.Face>面 4</TurnBox.Face>
+        <TurnBox.Face>Face 1</TurnBox.Face>
+        <TurnBox.Face>Face 2</TurnBox.Face>
+        <TurnBox.Face>Face 3</TurnBox.Face>
+        <TurnBox.Face>Face 4</TurnBox.Face>
       </TurnBox.Root>
-      <button onClick={() => ref.current?.next()}>次へ</button>
-      <button onClick={() => ref.current?.prev()}>戻る</button>
+      <button onClick={() => ref.current?.next()}>Next</button>
+      <button onClick={() => ref.current?.prev()}>Back</button>
     </>
   );
 };
 ```
 
-### `TurnBoxRootHandle`
+### TurnBoxRootHandle
 
-| メソッド | 説明 |
+| Method | Description |
 | --- | --- |
-| `next()` | 次の面へ移動する |
-| `prev()` | 前の面へ移動する |
-| `goTo(face, animation?)` | 指定した面へ移動する。`animation` を `false` にするとアニメーションなし（デフォルト `true`） |
-| `getCurrentFace()` | 現在の面番号を返す（1始まり） |
+| `next()` | Go to the next face |
+| `prev()` | Go to the previous face |
+| `goTo(face, animation?)` | Go to the specified face. Pass `false` to skip animation (default: `true`) |
+| `getCurrentFace()` | Returns the current face number (1-based) |
 
-### `TurnBox.Button` props
+### TurnBox.Button props
 
-| props | 型 | デフォルト | 説明 |
+| Prop | Type | Default | Description |
 | --- | --- | --- | --- |
-| `direction` | `"next" \| "prev"` | `"next"` | 次の面へ進む・前の面へ戻る |
-| `to` | `number` | — | 指定した面番号へ直接移動する（`direction` より優先） |
+| `direction` | `"next" \| "prev"` | `"next"` | Go to the next or previous face |
+| `to` | `number` | | Jump directly to the specified face number (takes priority over direction) |
 
-`TurnBox.Button` はネイティブ `<button>` 要素です。`className` や `style` などの標準 props を渡せます。
+`TurnBox.Button` renders a native `<button>` element. Standard props like `className` and `style` are forwarded.
 
 ---
 
-## `useTurnBox` フック
+## useTurnBox hook
 
-DOM 要素を `ref` でバインドし、命令的にアニメーションを制御します。  
-スタイルを自由に組みたい場合や、ライブラリの UI コンポーネントを使わない場合に使います。
+Binds a DOM element via ref and controls animation imperatively.  
+Use this when you want full control over styling or prefer not to use the compound component.
 
 ```tsx
 import { useTurnBox } from "@kazuhi-ra/turnbox-react";
@@ -96,33 +96,33 @@ const FlipCard = () => {
 
   return (
     <div ref={containerRef}>
-      <div>表</div>
-      <div>裏</div>
+      <div>Front</div>
+      <div>Back</div>
     </div>
   );
 };
 ```
 
-### `UseTurnBoxReturn`
+### UseTurnBoxReturn
 
-| フィールド | 型 | 説明 |
+| Field | Type | Description |
 | --- | --- | --- |
-| `containerRef` | `RefObject<HTMLElement>` | コンテナ要素にバインドする ref |
-| `currentFace` | `number` | 現在の面番号（1始まり） |
-| `isAnimating` | `boolean` | アニメーション中かどうか |
-| `next()` | `() => void` | 次の面へ移動する |
-| `prev()` | `() => void` | 前の面へ移動する |
-| `goTo(face, animation?)` | `(face: number, animation?: boolean) => void` | 指定した面へ移動する |
+| `containerRef` | `RefObject<HTMLElement>` | Attach to the container element |
+| `currentFace` | `number` | Current face number (1-based) |
+| `isAnimating` | `boolean` | Whether an animation is in progress |
+| `next()` | `() => void` | Go to the next face |
+| `prev()` | `() => void` | Go to the previous face |
+| `goTo(face, animation?)` | `(face: number, animation?: boolean) => void` | Go to the specified face |
 
 ---
 
-## オプション
+## Options
 
-`TurnBox.Root` と `useTurnBox` で共通の `TurnBoxOptions` です。  
-詳細は[共通オプション](../../README.md#オプション)を参照してください。
+`TurnBox.Root` and `useTurnBox` share the same `TurnBoxOptions`.  
+See [shared options](../../README.md#options) for the full reference.
 
 ---
 
-## ライセンス
+## License
 
 MIT
