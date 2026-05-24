@@ -13,16 +13,18 @@ const mountTurnBox = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) 
   const TestComponent = defineComponent({
     render() {
       const faceNodes = Array.from({ length: faces }, (_, i) => h(TurnBox.Face, { key: `face-${i + 1}` }));
-      return h(
-        TurnBox.Root,
-        {
-          faces,
-          ...opts,
-          ref: (r: TurnBoxRootHandle | null) => {
-            rootHandle.value = r;
-          },
-        } as Record<string, unknown>,
-        () => faceNodes,
+      return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
+        h(
+          TurnBox.Root,
+          {
+            faces,
+            ...opts,
+            ref: (r: TurnBoxRootHandle | null) => {
+              rootHandle.value = r;
+            },
+          } as Record<string, unknown>,
+          () => faceNodes,
+        ),
       );
     },
   });

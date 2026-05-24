@@ -26,6 +26,7 @@ export type CreateAdapterOptions = {
   width?: number;
   height?: number;
   even?: number;
+  reduceAnimation?: "system setting" | "never";
   onChange?: (face: number) => void;
   onAnimationEnd?: (face: number) => void;
   withFocusableChildren?: boolean;

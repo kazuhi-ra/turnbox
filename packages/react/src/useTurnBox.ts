@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createTurnBox, type TurnBoxInstance } from "@kazuhi-ra/turnbox-dom";
 import type { TurnBoxOptions } from "@kazuhi-ra/turnbox-core";
+import { useTurnBoxConfig } from "./TurnBox/ConfigContext.js";
 
 export type UseTurnBoxReturn = {
   containerRef: React.RefObject<HTMLElement | null>;
@@ -12,6 +13,7 @@ export type UseTurnBoxReturn = {
 };
 
 export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
+  const config = useTurnBoxConfig();
   const { faces, axis, direction, type, duration, delay, easing, perspective, width, height, even } = options;
 
   const containerRef = useRef<HTMLElement>(null);
@@ -41,6 +43,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       width,
       height,
       even,
+      reduceAnimation: config.reduceAnimation,
       onChange: (face) => {
         setCurrentFace(face);
         setIsAnimating(true);
@@ -58,7 +61,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       instance.destroy();
       instanceRef.current = null;
     };
-  }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even]);
+  }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even, config.reduceAnimation]);
 
   const goTo = useCallback((face: number, animation = true) => {
     instanceRef.current?.goTo(face, animation);

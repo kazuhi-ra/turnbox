@@ -3,6 +3,7 @@ import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } fro
 import type { TurnBoxOptions, NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContext } from "./context.js";
+import { useTurnBoxConfig } from "./ConfigContext.js";
 import { toTransformString } from "./utils.js";
 import { Face } from "./Face.js";
 import {
@@ -84,6 +85,9 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     ref,
   ) => {
     // ── hooks ──────────────────────────────────────────────────────────────────
+    const config = useTurnBoxConfig();
+    const effectiveReduceAnimation = config.reduceAnimation;
+
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
     const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -108,11 +112,28 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         height,
         even,
       });
-      if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const prefersReducedMotion =
+        effectiveReduceAnimation !== "never" &&
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
         return { ...base, duration: 0, delay: 0 };
       }
       return base;
-    }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even]);
+    }, [
+      faces,
+      axis,
+      direction,
+      type,
+      duration,
+      delay,
+      easing,
+      perspective,
+      width,
+      height,
+      even,
+      effectiveReduceAnimation,
+    ]);
 
     const addTimeout = useCallback((fn: () => void, ms: number) => {
       pendingTimers.current.push(setTimeout(fn, ms));

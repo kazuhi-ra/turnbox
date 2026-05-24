@@ -15,11 +15,17 @@ import {
 } from "vue";
 import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { calcPrePositionTransform, resolveTransition, VIRTUAL_NEXT_WRAP, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
+import {
+  calcPrePositionTransform,
+  resolveTransition,
+  VIRTUAL_NEXT_WRAP,
+  FOCUSABLE,
+} from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContextKey } from "./context.js";
 import { toTransformString } from "./utils.js";
 import type { AnimationPhase } from "./context.js";
 import { Face } from "./Face.js";
+import { injectTurnBoxConfig } from "./configContext.js";
 
 const EMPTY_MAP: ReadonlyMap<number, string> = new Map();
 
@@ -71,6 +77,7 @@ export const Root = defineComponent({
     ariaLabel: { type: String },
   },
   setup(props, { slots, expose }) {
+    const config = injectTurnBoxConfig();
     const displayFace = ref(1);
     const phase = shallowRef<AnimationPhase>({ kind: "idle" });
     const shownFaces = shallowRef<ReadonlySet<number>>(new Set([1]));
@@ -104,7 +111,11 @@ export const Root = defineComponent({
         height: props.height,
         even: props.even,
       });
-      if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const prefersReducedMotion =
+        config.reduceAnimation !== "never" &&
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
         return { ...base, duration: 0, delay: 0 };
       }
       return base;

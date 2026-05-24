@@ -31,6 +31,8 @@ export type Geometry =
 
 export type FaceCount = 2 | 3 | 4;
 
+export type ReduceAnimation = "system setting" | "never";
+
 export type TurnBoxOptions = {
   faces: FaceCount;
   axis?: Axis;

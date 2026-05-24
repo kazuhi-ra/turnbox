@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
 import { createApp, defineComponent, h } from "vue";
-import { useTurnBox } from "@kazuhi-ra/turnbox-vue";
+import { useTurnBox, TurnBox as VueTurnBox } from "@kazuhi-ra/turnbox-vue";
 
 type Args = {
   faces: 2 | 3 | 4;
@@ -87,7 +87,10 @@ const VueWrapper = ({ args }: { args: Args }) => {
   useEffect(() => {
     const el = mountRef.current;
     if (!el) return;
-    const app = createApp(VueTurnBoxDemo, args);
+    const Root = defineComponent({
+      render: () => h(VueTurnBox.Provider, { reduceAnimation: "never" }, () => h(VueTurnBoxDemo, args)),
+    });
+    const app = createApp(Root);
     app.mount(el);
     return () => app.unmount();
   }, []);
