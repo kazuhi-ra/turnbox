@@ -30,10 +30,3 @@ export const allAdapters: [string, AdapterFactory][] = [
   ["React (Component)", createReactComponentAdapter],
   ["Vue (Component)", createVueComponentAdapter],
 ];
-
-// DOM + React hook + Vue hook: only adapters that expose isAnimating
-export const animatingAdapters: [string, AdapterFactory][] = [
-  ["DOM", createDomAdapter],
-  ["React", createReactAdapter],
-  ["Vue", createVueAdapter],
-];

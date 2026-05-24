@@ -65,7 +65,7 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
     },
 
     isAnimating() {
-      return false;
+      return getHandle().isAnimating();
     },
 
     isFaceShown(faceNum) {

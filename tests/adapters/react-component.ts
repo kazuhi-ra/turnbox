@@ -67,7 +67,7 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
     },
 
     isAnimating() {
-      return false;
+      return getHandle().isAnimating();
     },
 
     isFaceShown(faceNum) {

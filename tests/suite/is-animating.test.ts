@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { animatingAdapters } from "../adapters/index.js";
+import { modernAdapters } from "../adapters/index.js";
 import type { TurnBoxTestAdapter } from "./adapter.js";
 
 const DURATION = 200;
@@ -7,7 +7,7 @@ const DELAY = 0;
 const ADJUST_TIME = 20;
 const TOTAL = DURATION + DELAY;
 
-describe.each(animatingAdapters)("%s — isAnimating", (_, createAdapter) => {
+describe.each(modernAdapters)("%s — isAnimating", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   afterEach(() => {

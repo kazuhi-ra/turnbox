@@ -54,6 +54,7 @@ const calcContainerDynStyle = (
 export type TurnBoxRootHandle = {
   goTo(face: number, animation?: boolean): void;
   getCurrentFace(): number;
+  isAnimating(): boolean;
   next(): void;
   prev(): void;
 };
@@ -288,7 +289,7 @@ export const Root = defineComponent({
       prev,
     });
 
-    expose({ goTo, getCurrentFace: () => displayFace.value, next, prev } satisfies TurnBoxRootHandle);
+    expose({ goTo, getCurrentFace: () => displayFace.value, isAnimating: () => isAnimatingFlag.value, next, prev } satisfies TurnBoxRootHandle);
 
     return () => {
       const boxWidth = props.width ?? DEFAULT_SIZE;

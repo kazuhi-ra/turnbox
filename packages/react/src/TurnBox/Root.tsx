@@ -56,6 +56,7 @@ type RootProps = TurnBoxOptions &
 export type TurnBoxRootHandle = {
   goTo(face: number, animation?: boolean): void;
   getCurrentFace(): number;
+  isAnimating(): boolean;
   next(): void;
   prev(): void;
 };
@@ -269,7 +270,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     const next = useCallback(() => goTo(state.displayFace + 1, true), [goTo, state.displayFace]);
     const prev = useCallback(() => goTo(state.displayFace - 1, true), [goTo, state.displayFace]);
 
-    useImperativeHandle(ref, () => ({ goTo, getCurrentFace: () => state.displayFace, next, prev }), [
+    useImperativeHandle(ref, () => ({ goTo, getCurrentFace: () => state.displayFace, isAnimating: () => isAnimatingRef.current, next, prev }), [
       goTo,
       next,
       prev,
