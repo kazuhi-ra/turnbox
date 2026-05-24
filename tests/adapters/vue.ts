@@ -46,9 +46,7 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
         "div",
         { ref: "containerRef", "data-turnbox-test": testId },
         Array.from({ length: faces }, (_, i) => {
-          const btn = options.withFocusableChildren
-            ? h("button", { "data-face-btn": String(i + 1) })
-            : null;
+          const btn = options.withFocusableChildren ? h("button", { "data-face-btn": String(i + 1) }) : null;
           return h("div", { key: `face-${i + 1}` }, btn ? [btn] : undefined);
         }),
       );

@@ -10,9 +10,7 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
   const rootHandle = shallowRef<TurnBoxRootHandle | null>(null);
 
   const faceNodes = Array.from({ length: faces }, (_, i) => {
-    const btn = options.withFocusableChildren
-      ? h("button", { "data-face-btn": String(i + 1) })
-      : null;
+    const btn = options.withFocusableChildren ? h("button", { "data-face-btn": String(i + 1) }) : null;
     return h(TurnBox.Face, { key: `face-${i + 1}` }, btn ? () => [btn] : undefined);
   });
 
