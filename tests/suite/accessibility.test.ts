@@ -87,6 +87,45 @@ describe.each(modernAdapters)("%s — aria-hidden", (_, createAdapter) => {
   });
 });
 
+// ── adapter-based: inert ─────────────────────────────────────────────────────
+// inert prevents Tab focus into hidden faces (aria-hidden alone does not).
+
+describe.each(modernAdapters)("%s — inert", (_, createAdapter) => {
+  let adapter: TurnBoxTestAdapter;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY });
+  });
+
+  afterEach(async () => {
+    adapter.destroy();
+    vi.useRealTimers();
+  });
+
+  it("face 1 is not inert on init", () => {
+    expect(adapter.getInert(1)).toBe(false);
+  });
+
+  it("faces 2–4 are inert on init", () => {
+    expect(adapter.getInert(2)).toBe(true);
+    expect(adapter.getInert(3)).toBe(true);
+    expect(adapter.getInert(4)).toBe(true);
+  });
+
+  it("target face loses inert after animation", async () => {
+    adapter.next();
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getInert(2)).toBe(false);
+  });
+
+  it("previous face gains inert after animation", async () => {
+    adapter.next();
+    await adapter.advanceTime(TOTAL + 50);
+    expect(adapter.getInert(1)).toBe(true);
+  });
+});
+
 // ── DOM only: destroy removes aria-hidden ─────────────────────────────────────
 // createTurnBox.destroy() explicitly removes aria-hidden from all faces so that
 // any code holding element references doesn't see stale attributes.

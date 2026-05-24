@@ -5,11 +5,15 @@ import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";
 
-export type FaceProps = {
-  children?: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
+// inert is a standard HTML attribute but missing from @types/react 18
+declare module "react" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface, not type
+  interface HTMLAttributes<T> {
+    inert?: "" | undefined;
+  }
+}
+
+export type FaceProps = React.HTMLAttributes<HTMLDivElement>;
 
 type FaceInternalProps = FaceProps & { _faceIndex?: number };
 
@@ -29,7 +33,7 @@ const hasTransition = (phase: AnimationPhase): boolean =>
 const usesFaceTransform = (phase: AnimationPhase): boolean =>
   phase.kind !== "adjusting" && phase.kind !== "adjust-animating";
 
-export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInternalProps) => {
+export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: FaceInternalProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
 
   const ft = usesFaceTransform(phase)
@@ -40,7 +44,6 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
   const transformStr = override ?? toTransformString(ft);
 
   const faceStyle: React.CSSProperties = {
-    // user styles first so component's required properties take precedence
     ...style,
     position: "absolute",
     ...faceDimStyle(_faceIndex, opts),
@@ -55,7 +58,14 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
   const isShown = shownFaces.has(_faceIndex);
 
   return (
-    <div data-face-index={_faceIndex} className={className} style={faceStyle} aria-hidden={isShown ? undefined : true}>
+    <div
+      {...rest}
+      data-face-index={_faceIndex}
+      className={className}
+      style={faceStyle}
+      aria-hidden={isShown ? undefined : true}
+      inert={isShown ? undefined : ""}
+    >
       {children}
     </div>
   );

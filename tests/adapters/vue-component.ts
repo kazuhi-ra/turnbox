@@ -6,10 +6,13 @@ import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-vue";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, ...rest } = options;
+  const { faces, withFocusableChildren, ...rest } = options;
   const rootHandle = shallowRef<TurnBoxRootHandle | null>(null);
 
-  const faceNodes = Array.from({ length: faces }, (_, i) => h(TurnBox.Face, { key: `face-${i + 1}` }));
+  const faceNodes = Array.from({ length: faces }, (_, i) => {
+    const btn = options.withFocusableChildren ? h("button", { "data-face-btn": String(i + 1) }) : null;
+    return h(TurnBox.Face, { key: `face-${i + 1}` }, btn ? () => [btn] : undefined);
+  });
 
   const TestComponent = defineComponent({
     render() {
@@ -93,6 +96,18 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
 
     getAriaHidden(faceNum) {
       return getFaceEl(faceNum)?.getAttribute("aria-hidden") ?? null;
+    },
+
+    getInert(faceNum) {
+      const el = getFaceEl(faceNum);
+      return el ? el.inert === true || el.hasAttribute("inert") : false;
+    },
+
+    getFocusedFaceIndex() {
+      const el = document.activeElement;
+      if (!el) return null;
+      const face = el.closest<HTMLElement>("[data-face-index]");
+      return face ? Number(face.getAttribute("data-face-index")) : null;
     },
 
     async waitForRender() {

@@ -20,7 +20,11 @@ export type TurnBoxInstance = {
   destroy(): void;
 };
 
+type DomOptions = TurnBoxOptions & { ariaLabel?: string };
+
 const ADJUST_TIME = 20;
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
@@ -42,8 +46,11 @@ const applyAdjustTransforms = (faces: HTMLElement[], currentFace: number, opts: 
   });
 };
 
-export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): TurnBoxInstance => {
-  const opts = normalizeOptions(options);
+export const createTurnBox = (container: HTMLElement, options: DomOptions): TurnBoxInstance => {
+  const rawOpts = normalizeOptions(options);
+  const prefersReducedMotion =
+    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const opts = prefersReducedMotion ? { ...rawOpts, duration: 0, delay: 0 } : rawOpts;
   const { geometry } = opts;
   const faces = Array.from(container.children).slice(0, opts.faces) as HTMLElement[];
 
@@ -91,17 +98,27 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
 
   const showFace = (faceNum: number): void => {
     const face = faces[resolveRealFace(faceNum) - 1];
-    face?.classList.add("turnBoxShow");
-    face?.removeAttribute("aria-hidden");
+    if (!face) return;
+    face.classList.add("turnBoxShow");
+    face.removeAttribute("aria-hidden");
+    face.inert = false;
   };
 
   const hideFace = (faceNum: number): void => {
     const face = faces[resolveRealFace(faceNum) - 1];
-    face?.classList.remove("turnBoxShow");
-    face?.setAttribute("aria-hidden", "true");
+    if (!face) return;
+    face.classList.remove("turnBoxShow");
+    face.setAttribute("aria-hidden", "true");
+    face.inert = true;
   };
 
   // Initialize
+  // role="region" makes TurnBox a landmark for screen reader navigation (e.g. "R" key jump).
+  // Only set when ariaLabel is provided — an unlabelled landmark is worse than no landmark.
+  if (options.ariaLabel) {
+    container.setAttribute("role", "region");
+    container.setAttribute("aria-label", options.ariaLabel);
+  }
   container.style.perspective = `${opts.perspective}px`;
   container.classList.add("turnBoxContainer", `turnBoxCurrentFace${currentFace}`);
   if (geometry.kind === "variable") {
@@ -109,7 +126,10 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
   }
   applyFaceTransforms(faces, currentFace, opts);
   faces[0]?.classList.add("turnBoxShow");
-  for (const face of faces.slice(1)) face.setAttribute("aria-hidden", "true");
+  for (const face of faces.slice(1)) {
+    face.setAttribute("aria-hidden", "true");
+    face.inert = true;
+  }
 
   // Fixed-geometry wrap: override incoming face to 0° so transition goes
   // from the pre-positioned ±90° to 0°, not from ±90° to ±360°.
@@ -142,6 +162,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
           applyFaceTransforms(faces, currentFace, opts);
           isAnimating = false;
           options.onAnimationEnd?.(finalFace);
+          faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
         },
         time + ADJUST_TIME * 2,
       );
@@ -199,6 +220,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
         if (!hasAdjust) {
           isAnimating = false;
           options.onAnimationEnd?.(finalFace);
+          faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
         }
       }, time);
     }, ADJUST_TIME);
@@ -234,6 +256,7 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
         face.style.height = "";
         face.style.width = "";
         face.removeAttribute("aria-hidden");
+        face.inert = false;
       });
       container.classList.remove(
         "turnBoxContainer",
@@ -243,6 +266,10 @@ export const createTurnBox = (container: HTMLElement, options: TurnBoxOptions): 
       container.style.left = "";
       container.style.transition = "";
       container.style.perspective = "";
+      if (options.ariaLabel) {
+        container.removeAttribute("role");
+        container.removeAttribute("aria-label");
+      }
     },
   };
 };
