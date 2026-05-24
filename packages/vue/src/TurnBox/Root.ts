@@ -20,6 +20,7 @@ import { TurnBoxContextKey } from "./context.js";
 import { toTransformString } from "./utils.js";
 import type { AnimationPhase } from "./context.js";
 import { Face } from "./Face.js";
+import { injectTurnBoxConfig } from "./configContext.js";
 
 const EMPTY_MAP: ReadonlyMap<number, string> = new Map();
 
@@ -72,6 +73,7 @@ export const Root = defineComponent({
     ariaLabel: { type: String },
   },
   setup(props, { slots, expose }) {
+    const config = injectTurnBoxConfig();
     const displayFace = ref(1);
     const phase = shallowRef<AnimationPhase>({ kind: "idle" });
     const shownFaces = shallowRef<ReadonlySet<number>>(new Set([1]));
@@ -104,7 +106,7 @@ export const Root = defineComponent({
         width: props.width,
         height: props.height,
         even: props.even,
-        reduceMotion: props.reduceMotion,
+        reduceMotion: props.reduceMotion ?? config.reduceMotion,
       });
       const prefersReducedMotion =
         base.reduceMotion !== "never" &&

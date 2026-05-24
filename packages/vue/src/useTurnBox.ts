@@ -1,6 +1,7 @@
 import { onMounted, onUnmounted, ref, watch, type Ref } from "vue";
 import { createTurnBox, type TurnBoxInstance } from "@kazuhi-ra/turnbox-dom";
 import type { TurnBoxOptions } from "@kazuhi-ra/turnbox-core";
+import { injectTurnBoxConfig } from "./TurnBox/configContext.js";
 
 export type UseTurnBoxReturn = {
   containerRef: Ref<HTMLElement | null>;
@@ -12,6 +13,7 @@ export type UseTurnBoxReturn = {
 };
 
 export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
+  const config = injectTurnBoxConfig();
   const containerRef = ref<HTMLElement | null>(null);
   const currentFace = ref(1);
   const isAnimating = ref(false);
@@ -23,6 +25,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
 
     instance = createTurnBox(el, {
       ...options,
+      reduceMotion: options.reduceMotion ?? config.reduceMotion,
       onChange: (face) => {
         currentFace.value = face;
         isAnimating.value = true;
@@ -57,7 +60,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       options.width,
       options.height,
       options.even,
-      options.reduceMotion,
+      options.reduceMotion ?? config.reduceMotion,
     ],
     () => {
       cleanup();
