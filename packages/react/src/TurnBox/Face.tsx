@@ -5,6 +5,13 @@ import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";
 
+// inert is a standard HTML attribute but missing from @types/react 18
+declare module "react" {
+  interface HTMLAttributes<T> {
+    inert?: "" | undefined;
+  }
+}
+
 export type FaceProps = React.HTMLAttributes<HTMLDivElement>;
 
 type FaceInternalProps = FaceProps & { _faceIndex?: number };
@@ -56,6 +63,7 @@ export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: Fa
       className={className}
       style={faceStyle}
       aria-hidden={isShown ? undefined : true}
+      inert={isShown ? undefined : ""}
     >
       {children}
     </div>

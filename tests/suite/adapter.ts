@@ -41,6 +41,7 @@ export type TurnBoxTestAdapter = {
   getFaceState(faceNum: number): FaceState;
   getContainerState(): ContainerState;
   getAriaHidden(faceNum: number): string | null;
+  getInert(faceNum: number): boolean;
   getFocusedFaceIndex(): number | null;
   waitForRender(): Promise<void>;
   advanceTime(ms: number): Promise<void>;

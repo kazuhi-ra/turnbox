@@ -75,6 +75,10 @@ export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
       return container.querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getInert(faceNum) {
+      return (container.querySelector(`.turnBoxFaceNum${faceNum}`) as HTMLElement | null)?.inert ?? false;
+    },
+
     getFocusedFaceIndex() {
       const el = document.activeElement;
       if (!el || el === document.body) return null;

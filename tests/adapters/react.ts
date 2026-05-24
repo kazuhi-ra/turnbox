@@ -129,6 +129,10 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
       return getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getInert(faceNum) {
+      return (getContainer().querySelector(`.turnBoxFaceNum${faceNum}`) as HTMLElement | null)?.inert ?? false;
+    },
+
     getFocusedFaceIndex() {
       const el = document.activeElement;
       if (!el || el === document.body) return null;

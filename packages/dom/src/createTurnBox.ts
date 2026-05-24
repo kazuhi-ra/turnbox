@@ -98,14 +98,18 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
   const showFace = (faceNum: number): void => {
     const face = faces[resolveRealFace(faceNum) - 1];
-    face?.classList.add("turnBoxShow");
-    face?.removeAttribute("aria-hidden");
+    if (!face) return;
+    face.classList.add("turnBoxShow");
+    face.removeAttribute("aria-hidden");
+    face.inert = false;
   };
 
   const hideFace = (faceNum: number): void => {
     const face = faces[resolveRealFace(faceNum) - 1];
-    face?.classList.remove("turnBoxShow");
-    face?.setAttribute("aria-hidden", "true");
+    if (!face) return;
+    face.classList.remove("turnBoxShow");
+    face.setAttribute("aria-hidden", "true");
+    face.inert = true;
   };
 
   // Initialize
@@ -120,7 +124,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   }
   applyFaceTransforms(faces, currentFace, opts);
   faces[0]?.classList.add("turnBoxShow");
-  for (const face of faces.slice(1)) face.setAttribute("aria-hidden", "true");
+  for (const face of faces.slice(1)) {
+    face.setAttribute("aria-hidden", "true");
+    face.inert = true;
+  }
 
   // Fixed-geometry wrap: override incoming face to 0° so transition goes
   // from the pre-positioned ±90° to 0°, not from ±90° to ±360°.
@@ -247,6 +254,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
         face.style.height = "";
         face.style.width = "";
         face.removeAttribute("aria-hidden");
+        face.inert = false;
       });
       container.classList.remove(
         "turnBoxContainer",

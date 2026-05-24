@@ -100,6 +100,11 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
       return getFaceEl(faceNum)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getInert(faceNum) {
+      const el = getFaceEl(faceNum);
+      return el ? el.inert === true || el.hasAttribute("inert") : false;
+    },
+
     getFocusedFaceIndex() {
       const el = document.activeElement;
       if (!el) return null;

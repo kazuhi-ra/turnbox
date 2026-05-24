@@ -88,6 +88,10 @@ export const createJQueryAdapter = (options: CreateAdapterOptions): TurnBoxTestA
       return null;
     },
 
+    getInert(_faceNum) {
+      return false;
+    },
+
     waitForRender() {
       return Promise.resolve();
     },

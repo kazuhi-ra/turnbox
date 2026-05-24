@@ -100,6 +100,11 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
       return wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null;
     },
 
+    getInert(faceNum) {
+      const el = wrapper.querySelector(`[data-face-index="${faceNum}"]`) as HTMLElement | null;
+      return el ? el.inert === true || el.hasAttribute("inert") : false;
+    },
+
     getFocusedFaceIndex() {
       const el = document.activeElement;
       if (!el) return null;
