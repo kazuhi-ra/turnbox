@@ -7,6 +7,10 @@ describe.each(modernAdapters)("%s — prefers-reduced-motion", (_, createAdapter
 
   beforeEach(() => {
     vi.useFakeTimers();
+    // jsdom has no real CSS media query engine, so matchMedia is undefined by default.
+    // Define it via Object.defineProperty (vi.spyOn requires the property to already exist).
+    // matches:true simulates the OS "reduce motion" setting being ON, which causes
+    // the implementation to override duration/delay to 0 at initialization time.
     Object.defineProperty(window, "matchMedia", {
       writable: true,
       configurable: true,
