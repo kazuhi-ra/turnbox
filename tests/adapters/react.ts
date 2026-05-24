@@ -53,7 +53,7 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
       { ref: containerRef, "data-turnbox-test": testId },
       ...Array.from({ length: faces }, (_, i) => {
         const btn = options.withFocusableChildren
-          ? createElement("button", { key: "btn", "data-face-btn": String(i + 1) })
+          ? createElement("button", { key: "btn", type: "button", "data-face-btn": String(i + 1) })
           : null;
         return createElement("div", { key: `face-${i + 1}` }, btn);
       }),

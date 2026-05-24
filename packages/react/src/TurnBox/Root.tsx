@@ -280,6 +280,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     const containerDynStyle = calcContainerDynStyle(state, opts);
 
     return (
+      // biome-ignore lint/a11y/useAriaPropsSupportedByRole: role="region" is set conditionally alongside aria-label; Biome cannot track the dynamic pairing
       <div
         {...ariaRest}
         role={ariaLabel ? "region" : undefined}

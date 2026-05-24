@@ -15,7 +15,7 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
 
   const faceNodes = Array.from({ length: faces }, (_, i) => {
     const btn = options.withFocusableChildren
-      ? createElement("button", { key: "btn", "data-face-btn": String(i + 1) })
+      ? createElement("button", { key: "btn", type: "button", "data-face-btn": String(i + 1) })
       : null;
     return createElement(TurnBox.Face, { key: `face-${i + 1}` }, btn);
   });

@@ -7,6 +7,7 @@ import { toTransformString } from "./utils.js";
 
 // inert is a standard HTML attribute but missing from @types/react 18
 declare module "react" {
+  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface, not type
   interface HTMLAttributes<T> {
     inert?: "" | undefined;
   }

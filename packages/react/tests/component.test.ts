@@ -244,13 +244,12 @@ describe("focus management", () => {
       createElement(
         TurnBox.Face,
         { key: `face-${i + 1}` },
-        createElement("button", { "data-testid": `btn-face-${i + 1}` }, `Face ${i + 1}`),
+        createElement("button", { type: "button", "data-testid": `btn-face-${i + 1}` }, `Face ${i + 1}`),
       ),
     );
     const container = document.createElement("div");
     document.body.appendChild(container);
 
-    // biome-ignore lint/style/useConst: assigned inside act
     let root: ReturnType<typeof createRoot>;
     act(() => {
       root = createRoot(container);
