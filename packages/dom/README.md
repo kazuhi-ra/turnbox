@@ -25,7 +25,6 @@ import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 const box = createTurnBox(document.getElementById("box"), {
   faces: 4,
   duration: 400,
-  reduceAnimation: "system setting",
 });
 
 box.next();

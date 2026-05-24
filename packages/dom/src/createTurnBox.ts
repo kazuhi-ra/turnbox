@@ -22,7 +22,7 @@ export type TurnBoxInstance = {
   destroy(): void;
 };
 
-type DomOptions = TurnBoxOptions & { ariaLabel?: string; reduceAnimation: ReduceAnimation };
+type DomOptions = TurnBoxOptions & { ariaLabel?: string; reduceAnimation?: ReduceAnimation };
 
 const ADJUST_TIME = 20;
 

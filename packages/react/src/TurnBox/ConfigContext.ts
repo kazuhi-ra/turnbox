@@ -3,13 +3,8 @@ import type { ReduceAnimation } from "@kazuhi-ra/turnbox-core";
 
 export type TurnBoxConfig = { reduceAnimation: ReduceAnimation };
 
-export const TurnBoxConfigContext = createContext<TurnBoxConfig | null>(null);
+const DEFAULT_CONFIG: TurnBoxConfig = { reduceAnimation: "system setting" };
 
-export const useTurnBoxConfig = (): TurnBoxConfig => {
-  const config = useContext(TurnBoxConfigContext);
-  if (!config)
-    throw new Error(
-      '[TurnBox] reduceAnimation is required. Wrap with <TurnBox.Provider reduceAnimation="system setting" | "never">.',
-    );
-  return config;
-};
+export const TurnBoxConfigContext = createContext<TurnBoxConfig>(DEFAULT_CONFIG);
+
+export const useTurnBoxConfig = (): TurnBoxConfig => useContext(TurnBoxConfigContext);

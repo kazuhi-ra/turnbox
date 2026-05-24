@@ -5,7 +5,7 @@ import { TurnBoxConfigKey, type TurnBoxConfig } from "./configContext.js";
 export const Provider = defineComponent({
   name: "TurnBoxProvider",
   props: {
-    reduceAnimation: { type: String as PropType<ReduceAnimation>, required: true },
+    reduceAnimation: { type: String as PropType<ReduceAnimation>, default: "system setting" },
   },
   setup(props, { slots }) {
     const config = reactive<TurnBoxConfig>({ reduceAnimation: props.reduceAnimation });

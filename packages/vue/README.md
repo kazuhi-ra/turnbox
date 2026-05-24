@@ -12,23 +12,7 @@ npm install @kazuhi-ra/turnbox-vue
 
 ## Compound Component
 
-Wrap your app (or the section that uses TurnBox) with `TurnBox.Provider`. This is required — `TurnBox.Root` will throw if no Provider is present.
-
 ```vue
-<!-- App.vue -->
-<template>
-  <TurnBox.Provider reduceAnimation="system setting">
-    <FlipCard />
-  </TurnBox.Provider>
-</template>
-
-<script setup>
-import { TurnBox } from "@kazuhi-ra/turnbox-vue";
-</script>
-```
-
-```vue
-<!-- FlipCard.vue -->
 <template>
   <TurnBox.Root :faces="4" :duration="400">
     <TurnBox.Face>
@@ -50,20 +34,6 @@ import { TurnBox } from "@kazuhi-ra/turnbox-vue";
 ### External control via ref
 
 ```vue
-<!-- App.vue -->
-<template>
-  <TurnBox.Provider reduceAnimation="system setting">
-    <FlipCard />
-  </TurnBox.Provider>
-</template>
-
-<script setup>
-import { TurnBox } from "@kazuhi-ra/turnbox-vue";
-</script>
-```
-
-```vue
-<!-- FlipCard.vue -->
 <template>
   <TurnBox.Root :faces="4" :duration="400" :ref="handle">
     <TurnBox.Face>Face 1</TurnBox.Face>
@@ -103,23 +73,7 @@ Forwards standard attrs (`class`, `style`, etc.) to the native `<button>`.
 
 ## useTurnBox composable
 
-`useTurnBox` also requires a `TurnBox.Provider` ancestor.
-
 ```vue
-<!-- App.vue -->
-<template>
-  <TurnBox.Provider reduceAnimation="system setting">
-    <FlipCard />
-  </TurnBox.Provider>
-</template>
-
-<script setup>
-import { TurnBox } from "@kazuhi-ra/turnbox-vue";
-</script>
-```
-
-```vue
-<!-- FlipCard.vue -->
 <script setup>
 import { useTurnBox } from "@kazuhi-ra/turnbox-vue";
 
