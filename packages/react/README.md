@@ -59,6 +59,7 @@ const FlipCard = () => {
 | `prev()` | Go to the previous face |
 | `goTo(face, animation?)` | Go to the specified face (`animation` defaults to `true`) |
 | `getCurrentFace()` | Current face number (1-based) |
+| `isAnimating()` | Whether an animation is in progress |
 
 ### TurnBox.Button props
 
