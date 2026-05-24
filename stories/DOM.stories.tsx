@@ -65,6 +65,7 @@ const DomDemo = (args: Args) => {
       width: args.width,
       height: args.height,
       even: args.even,
+      reduceAnimation: "never",
       onChange: setCurrentFace,
     });
 

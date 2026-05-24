@@ -72,7 +72,7 @@ describe.each(modernAdapters)("%s — reduceAnimation:'never'", (_, createAdapte
 
   beforeEach(() => {
     vi.useFakeTimers();
-    // Simulate OS "reduce motion" ON, but the component opts out via reduceMotion:"never"
+    // Simulate OS "reduce motion" ON, but the component opts out via reduceAnimation:"never"
     mockMatchMediaReduceMotion(true);
     adapter = createAdapter({ faces: 4, duration: 300, delay: 100, reduceAnimation: "never" });
   });
