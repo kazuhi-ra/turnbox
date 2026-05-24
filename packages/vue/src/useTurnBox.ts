@@ -57,6 +57,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       options.width,
       options.height,
       options.even,
+      options.reduceMotion,
     ],
     () => {
       cleanup();

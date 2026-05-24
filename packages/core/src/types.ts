@@ -31,6 +31,8 @@ export type Geometry =
 
 export type FaceCount = 2 | 3 | 4;
 
+export type ReduceMotion = "user" | "never";
+
 export type TurnBoxOptions = {
   faces: FaceCount;
   axis?: Axis;
@@ -43,6 +45,7 @@ export type TurnBoxOptions = {
   width?: number;
   height?: number;
   even?: number;
+  reduceMotion?: ReduceMotion;
   onChange?: (face: number) => void;
   onAnimationEnd?: (face: number) => void;
 };
@@ -56,6 +59,7 @@ export type NormalizedOptions = {
   easing: string;
   perspective: number;
   geometry: Geometry;
+  reduceMotion: ReduceMotion;
 };
 
 export type FaceTransform = {

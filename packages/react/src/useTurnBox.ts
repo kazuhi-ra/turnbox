@@ -12,7 +12,8 @@ export type UseTurnBoxReturn = {
 };
 
 export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
-  const { faces, axis, direction, type, duration, delay, easing, perspective, width, height, even } = options;
+  const { faces, axis, direction, type, duration, delay, easing, perspective, width, height, even, reduceMotion } =
+    options;
 
   const containerRef = useRef<HTMLElement>(null);
   const instanceRef = useRef<TurnBoxInstance | null>(null);
@@ -41,6 +42,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       width,
       height,
       even,
+      reduceMotion,
       onChange: (face) => {
         setCurrentFace(face);
         setIsAnimating(true);
@@ -58,7 +60,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       instance.destroy();
       instanceRef.current = null;
     };
-  }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even]);
+  }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even, reduceMotion]);
 
   const goTo = useCallback((face: number, animation = true) => {
     instanceRef.current?.goTo(face, animation);

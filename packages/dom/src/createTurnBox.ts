@@ -48,7 +48,9 @@ const applyAdjustTransforms = (faces: HTMLElement[], currentFace: number, opts: 
 export const createTurnBox = (container: HTMLElement, options: DomOptions): TurnBoxInstance => {
   const rawOpts = normalizeOptions(options);
   const prefersReducedMotion =
-    typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    rawOpts.reduceMotion !== "never" &&
+    typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const opts = prefersReducedMotion ? { ...rawOpts, duration: 0, delay: 0 } : rawOpts;
   const { geometry } = opts;
   const faces = Array.from(container.children).slice(0, opts.faces) as HTMLElement[];

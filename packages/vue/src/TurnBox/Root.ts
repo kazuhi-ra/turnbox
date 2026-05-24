@@ -66,6 +66,7 @@ export const Root = defineComponent({
     width: { type: Number },
     height: { type: Number },
     even: { type: Number },
+    reduceMotion: { type: String as PropType<"user" | "never"> },
     onChange: { type: Function as PropType<(face: number) => void> },
     onAnimationEnd: { type: Function as PropType<(face: number) => void> },
     ariaLabel: { type: String },
@@ -103,8 +104,13 @@ export const Root = defineComponent({
         width: props.width,
         height: props.height,
         even: props.even,
+        reduceMotion: props.reduceMotion,
       });
-      if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const prefersReducedMotion =
+        base.reduceMotion !== "never" &&
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
         return { ...base, duration: 0, delay: 0 };
       }
       return base;

@@ -73,6 +73,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       width,
       height,
       even,
+      reduceMotion,
       onChange,
       onAnimationEnd,
       children,
@@ -107,12 +108,17 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         width,
         height,
         even,
+        reduceMotion,
       });
-      if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      const prefersReducedMotion =
+        base.reduceMotion !== "never" &&
+        typeof window !== "undefined" &&
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      if (prefersReducedMotion) {
         return { ...base, duration: 0, delay: 0 };
       }
       return base;
-    }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even]);
+    }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even, reduceMotion]);
 
     const addTimeout = useCallback((fn: () => void, ms: number) => {
       pendingTimers.current.push(setTimeout(fn, ms));
