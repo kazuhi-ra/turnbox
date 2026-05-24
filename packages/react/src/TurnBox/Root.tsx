@@ -74,7 +74,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       width,
       height,
       even,
-      reduceMotion,
       onChange,
       onAnimationEnd,
       children,
@@ -87,7 +86,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
   ) => {
     // ── hooks ──────────────────────────────────────────────────────────────────
     const config = useTurnBoxConfig();
-    const effectiveReduceMotion = reduceMotion ?? config.reduceMotion;
+    const effectiveReduceMotion = config.reduceMotion;
 
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
@@ -112,10 +111,9 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         width,
         height,
         even,
-        reduceMotion: effectiveReduceMotion,
       });
       const prefersReducedMotion =
-        base.reduceMotion !== "never" &&
+        effectiveReduceMotion !== "never" &&
         typeof window !== "undefined" &&
         window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       if (prefersReducedMotion) {

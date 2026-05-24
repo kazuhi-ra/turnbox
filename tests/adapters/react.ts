@@ -2,13 +2,13 @@ import { vi } from "vitest";
 import { createElement, StrictMode, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
-import { useTurnBox } from "@kazuhi-ra/turnbox-react";
+import { useTurnBox, TurnBox } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 let counter = 0;
 
 export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, ...turnBoxOptions } = options;
+  const { faces, withFocusableChildren, reduceMotion, ...turnBoxOptions } = options;
   const testId = String(counter++);
 
   const holder: {
@@ -60,10 +60,14 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
     );
   }
 
+  const tree = reduceMotion
+    ? createElement(TurnBox.Provider, { reduceMotion }, createElement(TestComponent))
+    : createElement(TestComponent);
+
   let root: Root;
   act(() => {
     root = createRoot(wrapper);
-    root.render(createElement(StrictMode, null, createElement(TestComponent)));
+    root.render(createElement(StrictMode, null, tree));
   });
 
   const getContainer = (): HTMLElement => {

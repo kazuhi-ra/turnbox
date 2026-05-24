@@ -1,13 +1,13 @@
 import { vi } from "vitest";
 import { defineComponent, h, nextTick, type Ref } from "vue";
 import { mount } from "@vue/test-utils";
-import { useTurnBox } from "@kazuhi-ra/turnbox-vue";
+import { useTurnBox, TurnBox } from "@kazuhi-ra/turnbox-vue";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 let counter = 0;
 
 export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, ...turnBoxOptions } = options;
+  const { faces, withFocusableChildren, reduceMotion, ...turnBoxOptions } = options;
   const testId = String(counter++);
 
   const holder: {
@@ -53,8 +53,12 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
     },
   });
 
-  const wrapper = mount(TestComponent, { attachTo: document.body });
-  holder.container = wrapper.element as HTMLElement;
+  const RootComponent = reduceMotion
+    ? defineComponent({ render: () => h(TurnBox.Provider, { reduceMotion }, () => h(TestComponent)) })
+    : TestComponent;
+
+  const wrapper = mount(RootComponent, { attachTo: document.body });
+  holder.container = wrapper.element.querySelector("[data-turnbox-test]") as HTMLElement ?? wrapper.element as HTMLElement;
 
   const getContainer = (): HTMLElement => {
     if (!holder.container) throw new Error("container not mounted");

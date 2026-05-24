@@ -10,6 +10,7 @@ import {
   type TurnBoxOptions,
   type NormalizedOptions,
 } from "@kazuhi-ra/turnbox-core/internal";
+import type { ReduceMotion } from "@kazuhi-ra/turnbox-core";
 import { toTransformString } from "./css.js";
 
 export type TurnBoxInstance = {
@@ -21,7 +22,7 @@ export type TurnBoxInstance = {
   destroy(): void;
 };
 
-type DomOptions = TurnBoxOptions & { ariaLabel?: string };
+type DomOptions = TurnBoxOptions & { ariaLabel?: string; reduceMotion?: ReduceMotion };
 
 const ADJUST_TIME = 20;
 
@@ -47,8 +48,9 @@ const applyAdjustTransforms = (faces: HTMLElement[], currentFace: number, opts: 
 
 export const createTurnBox = (container: HTMLElement, options: DomOptions): TurnBoxInstance => {
   const rawOpts = normalizeOptions(options);
+  const reduceMotion = options.reduceMotion ?? "user";
   const prefersReducedMotion =
-    rawOpts.reduceMotion !== "never" &&
+    reduceMotion !== "never" &&
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const opts = prefersReducedMotion ? { ...rawOpts, duration: 0, delay: 0 } : rawOpts;

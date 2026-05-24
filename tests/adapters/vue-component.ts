@@ -6,7 +6,7 @@ import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-vue";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, ...rest } = options;
+  const { faces, withFocusableChildren, reduceMotion, ...rest } = options;
   const rootHandle = shallowRef<TurnBoxRootHandle | null>(null);
 
   const faceNodes = Array.from({ length: faces }, (_, i) => {
@@ -16,17 +16,12 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
 
   const TestComponent = defineComponent({
     render() {
-      return h(
+      const rootEl = h(
         TurnBox.Root,
-        {
-          faces: faces as 2 | 3 | 4,
-          ...rest,
-          ref: (r: TurnBoxRootHandle | null) => {
-            rootHandle.value = r;
-          },
-        },
+        { faces: faces as 2 | 3 | 4, ...rest, ref: (r: TurnBoxRootHandle | null) => { rootHandle.value = r; } },
         () => faceNodes,
       );
+      return reduceMotion ? h(TurnBox.Provider, { reduceMotion }, () => rootEl) : rootEl;
     },
   });
 
