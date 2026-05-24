@@ -5,7 +5,7 @@ import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.
 let counter = 0;
 
 export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, reduceAnimation = "system setting", ...turnBoxOptions } = options;
+  const { faces, withFocusableChildren, reduceAnimation, ...turnBoxOptions } = options;
 
   const testId = String(counter++);
   const container = document.createElement("div");

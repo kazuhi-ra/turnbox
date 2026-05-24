@@ -7,7 +7,7 @@ import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createReactComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, reduceAnimation = "system setting", ...rest } = options;
+  const { faces, withFocusableChildren, reduceAnimation, ...rest } = options;
   const rootRef = createRef<TurnBoxRootHandle>();
 
   const wrapper = document.createElement("div");

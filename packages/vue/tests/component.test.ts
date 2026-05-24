@@ -21,18 +21,16 @@ const mountTurnBox = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) 
       const faceNodes = Array.from({ length: faces }, (_, i) =>
         h(TurnBox.Face, { key: `face-${i + 1}`, "data-testid": `face-${i + 1}` }),
       );
-      return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-        h(
-          TurnBox.Root,
-          {
-            faces,
-            ...opts,
-            ref: (r: TurnBoxRootHandle | null) => {
-              rootHandle.value = r;
-            },
-          } as Record<string, unknown>,
-          () => faceNodes,
-        ),
+      return h(
+        TurnBox.Root,
+        {
+          faces,
+          ...opts,
+          ref: (r: TurnBoxRootHandle | null) => {
+            rootHandle.value = r;
+          },
+        } as Record<string, unknown>,
+        () => faceNodes,
       );
     },
   });
@@ -61,13 +59,11 @@ describe("TurnBox.Face positional indexing", () => {
   it("extra Face components beyond faces are not rendered", () => {
     const TestComponent = defineComponent({
       render() {
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(TurnBox.Root, { faces: 2 } as Record<string, unknown>, () => [
-            h(TurnBox.Face, { key: "1" }),
-            h(TurnBox.Face, { key: "2" }),
-            h(TurnBox.Face, { key: "3" }), // extra
-          ]),
-        );
+        return h(TurnBox.Root, { faces: 2 } as Record<string, unknown>, () => [
+          h(TurnBox.Face, { key: "1" }),
+          h(TurnBox.Face, { key: "2" }),
+          h(TurnBox.Face, { key: "3" }), // extra
+        ]);
       },
     });
     const wrapper = mount(TestComponent, { attachTo: document.body });
@@ -80,14 +76,12 @@ describe("TurnBox.Face positional indexing", () => {
   it("non-Face siblings do not affect _faceIndex numbering", () => {
     const TestComponent = defineComponent({
       render() {
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(TurnBox.Root, { faces: 3 } as Record<string, unknown>, () => [
-            h(TurnBox.Face, { key: "1" }),
-            h("div", { key: "sep" }),
-            h(TurnBox.Face, { key: "2" }),
-            h(TurnBox.Face, { key: "3" }),
-          ]),
-        );
+        return h(TurnBox.Root, { faces: 3 } as Record<string, unknown>, () => [
+          h(TurnBox.Face, { key: "1" }),
+          h("div", { key: "sep" }),
+          h(TurnBox.Face, { key: "2" }),
+          h(TurnBox.Face, { key: "3" }),
+        ]);
       },
     });
     const wrapper = mount(TestComponent, { attachTo: document.body });
@@ -106,9 +100,7 @@ describe("TurnBox.Face positional indexing", () => {
           null,
           Array.from({ length: 4 }, (_, i) => h(TurnBox.Face, { key: `face-${i + 1}` })),
         );
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(TurnBox.Root, { faces: 4 } as Record<string, unknown>, () => [fragment]),
-        );
+        return h(TurnBox.Root, { faces: 4 } as Record<string, unknown>, () => [fragment]);
       },
     });
     const wrapper = mount(TestComponent, { attachTo: document.body });
@@ -136,18 +128,16 @@ describe("TurnBox.Button", () => {
           return h(TurnBox.Face, { key: `face-${i + 1}` }, () => [nextBtn, prevBtn].filter(Boolean));
         });
 
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(
-            TurnBox.Root,
-            {
-              faces,
-              duration: 600,
-              ref: (r: TurnBoxRootHandle | null) => {
-                rootHandle.value = r;
-              },
-            } as Record<string, unknown>,
-            () => faceNodes,
-          ),
+        return h(
+          TurnBox.Root,
+          {
+            faces,
+            duration: 600,
+            ref: (r: TurnBoxRootHandle | null) => {
+              rootHandle.value = r;
+            },
+          } as Record<string, unknown>,
+          () => faceNodes,
         );
       },
     });
@@ -200,19 +190,17 @@ describe("TurnBox.Button to={N}", () => {
             i === 0 ? [h(TurnBox.Button, { to: 3, "data-testid": "goto3" }, () => "Go 3")] : [],
           ),
         );
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(
-            TurnBox.Root,
-            {
-              faces: 4,
-              type: "skip",
-              duration: 600,
-              ref: (r: TurnBoxRootHandle | null) => {
-                rootHandle.value = r;
-              },
-            } as Record<string, unknown>,
-            () => faces,
-          ),
+        return h(
+          TurnBox.Root,
+          {
+            faces: 4,
+            type: "skip",
+            duration: 600,
+            ref: (r: TurnBoxRootHandle | null) => {
+              rootHandle.value = r;
+            },
+          } as Record<string, unknown>,
+          () => faces,
         );
       },
     });
@@ -234,12 +222,10 @@ describe("TurnBox.Face style prop", () => {
   it("merges user style with computed position style", () => {
     const TestComponent = defineComponent({
       render() {
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(TurnBox.Root, { faces: 2 } as Record<string, unknown>, () => [
-            h(TurnBox.Face, { style: { background: "red" } }),
-            h(TurnBox.Face, {}),
-          ]),
-        );
+        return h(TurnBox.Root, { faces: 2 } as Record<string, unknown>, () => [
+          h(TurnBox.Face, { style: { background: "red" } }),
+          h(TurnBox.Face, {}),
+        ]);
       },
     });
 
@@ -264,18 +250,16 @@ describe("focus management", () => {
             h("button", { "data-testid": `btn-face-${i + 1}` }, `Face ${i + 1}`),
           ]),
         );
-        return h(TurnBox.Provider, { reduceAnimation: "system setting" }, () =>
-          h(
-            TurnBox.Root,
-            {
-              faces,
-              ...opts,
-              ref: (r: TurnBoxRootHandle | null) => {
-                rootHandle.value = r;
-              },
-            } as Record<string, unknown>,
-            () => faceNodes,
-          ),
+        return h(
+          TurnBox.Root,
+          {
+            faces,
+            ...opts,
+            ref: (r: TurnBoxRootHandle | null) => {
+              rootHandle.value = r;
+            },
+          } as Record<string, unknown>,
+          () => faceNodes,
         );
       },
     });

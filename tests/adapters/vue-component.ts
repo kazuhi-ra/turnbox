@@ -6,7 +6,7 @@ import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-vue";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, reduceAnimation = "system setting", ...rest } = options;
+  const { faces, withFocusableChildren, reduceAnimation, ...rest } = options;
   const rootHandle = shallowRef<TurnBoxRootHandle | null>(null);
 
   const faceNodes = Array.from({ length: faces }, (_, i) => {
