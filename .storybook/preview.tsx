@@ -5,7 +5,7 @@ import { TurnBox } from "@kazuhi-ra/turnbox-react";
 const preview: Preview = {
   decorators: [
     (Story) => (
-      <TurnBox.Provider reduceAnimation="system setting">
+      <TurnBox.Provider reduceAnimation="never">
         <div style={{ background: "#3a3a3a", minHeight: "100vh" }}>
           <Story />
         </div>

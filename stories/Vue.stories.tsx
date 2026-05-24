@@ -88,7 +88,7 @@ const VueWrapper = ({ args }: { args: Args }) => {
     const el = mountRef.current;
     if (!el) return;
     const Root = defineComponent({
-      render: () => h(VueTurnBox.Provider, { reduceAnimation: "system setting" }, () => h(VueTurnBoxDemo, args)),
+      render: () => h(VueTurnBox.Provider, { reduceAnimation: "never" }, () => h(VueTurnBoxDemo, args)),
     });
     const app = createApp(Root);
     app.mount(el);
