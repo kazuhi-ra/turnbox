@@ -12,8 +12,16 @@ npm install @kazuhi-ra/turnbox-react
 
 ## Compound Component
 
+Wrap your app (or the section of your app that uses TurnBox) with `TurnBox.Provider`. This is required — `TurnBox.Root` will throw if no Provider is present.
+
 ```tsx
 import { TurnBox } from "@kazuhi-ra/turnbox-react";
+
+const App = () => (
+  <TurnBox.Provider reduceAnimation="system setting">
+    <FlipCard />
+  </TurnBox.Provider>
+);
 
 const FlipCard = () => (
   <TurnBox.Root faces={4} duration={400}>
@@ -34,6 +42,13 @@ const FlipCard = () => (
 ```tsx
 import { useRef } from "react";
 import { TurnBox, type TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
+
+// TurnBox.Provider should wrap the section of your app that uses TurnBox
+const App = () => (
+  <TurnBox.Provider reduceAnimation="system setting">
+    <FlipCard />
+  </TurnBox.Provider>
+);
 
 const FlipCard = () => {
   const ref = useRef<TurnBoxRootHandle>(null);
@@ -73,8 +88,17 @@ Forwards standard props (`className`, `style`, etc.) to the native `<button>`.
 
 ## useTurnBox hook
 
+`useTurnBox` also requires a `TurnBox.Provider` ancestor.
+
 ```tsx
 import { useTurnBox } from "@kazuhi-ra/turnbox-react";
+
+// TurnBox.Provider should wrap the section of your app that uses TurnBox
+const App = () => (
+  <TurnBox.Provider reduceAnimation="system setting">
+    <FlipCard />
+  </TurnBox.Provider>
+);
 
 const FlipCard = () => {
   const { containerRef, currentFace, isAnimating, next, prev, goTo } = useTurnBox({

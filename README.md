@@ -150,7 +150,7 @@ For `reduceAnimation`, see the dedicated section below — it is configured sepa
 Sets a different size for even-numbered faces along the rotation axis (`height` for `axis: "X"`, `width` for `axis: "Y"`).
 
 ```js
-createTurnBox(container, { faces: 4, axis: "X", height: 50, even: 30 });
+createTurnBox(container, { faces: 4, axis: "X", height: 50, even: 30, reduceAnimation: "system setting" });
 ```
 
 ## `reduceAnimation` — Accessibility Required Setting
