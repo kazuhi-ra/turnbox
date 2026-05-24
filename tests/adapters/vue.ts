@@ -7,7 +7,7 @@ import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.
 let counter = 0;
 
 export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, ...turnBoxOptions } = options;
+  const { faces, withFocusableChildren, ...turnBoxOptions } = options;
   const testId = String(counter++);
 
   const holder: {

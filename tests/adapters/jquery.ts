@@ -92,6 +92,10 @@ export const createJQueryAdapter = (options: CreateAdapterOptions): TurnBoxTestA
       return false;
     },
 
+    getFocusedFaceIndex() {
+      return null;
+    },
+
     waitForRender() {
       return Promise.resolve();
     },
