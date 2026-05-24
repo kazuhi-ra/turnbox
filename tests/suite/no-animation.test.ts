@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { sharedAdapters } from "../adapters/index.js";
+import { allAdapters } from "../adapters/index.js";
 
-describe.each(sharedAdapters)("%s — no animation", (_, createAdapter) => {
+describe.each(allAdapters)("%s — no animation", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
