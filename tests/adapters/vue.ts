@@ -58,7 +58,7 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
     : TestComponent;
 
   const wrapper = mount(RootComponent, { attachTo: document.body });
-  holder.container = wrapper.element.querySelector("[data-turnbox-test]") as HTMLElement ?? wrapper.element as HTMLElement;
+  holder.container = wrapper.element as HTMLElement;
 
   const getContainer = (): HTMLElement => {
     if (!holder.container) throw new Error("container not mounted");

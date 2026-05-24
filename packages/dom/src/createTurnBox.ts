@@ -9,8 +9,8 @@ import {
   FOCUSABLE,
   type TurnBoxOptions,
   type NormalizedOptions,
+  type ReduceMotion,
 } from "@kazuhi-ra/turnbox-core/internal";
-import type { ReduceMotion } from "@kazuhi-ra/turnbox-core";
 import { toTransformString } from "./css.js";
 
 export type TurnBoxInstance = {
