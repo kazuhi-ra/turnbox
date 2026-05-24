@@ -16,20 +16,12 @@ npm install @kazuhi-ra/turnbox-react
 import { TurnBox } from "@kazuhi-ra/turnbox-react";
 
 const FlipCard = () => (
-  <TurnBox.Root faces={4} duration={400}>
+  <TurnBox.Root faces={2} duration={400}>
     <TurnBox.Face>
-      Face 1<TurnBox.Button>Next</TurnBox.Button>
+      Front<TurnBox.Button>Flip</TurnBox.Button>
     </TurnBox.Face>
     <TurnBox.Face>
-      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 2
-      <TurnBox.Button>Next</TurnBox.Button>
-    </TurnBox.Face>
-    <TurnBox.Face>
-      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 3
-      <TurnBox.Button>Next</TurnBox.Button>
-    </TurnBox.Face>
-    <TurnBox.Face>
-      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 4
+      <TurnBox.Button direction="prev">Flip back</TurnBox.Button>Back
     </TurnBox.Face>
   </TurnBox.Root>
 );
