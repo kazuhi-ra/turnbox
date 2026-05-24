@@ -228,3 +228,69 @@ describe("DOM — destroy mid-animation clears inline transition", () => {
     container.remove();
   });
 });
+
+describe("DOM — destroy removes inert", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it("destroy removes inert from all faces", async () => {
+    const container = document.createElement("div");
+    const faceEls: HTMLElement[] = [];
+    for (let i = 0; i < 4; i++) {
+      const el = document.createElement("div");
+      container.appendChild(el);
+      faceEls.push(el);
+    }
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, { faces: 4, duration: DURATION, delay: DELAY });
+
+    instance.next();
+    await vi.advanceTimersByTimeAsync(TOTAL + 50);
+    expect(faceEls[0].inert).toBe(true); // face 1 is now hidden
+
+    instance.destroy();
+    for (const face of faceEls) {
+      expect(face.inert).toBe(false);
+    }
+    container.remove();
+  });
+});
+
+describe("DOM — ariaLabel sets role and aria-label on container", () => {
+  it("sets role=region and aria-label when ariaLabel is provided", () => {
+    const container = document.createElement("div");
+    for (let i = 0; i < 4; i++) container.appendChild(document.createElement("div"));
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, { faces: 4, ariaLabel: "Image rotator" });
+
+    expect(container.getAttribute("role")).toBe("region");
+    expect(container.getAttribute("aria-label")).toBe("Image rotator");
+
+    instance.destroy();
+    container.remove();
+  });
+
+  it("removes role and aria-label on destroy", () => {
+    const container = document.createElement("div");
+    for (let i = 0; i < 4; i++) container.appendChild(document.createElement("div"));
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, { faces: 4, ariaLabel: "Image rotator" });
+
+    instance.destroy();
+    expect(container.getAttribute("role")).toBeNull();
+    expect(container.getAttribute("aria-label")).toBeNull();
+    container.remove();
+  });
+
+  it("does not set role when ariaLabel is omitted", () => {
+    const container = document.createElement("div");
+    for (let i = 0; i < 4; i++) container.appendChild(document.createElement("div"));
+    document.body.appendChild(container);
+    const instance = createTurnBox(container, { faces: 4 });
+
+    expect(container.getAttribute("role")).toBeNull();
+
+    instance.destroy();
+    container.remove();
+  });
+});

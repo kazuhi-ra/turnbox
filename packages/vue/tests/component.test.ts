@@ -301,6 +301,37 @@ describe("focus management", () => {
   });
 });
 
+describe("TurnBox.Root ariaLabel", () => {
+  it("sets role=region and aria-label when ariaLabel is provided", () => {
+    const TestComponent = defineComponent({
+      render() {
+        return h(TurnBox.Root, { faces: 2, ariaLabel: "Image rotator" } as Record<string, unknown>, () => [
+          h(TurnBox.Face, { key: "1" }),
+          h(TurnBox.Face, { key: "2" }),
+        ]);
+      },
+    });
+    const wrapper = mount(TestComponent, { attachTo: document.body });
+    expect(wrapper.element.getAttribute("role")).toBe("region");
+    expect(wrapper.element.getAttribute("aria-label")).toBe("Image rotator");
+    wrapper.unmount();
+  });
+
+  it("does not set role when ariaLabel is omitted", () => {
+    const TestComponent = defineComponent({
+      render() {
+        return h(TurnBox.Root, { faces: 2 } as Record<string, unknown>, () => [
+          h(TurnBox.Face, { key: "1" }),
+          h(TurnBox.Face, { key: "2" }),
+        ]);
+      },
+    });
+    const wrapper = mount(TestComponent, { attachTo: document.body });
+    expect(wrapper.element.getAttribute("role")).toBeNull();
+    wrapper.unmount();
+  });
+});
+
 describe("useTurnBoxContext outside Root", () => {
   it("throws when used outside TurnBox.Root", () => {
     const BadComponent = defineComponent({

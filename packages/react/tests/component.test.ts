@@ -298,3 +298,46 @@ describe("focus management", () => {
     destroy();
   });
 });
+
+describe("TurnBox.Root aria-label", () => {
+  it("sets role=region and aria-label when aria-label is provided", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    act(() => {
+      const root = createRoot(container);
+      root.render(
+        createElement(
+          TurnBox.Root,
+          { faces: 2, "aria-label": "Image rotator" },
+          createElement(TurnBox.Face, { key: "1" }),
+          createElement(TurnBox.Face, { key: "2" }),
+        ),
+      );
+    });
+
+    expect(container.firstElementChild?.getAttribute("role")).toBe("region");
+    expect(container.firstElementChild?.getAttribute("aria-label")).toBe("Image rotator");
+    container.remove();
+  });
+
+  it("does not set role when aria-label is omitted", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    act(() => {
+      const root = createRoot(container);
+      root.render(
+        createElement(
+          TurnBox.Root,
+          { faces: 2 },
+          createElement(TurnBox.Face, { key: "1" }),
+          createElement(TurnBox.Face, { key: "2" }),
+        ),
+      );
+    });
+
+    expect(container.firstElementChild?.getAttribute("role")).toBeNull();
+    container.remove();
+  });
+});

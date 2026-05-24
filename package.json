@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:doc": "vitest run --reporter verbose",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "turbo run build",
