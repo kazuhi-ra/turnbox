@@ -21,6 +21,16 @@ export const modernAdapters: [string, AdapterFactory][] = [
   ["Vue (Component)", createVueComponentAdapter],
 ];
 
+// All adapters: jQuery + DOM + React + Vue + React (Component) + Vue (Component)
+export const allAdapters: [string, AdapterFactory][] = [
+  ["jQuery", createJQueryAdapter],
+  ["DOM", createDomAdapter],
+  ["React", createReactAdapter],
+  ["Vue", createVueAdapter],
+  ["React (Component)", createReactComponentAdapter],
+  ["Vue (Component)", createVueComponentAdapter],
+];
+
 // DOM + React hook + Vue hook: only adapters that expose isAnimating
 export const animatingAdapters: [string, AdapterFactory][] = [
   ["DOM", createDomAdapter],

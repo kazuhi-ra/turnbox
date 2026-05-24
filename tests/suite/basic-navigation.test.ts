@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 import type { TurnBoxTestAdapter } from "./adapter.js";
-import { sharedAdapters, modernAdapters } from "../adapters/index.js";
+import { allAdapters } from "../adapters/index.js";
 
 const onlyOneFaceShown = (adapter: TurnBoxTestAdapter, faces: number): void => {
   const shownFaces = Array.from({ length: faces }, (_, i) => i + 1).filter((f) => adapter.isFaceShown(f));
   expect(shownFaces).toHaveLength(1);
 };
 
-describe.each(sharedAdapters)("%s — basic navigation", (_, createAdapter) => {
+describe.each(allAdapters)("%s — basic navigation", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
@@ -42,26 +42,21 @@ describe.each(sharedAdapters)("%s — basic navigation", (_, createAdapter) => {
     });
   });
 
-  // ── turnBoxAnimate() defaults ───────────────────────────────────────────────
+  // ── goTo ────────────────────────────────────────────────────────────────────
 
-  describe("turnBoxAnimate defaults", () => {
-    it("calling with no face arg (default face:1) from face 3 returns to face 1", async () => {
+  describe("goTo", () => {
+    it("goTo(1) from face 3 returns to face 1", async () => {
       adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
       adapter.goTo(3);
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(3);
-      // goTo(1) is equivalent to turnBoxAnimate({ face: 1 })
       adapter.goTo(1);
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(1);
       expect(adapter.isFaceShown(1)).toBe(true);
       expect(adapter.isFaceShown(3)).toBe(false);
     });
-  });
 
-  // ── goTo ────────────────────────────────────────────────────────────────────
-
-  describe("goTo", () => {
     it("goTo(2) transitions to face 2", async () => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.goTo(2);
@@ -230,38 +225,5 @@ describe.each(sharedAdapters)("%s — basic navigation", (_, createAdapter) => {
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(1);
     });
-  });
-});
-
-describe.each(modernAdapters)("%s — basic navigation (modern)", (_, createAdapter) => {
-  let adapter: TurnBoxTestAdapter;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    adapter.destroy();
-    vi.useRealTimers();
-  });
-
-  it("starts at face 1", () => {
-    adapter = createAdapter({ faces: 4 });
-    expect(adapter.getCurrentFace()).toBe(1);
-  });
-
-  it("face 1 is shown initially, others are hidden", () => {
-    adapter = createAdapter({ faces: 4 });
-    expect(adapter.isFaceShown(1)).toBe(true);
-    expect(adapter.isFaceShown(2)).toBe(false);
-    expect(adapter.isFaceShown(3)).toBe(false);
-    expect(adapter.isFaceShown(4)).toBe(false);
-  });
-
-  it("goTo(2) transitions to face 2", async () => {
-    adapter = createAdapter({ faces: 4, duration: 200 });
-    adapter.goTo(2);
-    await adapter.advanceTime(300);
-    expect(adapter.getCurrentFace()).toBe(2);
   });
 });
