@@ -7,6 +7,9 @@ export const TurnBoxConfigKey: InjectionKey<TurnBoxConfig> = Symbol("TurnBoxConf
 
 export const injectTurnBoxConfig = (): TurnBoxConfig => {
   const config = inject(TurnBoxConfigKey);
-  if (!config) throw new Error('[TurnBox] reduceAnimation is required. Wrap with <TurnBox.Provider reduceAnimation="system setting" | "never">.');
+  if (!config)
+    throw new Error(
+      '[TurnBox] reduceAnimation is required. Wrap with <TurnBox.Provider reduceAnimation="system setting" | "never">.',
+    );
   return config;
 };

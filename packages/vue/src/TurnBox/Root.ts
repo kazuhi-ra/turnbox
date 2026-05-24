@@ -15,7 +15,12 @@ import {
 } from "vue";
 import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { calcPrePositionTransform, resolveTransition, VIRTUAL_NEXT_WRAP, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
+import {
+  calcPrePositionTransform,
+  resolveTransition,
+  VIRTUAL_NEXT_WRAP,
+  FOCUSABLE,
+} from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContextKey } from "./context.js";
 import { toTransformString } from "./utils.js";
 import type { AnimationPhase } from "./context.js";
