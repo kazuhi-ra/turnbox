@@ -41,6 +41,7 @@ box.goTo(2, false);   // no animation
 | --- | --- | --- |
 | `container` | `HTMLElement` | The container element |
 | `options` | `TurnBoxOptions` | See [shared options](../../README.md#options) |
+| `options.reduceAnimation` | `"system setting" \| "never"` | Optional. Default: `"system setting"`. See [`reduceAnimation`](../../README.md#reduceanimation--accessibility-setting) |
 
 Returns a `TurnBoxInstance`.
 

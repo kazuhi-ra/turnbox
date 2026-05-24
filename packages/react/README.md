@@ -102,6 +102,16 @@ const FlipCard = () => {
 | `prev()` | `() => void` | Go to the previous face |
 | `goTo(face, animation?)` | `(face: number, animation?: boolean) => void` | Go to the specified face |
 
+## TurnBox.Provider
+
+Use `TurnBox.Provider` to override [`reduceAnimation`](../../README.md#reduceanimation--accessibility-setting) for a subtree. Without a Provider the default is `"system setting"`.
+
+```tsx
+<TurnBox.Provider reduceAnimation="never">
+  <App />
+</TurnBox.Provider>
+```
+
 ## Options
 
 See [shared options](../../README.md#options).
