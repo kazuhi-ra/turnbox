@@ -86,7 +86,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
   ) => {
     // ── hooks ──────────────────────────────────────────────────────────────────
     const config = useTurnBoxConfig();
-    const effectiveReduceMotion = config.reduceMotion;
+    const effectiveReduceAnimation = config.reduceAnimation;
 
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
@@ -113,14 +113,14 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         even,
       });
       const prefersReducedMotion =
-        effectiveReduceMotion !== "never" &&
+        effectiveReduceAnimation !== "never" &&
         typeof window !== "undefined" &&
         window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       if (prefersReducedMotion) {
         return { ...base, duration: 0, delay: 0 };
       }
       return base;
-    }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even, effectiveReduceMotion]);
+    }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even, effectiveReduceAnimation]);
 
     const addTimeout = useCallback((fn: () => void, ms: number) => {
       pendingTimers.current.push(setTimeout(fn, ms));

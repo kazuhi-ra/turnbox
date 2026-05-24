@@ -7,7 +7,7 @@ import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.
 let counter = 0;
 
 export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, reduceMotion, ...turnBoxOptions } = options;
+  const { faces, withFocusableChildren, reduceAnimation = "system setting", ...turnBoxOptions } = options;
   const testId = String(counter++);
 
   const holder: {
@@ -53,12 +53,14 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
     },
   });
 
-  const RootComponent = reduceMotion
-    ? defineComponent({ render: () => h(TurnBox.Provider, { reduceMotion }, () => h(TestComponent)) })
+  const RootComponent = reduceAnimation
+    ? defineComponent({ render: () => h(TurnBox.Provider, { reduceAnimation }, () => h(TestComponent)) })
     : TestComponent;
 
   const wrapper = mount(RootComponent, { attachTo: document.body });
-  holder.container = wrapper.element as HTMLElement;
+  holder.container =
+    (wrapper.element.querySelector("[data-turnbox-test]") as HTMLElement | null) ??
+    (wrapper.element as HTMLElement);
 
   const getContainer = (): HTMLElement => {
     if (!holder.container) throw new Error("container not mounted");

@@ -12,7 +12,8 @@ afterEach(() => vi.useRealTimers());
 const mountSSR = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) => {
   const ref = createRef<TurnBoxRootHandle>();
   const faceNodes = Array.from({ length: faces }, (_, i) => createElement(TurnBox.Face, { key: `face-${i + 1}` }));
-  const element = createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes);
+  const rootEl = createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes);
+  const element = createElement(TurnBox.Provider, { reduceAnimation: "system setting" }, rootEl);
 
   const html = renderToString(element);
 

@@ -25,7 +25,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
 
     instance = createTurnBox(el, {
       ...options,
-      reduceMotion: config.reduceMotion,
+      reduceAnimation: config.reduceAnimation,
       onChange: (face) => {
         currentFace.value = face;
         isAnimating.value = true;
@@ -60,7 +60,7 @@ export const useTurnBox = (options: TurnBoxOptions): UseTurnBoxReturn => {
       options.width,
       options.height,
       options.even,
-      config.reduceMotion,
+      config.reduceAnimation,
     ],
     () => {
       cleanup();

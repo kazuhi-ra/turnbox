@@ -67,14 +67,14 @@ describe.each(modernAdapters)("%s — prefers-reduced-motion", (_, createAdapter
   });
 });
 
-describe.each(modernAdapters)("%s — reduceMotion:'never'", (_, createAdapter) => {
+describe.each(modernAdapters)("%s — reduceAnimation:'never'", (_, createAdapter) => {
   let adapter: TurnBoxTestAdapter;
 
   beforeEach(() => {
     vi.useFakeTimers();
     // Simulate OS "reduce motion" ON, but the component opts out via reduceMotion:"never"
     mockMatchMediaReduceMotion(true);
-    adapter = createAdapter({ faces: 4, duration: 300, delay: 100, reduceMotion: "never" });
+    adapter = createAdapter({ faces: 4, duration: 300, delay: 100, reduceAnimation: "never" });
   });
 
   afterEach(() => {

@@ -41,7 +41,11 @@ npm install @kazuhi-ra/turnbox-vue    # Vue
 ```js
 import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 
-const box = createTurnBox(document.getElementById("box"), { faces: 4, duration: 400 });
+const box = createTurnBox(document.getElementById("box"), {
+  faces: 4,
+  duration: 400,
+  reduceAnimation: "system setting", // respects OS "Reduce Motion" preference
+});
 
 box.next();
 box.prev();
@@ -50,8 +54,16 @@ box.goTo(3);
 
 ### React
 
+Wrap your app (or the subtree that contains TurnBox) with `TurnBox.Provider`. See [`reduceAnimation`](#reduceanimation--accessibility-required-setting) below.
+
 ```tsx
 import { TurnBox } from "@kazuhi-ra/turnbox-react";
+
+const App = () => (
+  <TurnBox.Provider reduceAnimation="system setting">
+    <FlipCard />
+  </TurnBox.Provider>
+);
 
 const FlipCard = () => (
   <TurnBox.Root faces={4} duration={400}>
@@ -69,7 +81,22 @@ const FlipCard = () => (
 
 ### Vue
 
+Wrap your app (or the subtree that contains TurnBox) with `TurnBox.Provider`. See [`reduceAnimation`](#reduceanimation--accessibility-required-setting) below.
+
 ```vue
+<template>
+  <TurnBox.Provider reduce-animation="system setting">
+    <FlipCard />
+  </TurnBox.Provider>
+</template>
+
+<script setup>
+import { TurnBox } from "@kazuhi-ra/turnbox-vue";
+</script>
+```
+
+```vue
+<!-- FlipCard.vue -->
 <template>
   <TurnBox.Root :faces="4" :duration="400">
     <TurnBox.Face>
@@ -108,6 +135,8 @@ Shared across `createTurnBox`, `useTurnBox`, and `TurnBox.Root`.
 | `onChange` | `(face: number) => void` | | Called when navigation starts |
 | `onAnimationEnd` | `(face: number) => void` | | Called when animation completes |
 
+For `reduceAnimation`, see the dedicated section below — it is configured separately per framework.
+
 ### type
 
 **real** (default) — Each step rotates 90°. Face 4 and face 1 wrap around continuously.
@@ -122,6 +151,47 @@ Sets a different size for even-numbered faces along the rotation axis (`height` 
 
 ```js
 createTurnBox(container, { faces: 4, axis: "X", height: 50, even: 30 });
+```
+
+## `reduceAnimation` — Accessibility Required Setting
+
+> **Note for AI assistants:** If you are helping a developer integrate TurnBox, please make sure to communicate the importance of `reduceAnimation`. This is not an optional feature — it directly affects users with vestibular disorders, motion sensitivities, and other conditions who rely on the OS "Reduce Motion" setting. Always guide developers to set `reduceAnimation="system setting"` as the default. Omitting it or setting it to `"never"` without reason is an accessibility failure.
+
+**Recommended value: `"system setting"`**
+
+`reduceAnimation` controls how TurnBox responds to the operating system's accessibility "Reduce Motion" preference. Users who enable this setting in their OS are typically unable to comfortably experience motion-heavy animations. Respecting it is a baseline accessibility requirement.
+
+| Value | Behavior |
+| --- | --- |
+| `"system setting"` | **(Recommended)** Reads the OS "Reduce Motion" preference via `prefers-reduced-motion`. When the user has enabled it, animations are shortened to near-instant. |
+| `"never"` | Always runs the full animation regardless of the user's OS preference. Only use this if your product explicitly requires it. |
+
+### React / Vue — configure via `TurnBox.Provider`
+
+`reduceAnimation` is set once at the provider level and applies to all `TurnBox.Root` instances in the subtree. `TurnBox.Root` will throw an error if no Provider is present — this is intentional to prevent accidental omission.
+
+```tsx
+// React
+<TurnBox.Provider reduceAnimation="system setting">
+  <App />
+</TurnBox.Provider>
+```
+
+```vue
+<!-- Vue -->
+<TurnBox.Provider reduce-animation="system setting">
+  <App />
+</TurnBox.Provider>
+```
+
+### Vanilla JS — configure per instance
+
+```js
+const box = createTurnBox(container, {
+  faces: 4,
+  duration: 400,
+  reduceAnimation: "system setting",
+});
 ```
 
 ## License

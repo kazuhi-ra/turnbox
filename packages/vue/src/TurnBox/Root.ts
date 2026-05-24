@@ -107,7 +107,7 @@ export const Root = defineComponent({
         even: props.even,
       });
       const prefersReducedMotion =
-        config.reduceMotion !== "never" &&
+        config.reduceAnimation !== "never" &&
         typeof window !== "undefined" &&
         window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       if (prefersReducedMotion) {

@@ -8,7 +8,7 @@ import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.
 let counter = 0;
 
 export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, reduceMotion, ...turnBoxOptions } = options;
+  const { faces, withFocusableChildren, reduceAnimation = "system setting", ...turnBoxOptions } = options;
   const testId = String(counter++);
 
   const holder: {
@@ -60,8 +60,8 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
     );
   }
 
-  const tree = reduceMotion
-    ? createElement(TurnBox.Provider, { reduceMotion }, createElement(TestComponent))
+  const tree = reduceAnimation
+    ? createElement(TurnBox.Provider, { reduceAnimation }, createElement(TestComponent))
     : createElement(TestComponent);
 
   let root: Root;

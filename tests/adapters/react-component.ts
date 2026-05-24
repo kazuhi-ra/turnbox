@@ -7,7 +7,7 @@ import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createReactComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, withFocusableChildren, reduceMotion, ...rest } = options;
+  const { faces, withFocusableChildren, reduceAnimation = "system setting", ...rest } = options;
   const rootRef = createRef<TurnBoxRootHandle>();
 
   const wrapper = document.createElement("div");
@@ -21,7 +21,7 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
   });
 
   const rootEl = createElement(TurnBox.Root, { faces: faces as 2 | 3 | 4, ...rest, ref: rootRef }, ...faceNodes);
-  const tree = reduceMotion ? createElement(TurnBox.Provider, { reduceMotion }, rootEl) : rootEl;
+  const tree = reduceAnimation ? createElement(TurnBox.Provider, { reduceAnimation }, rootEl) : rootEl;
 
   let root: Root;
   act(() => {
