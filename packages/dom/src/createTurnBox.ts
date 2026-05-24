@@ -6,6 +6,7 @@ import {
   resolveTransition,
   VIRTUAL_PREV_WRAP,
   VIRTUAL_NEXT_WRAP,
+  FOCUSABLE,
   type TurnBoxOptions,
   type NormalizedOptions,
 } from "@kazuhi-ra/turnbox-core/internal";
@@ -23,8 +24,6 @@ export type TurnBoxInstance = {
 type DomOptions = TurnBoxOptions & { ariaLabel?: string };
 
 const ADJUST_TIME = 20;
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {

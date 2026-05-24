@@ -8,6 +8,9 @@ export const DEFAULT_PERSPECTIVE = 800;
 export const DEFAULT_SIZE = 200;
 export const DEFAULT_HEIGHT = 50;
 
+export const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export const normalizeOptions = (options: TurnBoxOptions): NormalizedOptions => {
   const faces = Math.min(options.faces, MAX_FACE_PCS) as FaceCount;
   const axis = options.axis ?? "X";

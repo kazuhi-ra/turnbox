@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef, useState } from "react";
 import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { TurnBoxOptions, NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { resolveTransition } from "@kazuhi-ra/turnbox-core/internal";
+import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContext } from "./context.js";
 import { toTransformString } from "./utils.js";
 import { Face } from "./Face.js";
@@ -15,11 +15,6 @@ import {
   buildGoStepAction,
 } from "./reducer.js";
 import type { TurnBoxState } from "./reducer.js";
-
-// ─── Module-scope helpers (Root-specific, not generic utils) ──────────────────
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const calcContainerDynStyle = (state: TurnBoxState, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
