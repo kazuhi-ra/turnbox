@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef, useState } from "react";
 import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { TurnBoxOptions, NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { resolveTransition } from "@kazuhi-ra/turnbox-core/internal";
@@ -17,6 +17,9 @@ import {
 import type { TurnBoxState } from "./reducer.js";
 
 // ─── Module-scope helpers (Root-specific, not generic utils) ──────────────────
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const calcContainerDynStyle = (state: TurnBoxState, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
@@ -47,12 +50,12 @@ const buildIndexedChildren = (children: React.ReactNode, maxFaces: number): Reac
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-type RootProps = TurnBoxOptions & {
-  children?: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-  "aria-label"?: string;
-};
+type RootProps = TurnBoxOptions &
+  React.AriaAttributes & {
+    children?: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+  };
 
 export type TurnBoxRootHandle = {
   goTo(face: number, animation?: boolean): void;
@@ -81,6 +84,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       className,
       style,
       "aria-label": ariaLabel,
+      ...ariaRest
     },
     ref,
   ) => {
@@ -93,8 +97,22 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     onChangeRef.current = onChange;
     onAnimationEndRef.current = onAnimationEnd;
 
+    const boxRef = useRef<HTMLDivElement>(null);
+
     const opts = useMemo(() => {
-      const base = normalizeOptions({ faces, axis, direction, type, duration, delay, easing, perspective, width, height, even });
+      const base = normalizeOptions({
+        faces,
+        axis,
+        direction,
+        type,
+        duration,
+        delay,
+        easing,
+        perspective,
+        width,
+        height,
+        even,
+      });
       if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
         return { ...base, duration: 0, delay: 0 };
       }
@@ -102,8 +120,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     }, [faces, axis, direction, type, duration, delay, easing, perspective, width, height, even]);
 
     const addTimeout = useCallback((fn: () => void, ms: number) => {
-      const id = setTimeout(fn, ms);
-      pendingTimers.current = [...pendingTimers.current, id];
+      pendingTimers.current.push(setTimeout(fn, ms));
     }, []);
 
     useEffect(
@@ -112,6 +129,34 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       },
       [],
     );
+
+    // ── Focus management ───────────────────────────────────────────────────────
+    // Detect navigation completion during render (pattern: store prev with useState).
+    // We track both kind and displayFace because instant transitions (GO_INSTANT)
+    // keep kind==="idle" throughout — only displayFace changes.
+    // focusRequest bundles the target face + a seq counter into one state so the
+    // effect deps are exhaustive — no stale closure on state.displayFace.
+    const [prevKind, setPrevKind] = useState(state.kind);
+    const [prevFace, setPrevFace] = useState(state.displayFace);
+    const [focusRequest, setFocusRequest] = useState<{ face: number; seq: number } | null>(null);
+
+    if (state.kind !== prevKind || state.displayFace !== prevFace) {
+      setPrevKind(state.kind);
+      setPrevFace(state.displayFace);
+      // Fire when landing on idle: either kind just became idle (animated) or
+      // face changed while kind stayed idle (instant).
+      if (state.kind === "idle" && (prevKind !== "idle" || state.displayFace !== prevFace)) {
+        setFocusRequest((prev) => ({ face: state.displayFace, seq: (prev?.seq ?? 0) + 1 }));
+      }
+    }
+
+    useEffect(() => {
+      if (!focusRequest) return;
+      boxRef.current
+        ?.querySelector<HTMLElement>(`[data-face-index="${focusRequest.face}"]`)
+        ?.querySelector<HTMLElement>(FOCUSABLE)
+        ?.focus({ preventScroll: true });
+    }, [focusRequest]);
 
     // Handle 2-phase transitions: fires after browser paints the pre-phase
     useEffect(() => {
@@ -236,7 +281,8 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     return (
       <div
-        role="region"
+        {...ariaRest}
+        role={ariaLabel ? "region" : undefined}
         aria-label={ariaLabel}
         className={className}
         style={{
@@ -248,6 +294,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         }}
       >
         <div
+          ref={boxRef}
           data-turnbox-box
           style={{
             width: boxWidth,

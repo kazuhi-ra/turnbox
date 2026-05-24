@@ -236,3 +236,66 @@ describe("TurnBox.Face style prop", () => {
     container.remove();
   });
 });
+
+describe("focus management", () => {
+  const mountWithFocusable = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) => {
+    const ref = createRef<TurnBoxRootHandle>();
+    const faceNodes = Array.from({ length: faces }, (_, i) =>
+      createElement(
+        TurnBox.Face,
+        { key: `face-${i + 1}` },
+        createElement("button", { "data-testid": `btn-face-${i + 1}` }, `Face ${i + 1}`),
+      ),
+    );
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    // biome-ignore lint/style/useConst: assigned inside act
+    let root: ReturnType<typeof createRoot>;
+    act(() => {
+      root = createRoot(container);
+      root.render(createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes));
+    });
+
+    const getHandle = (): TurnBoxRootHandle => {
+      if (!ref.current) throw new Error("handle not mounted");
+      return ref.current;
+    };
+
+    const destroy = () => {
+      act(() => {
+        root.unmount();
+      });
+      container.remove();
+    };
+
+    return { container, getHandle, destroy };
+  };
+
+  it("focuses first focusable element in target face after instant goTo (animation=false)", async () => {
+    const { container, getHandle, destroy } = mountWithFocusable();
+
+    await act(async () => {
+      getHandle().goTo(2, false);
+    });
+
+    const btn2 = container.querySelector<HTMLElement>('[data-testid="btn-face-2"]');
+    expect(document.activeElement).toBe(btn2);
+    destroy();
+  });
+
+  it("focuses first focusable element in target face after animated goTo", async () => {
+    const { container, getHandle, destroy } = mountWithFocusable(4, { duration: 100 });
+
+    await act(async () => {
+      getHandle().goTo(2, true);
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(200);
+    });
+
+    const btn2 = container.querySelector<HTMLElement>('[data-testid="btn-face-2"]');
+    expect(document.activeElement).toBe(btn2);
+    destroy();
+  });
+});

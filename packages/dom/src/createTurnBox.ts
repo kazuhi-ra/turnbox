@@ -23,7 +23,8 @@ export type TurnBoxInstance = {
 type DomOptions = TurnBoxOptions & { ariaLabel?: string };
 
 const ADJUST_TIME = 20;
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
@@ -108,8 +109,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   };
 
   // Initialize
-  container.setAttribute("role", "region");
-  if (options.ariaLabel) container.setAttribute("aria-label", options.ariaLabel);
+  if (options.ariaLabel) {
+    container.setAttribute("role", "region");
+    container.setAttribute("aria-label", options.ariaLabel);
+  }
   container.style.perspective = `${opts.perspective}px`;
   container.classList.add("turnBoxContainer", `turnBoxCurrentFace${currentFace}`);
   if (geometry.kind === "variable") {
@@ -253,8 +256,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       container.style.left = "";
       container.style.transition = "";
       container.style.perspective = "";
-      container.removeAttribute("role");
-      container.removeAttribute("aria-label");
+      if (options.ariaLabel) {
+        container.removeAttribute("role");
+        container.removeAttribute("aria-label");
+      }
     },
   };
 };

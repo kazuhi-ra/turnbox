@@ -3,7 +3,6 @@ import { createTurnBox } from "@kazuhi-ra/turnbox-dom";
 import { modernAdapters } from "../adapters/index.js";
 import type { TurnBoxTestAdapter } from "./adapter.js";
 
-
 const DURATION = 200;
 const DELAY = 0;
 const TOTAL = DURATION + DELAY;
@@ -190,4 +189,3 @@ describe("DOM — destroy mid-animation clears inline transition", () => {
     container.remove();
   });
 });
-

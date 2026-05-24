@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
@@ -6,13 +5,7 @@ import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";
 
-const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-export type FaceProps = {
-  children?: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-};
+export type FaceProps = React.HTMLAttributes<HTMLDivElement>;
 
 type FaceInternalProps = FaceProps & { _faceIndex?: number };
 
@@ -32,17 +25,8 @@ const hasTransition = (phase: AnimationPhase): boolean =>
 const usesFaceTransform = (phase: AnimationPhase): boolean =>
   phase.kind !== "adjusting" && phase.kind !== "adjust-animating";
 
-export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInternalProps) => {
+export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: FaceInternalProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
-  const divRef = useRef<HTMLDivElement>(null);
-  const didMountRef = useRef(false);
-
-  const isCurrent = _faceIndex === displayFace && phase.kind === "idle";
-  useEffect(() => {
-    if (!didMountRef.current) { didMountRef.current = true; return; }
-    if (!isCurrent || !divRef.current) return;
-    divRef.current.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
-  }, [isCurrent]);
 
   const ft = usesFaceTransform(phase)
     ? calcFaceTransform(displayFace, _faceIndex, opts)
@@ -52,7 +36,6 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
   const transformStr = override ?? toTransformString(ft);
 
   const faceStyle: React.CSSProperties = {
-    // user styles first so component's required properties take precedence
     ...style,
     position: "absolute",
     ...faceDimStyle(_faceIndex, opts),
@@ -68,7 +51,7 @@ export const Face = ({ children, className, style, _faceIndex = 0 }: FaceInterna
 
   return (
     <div
-      ref={divRef}
+      {...rest}
       data-face-index={_faceIndex}
       className={className}
       style={faceStyle}

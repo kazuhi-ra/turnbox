@@ -239,6 +239,68 @@ describe("TurnBox.Face style prop", () => {
   });
 });
 
+describe("focus management", () => {
+  const mountWithFocusable = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) => {
+    const rootHandle = shallowRef<TurnBoxRootHandle | null>(null);
+
+    const TestComponent = defineComponent({
+      render() {
+        const faceNodes = Array.from({ length: faces }, (_, i) =>
+          h(TurnBox.Face, { key: `face-${i + 1}` }, () => [
+            h("button", { "data-testid": `btn-face-${i + 1}` }, `Face ${i + 1}`),
+          ]),
+        );
+        return h(
+          TurnBox.Root,
+          {
+            faces,
+            ...opts,
+            ref: (r: TurnBoxRootHandle | null) => {
+              rootHandle.value = r;
+            },
+          } as Record<string, unknown>,
+          () => faceNodes,
+        );
+      },
+    });
+
+    const wrapper = mount(TestComponent, { attachTo: document.body });
+
+    const getHandle = (): TurnBoxRootHandle => {
+      if (!rootHandle.value) throw new Error("handle not mounted");
+      return rootHandle.value;
+    };
+
+    return { wrapper, getHandle };
+  };
+
+  it("focuses first focusable element in target face after instant goTo (animation=false)", async () => {
+    const { wrapper, getHandle } = mountWithFocusable(4, { duration: 0 });
+
+    getHandle().goTo(2, false);
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(0);
+    await nextTick();
+
+    const btn2 = wrapper.element.querySelector<HTMLElement>('[data-testid="btn-face-2"]');
+    expect(document.activeElement).toBe(btn2);
+    wrapper.unmount();
+  });
+
+  it("focuses first focusable element in target face after animated goTo", async () => {
+    const { wrapper, getHandle } = mountWithFocusable(4, { duration: 100 });
+
+    getHandle().goTo(2, true);
+    await nextTick();
+    await vi.advanceTimersByTimeAsync(200);
+    await nextTick();
+
+    const btn2 = wrapper.element.querySelector<HTMLElement>('[data-testid="btn-face-2"]');
+    expect(document.activeElement).toBe(btn2);
+    wrapper.unmount();
+  });
+});
+
 describe("useTurnBoxContext outside Root", () => {
   it("throws when used outside TurnBox.Root", () => {
     const BadComponent = defineComponent({

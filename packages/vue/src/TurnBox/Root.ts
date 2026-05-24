@@ -8,6 +8,7 @@ import {
   h,
   onUnmounted,
   cloneVNode,
+  nextTick,
   Fragment,
   type VNode,
   type PropType,
@@ -19,6 +20,9 @@ import { TurnBoxContextKey } from "./context.js";
 import { toTransformString } from "./utils.js";
 import type { AnimationPhase } from "./context.js";
 import { Face } from "./Face.js";
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const EMPTY_MAP: ReadonlyMap<number, string> = new Map();
 
@@ -78,6 +82,17 @@ export const Root = defineComponent({
     const pendingTimers: ReturnType<typeof setTimeout>[] = [];
     let pendingRaf: number | null = null;
 
+    const boxRef = ref<HTMLElement | null>(null);
+
+    const focusFace = (faceIndex: number): void => {
+      const box = boxRef.value;
+      if (!box) return;
+      box
+        .querySelector<HTMLElement>(`[data-face-index="${faceIndex}"]`)
+        ?.querySelector<HTMLElement>(FOCUSABLE)
+        ?.focus({ preventScroll: true });
+    };
+
     const opts = computed(() => {
       const base = normalizeOptions({
         faces: props.faces,
@@ -135,6 +150,7 @@ export const Root = defineComponent({
               faceOverrides.value = EMPTY_MAP;
               isAnimatingFlag.value = false;
               props.onAnimationEnd?.(landAt);
+              nextTick(() => focusFace(landAt));
             }, opts.value.duration + opts.value.delay);
           });
         } else if (newPhase.kind === "adjusting") {
@@ -152,6 +168,7 @@ export const Root = defineComponent({
               faceOverrides.value = EMPTY_MAP;
               isAnimatingFlag.value = false;
               props.onAnimationEnd?.(to);
+              nextTick(() => focusFace(to));
             }, opts.value.duration + opts.value.delay);
           });
         }
@@ -172,6 +189,7 @@ export const Root = defineComponent({
 
       if (transition.kind === "virtual-wrap") {
         if (!transition.doAnimate) {
+          // Reactive values set synchronously; Vue re-renders before the macrotask fires
           displayFace.value = transition.landAt;
           phase.value = { kind: "idle" };
           shownFaces.value = new Set([transition.landAt]);
@@ -179,6 +197,7 @@ export const Root = defineComponent({
           addTimeout(() => {
             isAnimatingFlag.value = false;
             props.onAnimationEnd?.(transition.landAt);
+            focusFace(transition.landAt);
           }, time);
           return;
         }
@@ -200,6 +219,7 @@ export const Root = defineComponent({
           addTimeout(() => {
             isAnimatingFlag.value = false;
             props.onAnimationEnd?.(transition.to);
+            focusFace(transition.to);
           }, time);
           return;
         }
@@ -221,6 +241,7 @@ export const Root = defineComponent({
         addTimeout(() => {
           isAnimatingFlag.value = false;
           props.onAnimationEnd?.(to);
+          focusFace(to);
         }, time);
         return;
       }
@@ -240,6 +261,7 @@ export const Root = defineComponent({
           shownFaces.value = new Set([to]);
           isAnimatingFlag.value = false;
           props.onAnimationEnd?.(to);
+          nextTick(() => focusFace(to));
         }, time);
       });
     };
@@ -280,7 +302,7 @@ export const Root = defineComponent({
       return h(
         "div",
         {
-          role: "region",
+          role: props.ariaLabel ? "region" : undefined,
           "aria-label": props.ariaLabel,
           style: {
             perspective: `${opts.value.perspective}px`,
@@ -293,6 +315,7 @@ export const Root = defineComponent({
           h(
             "div",
             {
+              ref: boxRef,
               "data-turnbox-box": "",
               style: {
                 width: `${boxWidth}px`,
