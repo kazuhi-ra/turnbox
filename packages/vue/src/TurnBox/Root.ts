@@ -302,6 +302,8 @@ export const Root = defineComponent({
       return h(
         "div",
         {
+          // role="region" makes TurnBox a landmark for screen reader navigation (e.g. "R" key jump).
+          // Only set when aria-label is provided — an unlabelled landmark is worse than no landmark.
           role: props.ariaLabel ? "region" : undefined,
           "aria-label": props.ariaLabel,
           style: {

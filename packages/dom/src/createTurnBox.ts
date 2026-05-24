@@ -113,6 +113,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   };
 
   // Initialize
+  // role="region" makes TurnBox a landmark for screen reader navigation (e.g. "R" key jump).
+  // Only set when ariaLabel is provided — an unlabelled landmark is worse than no landmark.
   if (options.ariaLabel) {
     container.setAttribute("role", "region");
     container.setAttribute("aria-label", options.ariaLabel);

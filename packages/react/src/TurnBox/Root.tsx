@@ -283,6 +283,8 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       // biome-ignore lint/a11y/useAriaPropsSupportedByRole: role="region" is set conditionally alongside aria-label; Biome cannot track the dynamic pairing
       <div
         {...ariaRest}
+        // role="region" makes TurnBox a landmark for screen reader navigation (e.g. "R" key jump).
+        // Only set when aria-label is provided — an unlabelled landmark is worse than no landmark.
         role={ariaLabel ? "region" : undefined}
         aria-label={ariaLabel}
         className={className}
