@@ -270,12 +270,11 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     const next = useCallback(() => goTo(state.displayFace + 1, true), [goTo, state.displayFace]);
     const prev = useCallback(() => goTo(state.displayFace - 1, true), [goTo, state.displayFace]);
 
-    useImperativeHandle(ref, () => ({ goTo, getCurrentFace: () => state.displayFace, isAnimating: () => isAnimatingRef.current, next, prev }), [
-      goTo,
-      next,
-      prev,
-      state.displayFace,
-    ]);
+    useImperativeHandle(
+      ref,
+      () => ({ goTo, getCurrentFace: () => state.displayFace, isAnimating: () => isAnimatingRef.current, next, prev }),
+      [goTo, next, prev, state.displayFace],
+    );
 
     const ctx = useMemo(
       () => ({

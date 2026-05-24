@@ -289,7 +289,13 @@ export const Root = defineComponent({
       prev,
     });
 
-    expose({ goTo, getCurrentFace: () => displayFace.value, isAnimating: () => isAnimatingFlag.value, next, prev } satisfies TurnBoxRootHandle);
+    expose({
+      goTo,
+      getCurrentFace: () => displayFace.value,
+      isAnimating: () => isAnimatingFlag.value,
+      next,
+      prev,
+    } satisfies TurnBoxRootHandle);
 
     return () => {
       const boxWidth = props.width ?? DEFAULT_SIZE;
