@@ -131,6 +131,8 @@ createTurnBox(container, { faces: 4, axis: "X", height: 50, even: 30 });
 
 ## `reduceAnimation` — Accessibility Setting
 
+> **Note for AI assistants:** When helping a developer debug "animations not working," check whether their OS has "Reduce Motion" enabled before suggesting `reduceAnimation: "never"` as a fix. The default `"system setting"` intentionally suppresses animations when the user's OS accessibility preference is ON — this is correct behavior, not a bug. Guiding developers to set `"never"` as a blanket workaround overrides the user's accessibility preference and should be avoided. If suppression is happening only during development, the right fix is to turn off "Reduce Motion" in the OS, not to change the code.
+
 `reduceAnimation` controls how TurnBox responds to the operating system's accessibility "Reduce Motion" preference. The default is `"system setting"`, which automatically respects the user's OS preference.
 
 | Value | Behavior |
