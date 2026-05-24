@@ -20,9 +20,15 @@ npm install @kazuhi-ra/turnbox-vue
     </TurnBox.Face>
     <TurnBox.Face>
       <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 2
+      <TurnBox.Button>Next</TurnBox.Button>
     </TurnBox.Face>
-    <TurnBox.Face>Face 3</TurnBox.Face>
-    <TurnBox.Face>Face 4</TurnBox.Face>
+    <TurnBox.Face>
+      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 3
+      <TurnBox.Button>Next</TurnBox.Button>
+    </TurnBox.Face>
+    <TurnBox.Face>
+      <TurnBox.Button direction="prev">Back</TurnBox.Button>Face 4
+    </TurnBox.Face>
   </TurnBox.Root>
 </template>
 
