@@ -18,7 +18,13 @@ export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBo
     render() {
       const rootEl = h(
         TurnBox.Root,
-        { faces: faces as 2 | 3 | 4, ...rest, ref: (r: TurnBoxRootHandle | null) => { rootHandle.value = r; } },
+        {
+          faces: faces as 2 | 3 | 4,
+          ...rest,
+          ref: (r: TurnBoxRootHandle | null) => {
+            rootHandle.value = r;
+          },
+        },
         () => faceNodes,
       );
       return reduceAnimation ? h(TurnBox.Provider, { reduceAnimation }, () => rootEl) : rootEl;

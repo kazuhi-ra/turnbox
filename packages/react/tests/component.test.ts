@@ -12,7 +12,11 @@ afterEach(() => vi.useRealTimers());
 const mountTurnBox = (faces: 2 | 3 | 4 = 4, opts: Record<string, unknown> = {}) => {
   const ref = createRef<TurnBoxRootHandle>();
   const faceNodes = Array.from({ length: faces }, (_, i) => createElement(TurnBox.Face, { key: `face-${i + 1}` }));
-  const element = createElement(TurnBox.Provider, { reduceAnimation: "system setting" }, createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes));
+  const element = createElement(
+    TurnBox.Provider,
+    { reduceAnimation: "system setting" },
+    createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes),
+  );
 
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -123,7 +127,13 @@ describe("TurnBox.Button", () => {
 
     act(() => {
       const root = createRoot(container);
-      root.render(createElement(TurnBox.Provider, { reduceAnimation: "system setting" }, createElement(TurnBox.Root, { faces, duration: 600, ref }, ...faceNodes)));
+      root.render(
+        createElement(
+          TurnBox.Provider,
+          { reduceAnimation: "system setting" },
+          createElement(TurnBox.Root, { faces, duration: 600, ref }, ...faceNodes),
+        ),
+      );
     });
 
     const getHandle = (): TurnBoxRootHandle => {
@@ -182,7 +192,13 @@ describe("TurnBox.Button to={N}", () => {
 
     act(() => {
       const root = createRoot(container);
-      root.render(createElement(TurnBox.Provider, { reduceAnimation: "system setting" }, createElement(TurnBox.Root, { faces: 4, type: "skip", duration: 600, ref }, ...faces)));
+      root.render(
+        createElement(
+          TurnBox.Provider,
+          { reduceAnimation: "system setting" },
+          createElement(TurnBox.Root, { faces: 4, type: "skip", duration: 600, ref }, ...faces),
+        ),
+      );
     });
 
     const btn = container.querySelector<HTMLButtonElement>('[data-testid="goto3"]');
@@ -265,7 +281,13 @@ describe("focus management", () => {
     let root: ReturnType<typeof createRoot>;
     act(() => {
       root = createRoot(container);
-      root.render(createElement(TurnBox.Provider, { reduceAnimation: "system setting" }, createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes)));
+      root.render(
+        createElement(
+          TurnBox.Provider,
+          { reduceAnimation: "system setting" },
+          createElement(TurnBox.Root, { faces, ...opts, ref }, ...faceNodes),
+        ),
+      );
     });
 
     const getHandle = (): TurnBoxRootHandle => {
