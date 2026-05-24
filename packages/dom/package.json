@@ -1,6 +1,6 @@
 {
   "name": "@kazuhi-ra/turnbox-dom",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vanilla JS TurnBox — CSS3 3D box flip animation for the browser",
   "keywords": [
     "3d",
