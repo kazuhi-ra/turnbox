@@ -28,6 +28,7 @@ export type CreateAdapterOptions = {
   even?: number;
   onChange?: (face: number) => void;
   onAnimationEnd?: (face: number) => void;
+  withFocusableChildren?: boolean;
 };
 
 export type TurnBoxTestAdapter = {
@@ -40,6 +41,7 @@ export type TurnBoxTestAdapter = {
   getFaceState(faceNum: number): FaceState;
   getContainerState(): ContainerState;
   getAriaHidden(faceNum: number): string | null;
+  getFocusedFaceIndex(): number | null;
   waitForRender(): Promise<void>;
   advanceTime(ms: number): Promise<void>;
   destroy(): void;

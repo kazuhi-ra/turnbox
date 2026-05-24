@@ -45,7 +45,12 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
       return h(
         "div",
         { ref: "containerRef", "data-turnbox-test": testId },
-        Array.from({ length: faces }, (_, i) => h("div", { key: `face-${i + 1}` })),
+        Array.from({ length: faces }, (_, i) => {
+          const btn = options.withFocusableChildren
+            ? h("button", { "data-face-btn": String(i + 1) })
+            : null;
+          return h("div", { key: `face-${i + 1}` }, btn ? [btn] : undefined);
+        }),
       );
     },
   });
@@ -108,6 +113,17 @@ export const createVueAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
 
     getAriaHidden(faceNum) {
       return getContainer().querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
+    },
+
+    getFocusedFaceIndex() {
+      const el = document.activeElement;
+      if (!el || el === document.body) return null;
+      const c = getContainer();
+      for (let i = 1; i <= faces; i++) {
+        const faceEl = c.querySelector(`.turnBoxFaceNum${i}`);
+        if (faceEl?.contains(el)) return i;
+      }
+      return null;
     },
 
     async waitForRender() {

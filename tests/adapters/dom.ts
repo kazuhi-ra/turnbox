@@ -12,7 +12,13 @@ export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
   container.setAttribute("data-turnbox-test", testId);
 
   for (let i = 0; i < faces; i++) {
-    container.appendChild(document.createElement("div"));
+    const face = document.createElement("div");
+    if (options.withFocusableChildren) {
+      const btn = document.createElement("button");
+      btn.setAttribute("data-face-btn", String(i + 1));
+      face.appendChild(btn);
+    }
+    container.appendChild(face);
   }
   document.body.appendChild(container);
 
@@ -67,6 +73,16 @@ export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
 
     getAriaHidden(faceNum) {
       return container.querySelector(`.turnBoxFaceNum${faceNum}`)?.getAttribute("aria-hidden") ?? null;
+    },
+
+    getFocusedFaceIndex() {
+      const el = document.activeElement;
+      if (!el || el === document.body) return null;
+      for (let i = 1; i <= faces; i++) {
+        const faceEl = container.querySelector(`.turnBoxFaceNum${i}`);
+        if (faceEl?.contains(el)) return i;
+      }
+      return null;
     },
 
     waitForRender() {

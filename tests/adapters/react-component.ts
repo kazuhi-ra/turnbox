@@ -7,13 +7,18 @@ import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
 import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../suite/adapter.js";
 
 export const createReactComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
-  const { faces, ...rest } = options;
+  const { faces, withFocusableChildren, ...rest } = options;
   const rootRef = createRef<TurnBoxRootHandle>();
 
   const wrapper = document.createElement("div");
   document.body.appendChild(wrapper);
 
-  const faceNodes = Array.from({ length: faces }, (_, i) => createElement(TurnBox.Face, { key: `face-${i + 1}` }));
+  const faceNodes = Array.from({ length: faces }, (_, i) => {
+    const btn = options.withFocusableChildren
+      ? createElement("button", { key: "btn", "data-face-btn": String(i + 1) })
+      : null;
+    return createElement(TurnBox.Face, { key: `face-${i + 1}` }, btn);
+  });
 
   const rootEl = createElement(TurnBox.Root, { faces: faces as 2 | 3 | 4, ...rest, ref: rootRef }, ...faceNodes);
 
@@ -93,6 +98,13 @@ export const createReactComponentAdapter = (options: CreateAdapterOptions): Turn
 
     getAriaHidden(faceNum) {
       return wrapper.querySelector(`[data-face-index="${faceNum}"]`)?.getAttribute("aria-hidden") ?? null;
+    },
+
+    getFocusedFaceIndex() {
+      const el = document.activeElement;
+      if (!el) return null;
+      const face = el.closest<HTMLElement>("[data-face-index]");
+      return face ? Number(face.getAttribute("data-face-index")) : null;
     },
 
     waitForRender() {
