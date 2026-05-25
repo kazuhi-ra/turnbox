@@ -228,7 +228,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     const goTo = useCallback(
       (rawTarget: number, animation = true) => {
-        let fromFace = resolveCurrentFace();
+        const fromFace = resolveCurrentFace();
 
         if (isAnimatingRef.current) {
           for (const id of pendingTimers.current) clearTimeout(id);
