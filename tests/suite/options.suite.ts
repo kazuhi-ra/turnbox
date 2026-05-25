@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
 
-export const optionsSuite = (
-  adapters: [string, AdapterFactory][],
-  modernAdapters: [string, AdapterFactory][],
-) => {
+export const optionsSuite = (adapters: [string, AdapterFactory][], modernAdapters: [string, AdapterFactory][]) => {
   describe.each(adapters)("%s — options", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

@@ -6,7 +6,7 @@ const jQuery = ["jQuery", createJQueryAdapter] as const;
 const dom = ["DOM", createDomAdapter] as const;
 
 runSuites({
-  all:    [jQuery, dom],
+  all: [jQuery, dom],
   modern: [dom],
   shared: [jQuery, dom],
 });

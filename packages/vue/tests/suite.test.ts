@@ -6,7 +6,7 @@ const vue = ["Vue", createVueAdapter] as const;
 const vueComponent = ["Vue (Component)", createVueComponentAdapter] as const;
 
 runSuites({
-  all:    [vue, vueComponent],
+  all: [vue, vueComponent],
   modern: [vue, vueComponent],
   shared: [],
 });
