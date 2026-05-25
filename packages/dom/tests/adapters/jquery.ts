@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../../../../tests/suite/adapter.js";
+import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../../../../tests/adapter.js";
 
 type JQueryStatic = {
   (selector: string): JQueryInstance;

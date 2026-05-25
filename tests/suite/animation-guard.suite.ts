@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "../adapter.js";
 
 // ── calls during animation are ignored ───────────────────────────────────────
 // next()/prev()/goTo() called before animation completes must be no-ops.

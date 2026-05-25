@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "../adapter.js";
 
 // The key invariant: adjacent faces must share an edge in 3D space.
 //

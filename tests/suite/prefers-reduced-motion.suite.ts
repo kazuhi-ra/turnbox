@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "../adapter.js";
 
 const mockMatchMediaReduceMotion = (matches: boolean): void => {
   Object.defineProperty(window, "matchMedia", {

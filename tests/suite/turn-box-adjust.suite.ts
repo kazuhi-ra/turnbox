@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "../adapter.js";
 
 // ── turnBoxAdjust cleanup (uneven geometry) ──────────────────────────────────
 // When fixed=false (even≠length), certain transitions add .turnBoxAdjust.

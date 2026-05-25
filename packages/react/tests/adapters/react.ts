@@ -3,7 +3,7 @@ import { createElement, StrictMode, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { act } from "react";
 import { useTurnBox, TurnBox } from "@kazuhi-ra/turnbox-react";
-import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../../../../tests/suite/adapter.js";
+import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../../../../tests/adapter.js";
 
 let counter = 0;
 

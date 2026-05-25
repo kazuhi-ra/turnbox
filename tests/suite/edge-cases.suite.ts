@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "../adapter.js";
 
 export const edgeCasesSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — edge cases", (_, createAdapter) => {

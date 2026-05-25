@@ -3,7 +3,7 @@ import { defineComponent, h, nextTick, shallowRef } from "vue";
 import { mount } from "@vue/test-utils";
 import { TurnBox } from "@kazuhi-ra/turnbox-vue";
 import type { TurnBoxRootHandle } from "@kazuhi-ra/turnbox-vue";
-import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../../../../tests/suite/adapter.js";
+import type { TurnBoxTestAdapter, CreateAdapterOptions } from "../../../../tests/adapter.js";
 
 export const createVueComponentAdapter = (options: CreateAdapterOptions): TurnBoxTestAdapter => {
   const { faces, withFocusableChildren, reduceAnimation, ...rest } = options;
