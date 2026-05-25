@@ -1,17 +1,10 @@
+import { useRef, useEffect } from "react";
 import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
 import { toTransformString } from "./utils.js";
-
-// inert is a standard HTML attribute but missing from @types/react 18
-declare module "react" {
-  // biome-ignore lint/style/useConsistentTypeDefinitions: module augmentation requires interface, not type
-  interface HTMLAttributes<T> {
-    inert?: "" | undefined;
-  }
-}
 
 export type FaceProps = React.HTMLAttributes<HTMLDivElement>;
 
@@ -35,6 +28,7 @@ const usesFaceTransform = (phase: AnimationPhase): boolean =>
 
 export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: FaceInternalProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
+  const divRef = useRef<HTMLDivElement>(null);
 
   const ft = usesFaceTransform(phase)
     ? calcFaceTransform(displayFace, _faceIndex, opts)
@@ -57,14 +51,18 @@ export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: Fa
 
   const isShown = shownFaces.has(_faceIndex);
 
+  useEffect(() => {
+    if (divRef.current) divRef.current.inert = !isShown;
+  }, [isShown]);
+
   return (
     <div
       {...rest}
+      ref={divRef}
       data-face-index={_faceIndex}
       className={className}
       style={faceStyle}
       aria-hidden={isShown ? undefined : true}
-      inert={isShown ? undefined : ""}
     >
       {children}
     </div>
