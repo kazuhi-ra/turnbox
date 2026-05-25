@@ -1,6 +1,6 @@
 {
   "name": "@kazuhi-ra/turnbox-vue",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Vue TurnBox — CSS3 3D box flip animation compound component and composable for Vue 3",
   "keywords": [
     "3d",
