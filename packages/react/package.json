@@ -39,7 +39,8 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts --out-dir dist",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "test": "vitest run"
   },
   "publishConfig": {
     "access": "public"
@@ -52,8 +53,8 @@
     "@kazuhi-ra/turnbox-dom": "workspace:*"
   },
   "devDependencies": {
-    "@types/react": "^18",
-    "react": "^18",
-    "react-dom": "^18"
+    "@types/react": "^19",
+    "react": "^19",
+    "react-dom": "^19"
   }
 }
