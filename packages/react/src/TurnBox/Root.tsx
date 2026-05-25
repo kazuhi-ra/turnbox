@@ -218,9 +218,17 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       }
     }, [state, opts, addTimeout]);
 
+    const resolveCurrentFace = useCallback((): number => {
+      const s = stateRef.current;
+      if (s.kind === "animating" && (s.displayFace === VIRTUAL_PREV_WRAP || s.displayFace === VIRTUAL_NEXT_WRAP)) {
+        return s.displayFace === VIRTUAL_PREV_WRAP ? 4 : 1;
+      }
+      return s.displayFace;
+    }, []);
+
     const goTo = useCallback(
       (rawTarget: number, animation = true) => {
-        let fromFace = stateRef.current.displayFace;
+        let fromFace = resolveCurrentFace();
 
         if (isAnimatingRef.current) {
           for (const id of pendingTimers.current) clearTimeout(id);
@@ -228,10 +236,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           if (rafIdRef.current !== null) {
             cancelAnimationFrame(rafIdRef.current);
             rafIdRef.current = null;
-          }
-          const s = stateRef.current;
-          if (s.kind === "animating" && (s.displayFace === VIRTUAL_PREV_WRAP || s.displayFace === VIRTUAL_NEXT_WRAP)) {
-            fromFace = s.displayFace === VIRTUAL_PREV_WRAP ? 4 : 1;
           }
           dispatch({ type: "COMPLETE", displayFace: fromFace });
           isAnimatingRef.current = false;
@@ -287,16 +291,8 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           onAnimationEndRef.current?.(to);
         }, time);
       },
-      [opts, addTimeout],
+      [opts, addTimeout, resolveCurrentFace],
     );
-
-    const resolveCurrentFace = useCallback((): number => {
-      const s = stateRef.current;
-      if (s.kind === "animating" && (s.displayFace === VIRTUAL_PREV_WRAP || s.displayFace === VIRTUAL_NEXT_WRAP)) {
-        return s.displayFace === VIRTUAL_PREV_WRAP ? 4 : 1;
-      }
-      return s.displayFace;
-    }, []);
 
     const next = useCallback(() => goTo(resolveCurrentFace() + 1, true), [goTo, resolveCurrentFace]);
     const prev = useCallback(() => goTo(resolveCurrentFace() - 1, true), [goTo, resolveCurrentFace]);
