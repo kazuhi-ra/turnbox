@@ -55,13 +55,14 @@ export const callbacksSuite = (adapters: AdapterList) => {
         expect(onChange).not.toHaveBeenCalled();
       });
 
-      it("fires once per transition even when second call is blocked", async () => {
+      it("fires for each interrupt: rapid next() calls fire onChange per call", async () => {
         const onChange = vi.fn();
         adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY, onChange });
-        adapter.next();
-        adapter.next(); // ignored while animating
+        adapter.next(); // face1 → face2: onChange(2)
+        adapter.next(); // interrupt (currentFace still 1): face1 → face2 again: onChange(2)
         await adapter.advanceTime(AFTER_ANIMATION);
-        expect(onChange).toHaveBeenCalledOnce();
+        expect(onChange).toHaveBeenCalledTimes(2);
+        expect(onChange).toHaveBeenCalledWith(2);
       });
 
       it("fires with landAt face (not virtual) for wrap animation", async () => {

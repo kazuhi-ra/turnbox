@@ -26,4 +26,6 @@ runSuites({
   variableGeometrySuite: modern,
   wrapAroundBasicSuite: all,
   wrapAroundSuite: modern,
+  interruptSuite: all,
+  interruptModernSuite: modern,
 });
