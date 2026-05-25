@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
-export const animationTypesSuite = (adapters: [string, AdapterFactory][]) => {
+export const animationTypesSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — animation types", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

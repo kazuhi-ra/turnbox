@@ -1,12 +1,12 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
 const DURATION = 200;
 const DELAY = 0;
 const ADJUST_TIME = 20;
 const TOTAL = DURATION + DELAY;
 
-export const isAnimatingSuite = (adapters: [string, AdapterFactory][]) => {
+export const isAnimatingSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — isAnimating", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

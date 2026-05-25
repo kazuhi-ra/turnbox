@@ -1,12 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
 // ── shared: same behavior across jQuery and DOM ───────────────────────────────
 
-export const wrapAroundSuite = (
-  sharedAdapters: [string, AdapterFactory][],
-  modernAdapters: [string, AdapterFactory][],
-) => {
+export const wrapAroundSuite = (sharedAdapters: AdapterList, modernAdapters: AdapterList) => {
   describe.each(sharedAdapters)("%s — wrap-around", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

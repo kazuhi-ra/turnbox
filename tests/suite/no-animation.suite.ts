@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
-export const noAnimationSuite = (adapters: [string, AdapterFactory][]) => {
+export const noAnimationSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — no animation", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

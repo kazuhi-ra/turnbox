@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
 const mockMatchMediaReduceMotion = (matches: boolean): void => {
   Object.defineProperty(window, "matchMedia", {
@@ -26,7 +26,7 @@ const restoreMatchMedia = (): void => {
   });
 };
 
-export const prefersReducedMotionSuite = (adapters: [string, AdapterFactory][]) => {
+export const prefersReducedMotionSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — prefers-reduced-motion", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

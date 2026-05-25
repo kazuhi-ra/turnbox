@@ -1,10 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
-export const transformValuesSuite = (
-  sharedAdapters: [string, AdapterFactory][],
-  modernAdapters: [string, AdapterFactory][],
-) => {
+export const transformValuesSuite = (sharedAdapters: AdapterList, modernAdapters: AdapterList) => {
   describe.each(sharedAdapters)("%s — transform values", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

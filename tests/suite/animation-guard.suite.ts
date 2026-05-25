@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
 // ── calls during animation are ignored ───────────────────────────────────────
 // next()/prev()/goTo() called before animation completes must be no-ops.
 // After completion, navigation must work normally again.
 
-export const animationGuardSuite = (adapters: [string, AdapterFactory][]) => {
+export const animationGuardSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — animation guard", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

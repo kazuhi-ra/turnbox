@@ -1,4 +1,4 @@
-import type { AdapterFactory } from "./adapter.js";
+import type { AdapterList } from "./adapter.js";
 import { basicNavigationSuite } from "./basic-navigation.suite.js";
 import { animationTypesSuite } from "./animation-types.suite.js";
 import { noAnimationSuite } from "./no-animation.suite.js";
@@ -14,9 +14,9 @@ import { transformValuesSuite } from "./transform-values.suite.js";
 import { wrapAroundSuite } from "./wrap-around.suite.js";
 
 export type AdapterSets = {
-  all: [string, AdapterFactory][];
-  modern: [string, AdapterFactory][];
-  shared: [string, AdapterFactory][];
+  all: AdapterList;
+  modern: AdapterList;
+  shared: AdapterList;
 };
 
 export const runSuites = (sets: AdapterSets) => {

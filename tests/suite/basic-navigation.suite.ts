@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
-export const basicNavigationSuite = (adapters: [string, AdapterFactory][]) => {
+export const basicNavigationSuite = (adapters: AdapterList) => {
   const onlyOneFaceShown = (adapter: TurnBoxTestAdapter, faces: number): void => {
     const shownFaces = Array.from({ length: faces }, (_, i) => i + 1).filter((f) => adapter.isFaceShown(f));
     expect(shownFaces).toHaveLength(1);

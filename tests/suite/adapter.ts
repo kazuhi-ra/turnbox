@@ -50,3 +50,5 @@ export type TurnBoxTestAdapter = {
 };
 
 export type AdapterFactory = (options: CreateAdapterOptions) => TurnBoxTestAdapter;
+
+export type AdapterList = ReadonlyArray<readonly [string, AdapterFactory]>;

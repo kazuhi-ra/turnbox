@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import type { AdapterFactory, TurnBoxTestAdapter } from "./adapter.js";
+import type { AdapterList, TurnBoxTestAdapter } from "./adapter.js";
 
 const DURATION = 200;
 const DELAY = 0;
@@ -7,7 +7,7 @@ const TOTAL = DURATION + DELAY;
 
 // ── adapter-based: covers DOM / React / Vue / React (Component) ───────────────
 
-export const accessibilitySuite = (adapters: [string, AdapterFactory][]) => {
+export const accessibilitySuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — aria-hidden", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

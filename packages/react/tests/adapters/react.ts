@@ -32,7 +32,7 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
 
   function TestComponent() {
     const { containerRef, goTo, next, prev, currentFace, isAnimating } = useTurnBox({
-      faces,
+      faces: faces as 2 | 3 | 4,
       ...turnBoxOptions,
     });
 
