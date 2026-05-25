@@ -10,7 +10,7 @@ const toSuiteName = (filename: string): string => {
 };
 
 describe("allSuites completeness", () => {
-  const dir = resolve(import.meta.dirname ?? __dirname, "suite");
+  const dir = resolve(import.meta.dirname, "suite");
   const suiteFiles = readdirSync(dir)
     .filter((f) => f.endsWith(".suite.ts") || f.endsWith(".suite.js"))
     .map(toSuiteName)
