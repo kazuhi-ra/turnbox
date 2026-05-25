@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import type { AdapterList, TurnBoxTestAdapter } from "../adapter.js";
 
-export const wrapAroundCompatSuite = (adapters: AdapterList) => {
+export const wrapAroundBasicSuite = (adapters: AdapterList) => {
   describe.each(adapters)("%s — wrap-around", (_, createAdapter) => {
     let adapter: TurnBoxTestAdapter;
 

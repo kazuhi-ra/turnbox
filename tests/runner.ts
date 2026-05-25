@@ -14,7 +14,7 @@ import { prefersReducedMotionSuite } from "./suite/prefers-reduced-motion.suite.
 import { accessibilitySuite } from "./suite/accessibility.suite.js";
 import { transformValuesSuite } from "./suite/transform-values.suite.js";
 import { variableGeometrySuite } from "./suite/variable-geometry.suite.js";
-import { wrapAroundCompatSuite } from "./suite/wrap-around-compat.suite.js";
+import { wrapAroundBasicSuite } from "./suite/wrap-around-basic.suite.js";
 import { wrapAroundSuite } from "./suite/wrap-around.suite.js";
 
 export const allSuites = {
@@ -33,7 +33,7 @@ export const allSuites = {
   accessibilitySuite,
   transformValuesSuite,
   variableGeometrySuite,
-  wrapAroundCompatSuite,
+  wrapAroundBasicSuite,
   wrapAroundSuite,
 } as const;
 

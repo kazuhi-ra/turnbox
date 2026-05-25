@@ -24,6 +24,6 @@ runSuites({
   accessibilitySuite: modern,
   transformValuesSuite: all,
   variableGeometrySuite: modern,
-  wrapAroundCompatSuite: all,
+  wrapAroundBasicSuite: all,
   wrapAroundSuite: modern,
 });

@@ -23,6 +23,6 @@ runSuites({
   accessibilitySuite: adapters,
   transformValuesSuite: adapters,
   variableGeometrySuite: adapters,
-  wrapAroundCompatSuite: adapters,
+  wrapAroundBasicSuite: adapters,
   wrapAroundSuite: adapters,
 });
