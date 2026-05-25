@@ -1,6 +1,6 @@
 {
   "name": "@kazuhi-ra/turnbox-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Core logic for TurnBox — pure functions for 3D box animation geometry, state, and transitions (no DOM dependency)",
   "keywords": [
     "3d",

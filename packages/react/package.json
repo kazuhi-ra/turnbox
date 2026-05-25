@@ -1,6 +1,6 @@
 {
   "name": "@kazuhi-ra/turnbox-react",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "React TurnBox — CSS3 3D box flip animation compound component and hook for React 18+",
   "keywords": [
     "3d",
