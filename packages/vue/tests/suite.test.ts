@@ -25,4 +25,6 @@ runSuites({
   variableGeometrySuite: adapters,
   wrapAroundBasicSuite: adapters,
   wrapAroundSuite: adapters,
+  interruptSuite: adapters,
+  interruptModernSuite: adapters,
 });

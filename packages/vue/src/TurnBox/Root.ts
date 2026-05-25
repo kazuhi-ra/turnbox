@@ -18,6 +18,7 @@ import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import {
   calcPrePositionTransform,
   resolveTransition,
+  VIRTUAL_PREV_WRAP,
   VIRTUAL_NEXT_WRAP,
   FOCUSABLE,
 } from "@kazuhi-ra/turnbox-core/internal";
@@ -185,8 +186,27 @@ export const Root = defineComponent({
       { flush: "post" },
     );
 
+    const abortAnimation = (): void => {
+      for (const id of pendingTimers) clearTimeout(id);
+      pendingTimers.length = 0;
+      if (pendingRaf !== null) {
+        cancelRaf(pendingRaf);
+        pendingRaf = null;
+      }
+      if (
+        phase.value.kind === "animating" &&
+        (displayFace.value === VIRTUAL_PREV_WRAP || displayFace.value === VIRTUAL_NEXT_WRAP)
+      ) {
+        displayFace.value = displayFace.value === VIRTUAL_PREV_WRAP ? 4 : 1;
+      }
+      phase.value = { kind: "idle" };
+      shownFaces.value = new Set([displayFace.value]);
+      faceOverrides.value = EMPTY_MAP;
+      isAnimatingFlag.value = false;
+    };
+
     const goTo = (rawTarget: number, animation = true) => {
-      if (isAnimatingFlag.value) return;
+      if (isAnimatingFlag.value) abortAnimation();
 
       const transition = resolveTransition(displayFace.value, rawTarget, opts.value, animation);
       if (transition.kind === "noop") return;
@@ -275,8 +295,18 @@ export const Root = defineComponent({
       });
     };
 
-    const next = () => goTo(displayFace.value + 1, true);
-    const prev = () => goTo(displayFace.value - 1, true);
+    const resolveCurrentFace = (): number => {
+      if (
+        phase.value.kind === "animating" &&
+        (displayFace.value === VIRTUAL_PREV_WRAP || displayFace.value === VIRTUAL_NEXT_WRAP)
+      ) {
+        return displayFace.value === VIRTUAL_PREV_WRAP ? 4 : 1;
+      }
+      return displayFace.value;
+    };
+
+    const next = () => goTo(resolveCurrentFace() + 1, true);
+    const prev = () => goTo(resolveCurrentFace() - 1, true);
 
     provide(TurnBoxContextKey, {
       opts,

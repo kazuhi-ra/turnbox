@@ -16,6 +16,8 @@ import { transformValuesSuite } from "./suite/transform-values.suite.js";
 import { variableGeometrySuite } from "./suite/variable-geometry.suite.js";
 import { wrapAroundBasicSuite } from "./suite/wrap-around-basic.suite.js";
 import { wrapAroundSuite } from "./suite/wrap-around.suite.js";
+import { interruptSuite } from "./suite/interrupt.suite.js";
+import { interruptModernSuite } from "./suite/interrupt-modern.suite.js";
 
 export const allSuites = {
   basicNavigationSuite,
@@ -35,6 +37,8 @@ export const allSuites = {
   variableGeometrySuite,
   wrapAroundBasicSuite,
   wrapAroundSuite,
+  interruptSuite,
+  interruptModernSuite,
 } as const;
 
 export type SuiteSelection = {

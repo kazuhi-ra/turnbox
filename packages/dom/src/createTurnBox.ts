@@ -133,6 +133,25 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     face.inert = true;
   }
 
+  const abortAnimation = (): void => {
+    for (const id of pendingTimers) clearTimeout(id);
+    pendingTimers.length = 0;
+    faces.forEach((f) => {
+      f.classList.remove("turnBoxTransition");
+      f.style.transition = "";
+    });
+    container.style.transition = "";
+    container.classList.remove("turnBoxAdjust");
+    setCurrentFace(resolveRealFace(currentFace));
+    applyFaceTransforms(faces, currentFace, opts);
+    faces.forEach((_, i) => {
+      const faceNum = i + 1;
+      if (faceNum === currentFace) showFace(faceNum);
+      else hideFace(faceNum);
+    });
+    isAnimating = false;
+  };
+
   // Fixed-geometry wrap: override incoming face to 0° so transition goes
   // from the pre-positioned ±90° to 0°, not from ±90° to ±360°.
   const overrideIncomingFaceToResting = (landAt: 1 | 4): void => {
@@ -143,7 +162,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   };
 
   const animate = (rawTarget: number, animationFlag: boolean): void => {
-    if (isAnimating) return;
+    if (isAnimating) abortAnimation();
 
     const transition = resolveTransition(currentFace, rawTarget, opts, animationFlag);
     if (transition.kind === "noop") return;
@@ -235,10 +254,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       animate(face, animation);
     },
     next() {
-      animate(currentFace + 1, true);
+      animate(resolveRealFace(currentFace) + 1, true);
     },
     prev() {
-      animate(currentFace - 1, true);
+      animate(resolveRealFace(currentFace) - 1, true);
     },
     getCurrentFace,
     isAnimating: () => isAnimating,
