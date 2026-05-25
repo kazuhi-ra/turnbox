@@ -7,7 +7,7 @@
     "node": ">=22.11.0"
   },
   "scripts": {
-    "test": "pnpm -r run test",
+    "test": "vitest run tests/completeness.test.ts && pnpm -r run test",
     "test:doc": "pnpm -r run test -- --reporter verbose",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
