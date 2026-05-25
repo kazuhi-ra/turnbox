@@ -1,6 +1,7 @@
 MIT License
 
-Copyright (c) 2026 NOHT CO.,LTD.
+Copyright (c) 2026 kazuhi-ra
+Based on turnBox.js (https://github.com/nohtcoltd/turnbox_js) by NOHT CO.,LTD., MIT licensed.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
