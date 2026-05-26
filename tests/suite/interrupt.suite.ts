@@ -29,12 +29,12 @@ export const interruptSuite = (adapters: AdapterList) => {
       expect(adapter.getCurrentFace()).toBe(3);
     });
 
-    it("next() interrupt: only final face is shown", async () => {
+    it("next() queued: only final face is shown after both animations complete", async () => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.next(); // face1 → face2
       await adapter.advanceTime(50);
-      adapter.next(); // interrupt → face2 → face3
-      await adapter.advanceTime(300);
+      adapter.next(); // queue face3 (face3 ≠ FROM=face1)
+      await adapter.advanceTime(550); // face1→face2 (≈220ms) + face2→face3 (≈220ms)
       expect(adapter.isFaceShown(3)).toBe(true);
       expect(adapter.isFaceShown(1)).toBe(false);
       expect(adapter.isFaceShown(2)).toBe(false);
@@ -67,19 +67,6 @@ export const interruptSuite = (adapters: AdapterList) => {
       adapter.next(); // face1 → face2
       await adapter.advanceTime(50);
       adapter.goTo(4, false); // interrupt (no CSS) → face2 → face4
-      await adapter.advanceTime(300);
-      expect(adapter.getCurrentFace()).toBe(4);
-    });
-
-    // ── sequential interrupts ─────────────────────────────────────────────────
-
-    it("two sequential interrupts: each step advances the face", async () => {
-      adapter = createAdapter({ faces: 4, duration: 200 });
-      adapter.next(); // face1 → face2
-      await adapter.advanceTime(50);
-      adapter.next(); // interrupt → face2 → face3
-      await adapter.advanceTime(50);
-      adapter.next(); // interrupt → face3 → face4
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(4);
     });
@@ -198,10 +185,70 @@ export const interruptSuite = (adapters: AdapterList) => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.next(); // face1 → face2
       await adapter.advanceTime(50);
-      adapter.next(); // interrupt → face2 → face3
+      adapter.next(); // queue face3
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(3);
       adapter.next(); // face3 → face4
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+
+    // ── queue behavior ────────────────────────────────────────────────────────
+
+    it("next() queued: face2 is still shown during first animation", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      expect(adapter.isFaceShown(2)).toBe(true); // face1→face2 still in progress
+      await adapter.advanceTime(550); // both animations complete
+      expect(adapter.isFaceShown(3)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+      expect(adapter.isFaceShown(1)).toBe(false);
+    });
+
+    // ── pattern coverage ──────────────────────────────────────────────────────
+
+    it("goTo(FROM) during animation: 即時実行 back to FROM face", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2 (FROM=1, display=2)
+      await adapter.advanceTime(50);
+      adapter.goTo(1); // target=FROM=face1 → 即時実行
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+      expect(adapter.isFaceShown(1)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+    });
+
+    it("next() during backward animation: 即時実行 back to FROM", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.goTo(3, false);
+      await adapter.advanceTime(300);
+      adapter.prev(); // face3 → face2 (FROM=3, display=2)
+      await adapter.advanceTime(50);
+      adapter.next(); // display=2, next=3=FROM → 即時実行
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(3);
+    });
+
+    it("prev() during backward animation: queued to face1", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.goTo(3, false);
+      await adapter.advanceTime(300);
+      adapter.prev(); // face3 → face2 (FROM=3, display=2)
+      await adapter.advanceTime(50);
+      adapter.prev(); // display=2, prev=1 ≠ FROM=3 → queue face1
+      await adapter.advanceTime(700); // face3→face2 + face2→face1 complete
+      expect(adapter.getCurrentFace()).toBe(1);
+    });
+
+    it("goTo(FROM) during wrap animation: 即時実行 back to FROM via wrap", async () => {
+      adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
+      adapter.goTo(4, false);
+      await adapter.advanceTime(300);
+      adapter.next(); // face4 → face1 wrap (FROM=4, display=1)
+      await adapter.advanceTime(50);
+      adapter.goTo(4); // target=FROM=face4 → 即時実行 (animated in type:real)
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(4);
     });

@@ -80,6 +80,9 @@ export const Root = defineComponent({
     const isAnimatingFlag = ref(false);
     const pendingTimers: ReturnType<typeof setTimeout>[] = [];
     let pendingRaf: number | null = null;
+    let animatingFromFace: number | null = null;
+    let animatingToFace: number | null = null;
+    const pendingNavigations: Array<{ face: number; animation: boolean }> = [];
 
     const boxRef = ref<HTMLElement | null>(null);
 
@@ -149,8 +152,12 @@ export const Root = defineComponent({
               shownFaces.value = new Set([to]);
               faceOverrides.value = EMPTY_MAP;
               isAnimatingFlag.value = false;
+              animatingFromFace = null;
+              animatingToFace = null;
               props.onAnimationEnd?.(to);
               nextTick(() => focusFace(to));
+              const pending = pendingNavigations.shift();
+              if (pending) goTo(pending.face, pending.animation);
             }, opts.value.duration + opts.value.delay);
           });
         }
@@ -165,21 +172,48 @@ export const Root = defineComponent({
         cancelRaf(pendingRaf);
         pendingRaf = null;
       }
+      const settleFace = animatingToFace ?? displayFace.value;
+      displayFace.value = settleFace;
       phase.value = { kind: "idle" };
-      shownFaces.value = new Set([displayFace.value]);
+      shownFaces.value = new Set([settleFace]);
       faceOverrides.value = EMPTY_MAP;
       isAnimatingFlag.value = false;
+      animatingFromFace = null;
+      animatingToFace = null;
     };
 
     const goTo = (rawTarget: number, animation = true) => {
-      if (isAnimatingFlag.value) abortAnimation();
+      if (isAnimatingFlag.value) {
+        const from = animatingToFace ?? displayFace.value;
+        const checkTransition = resolveTransition(from, rawTarget, opts.value, animation);
+        if (checkTransition.kind === "noop") return;
 
-      const transition = resolveTransition(displayFace.value, rawTarget, opts.value, animation);
+        const isImmediate = !animation || checkTransition.to === animatingFromFace;
+
+        if (!isImmediate) {
+          pendingNavigations.push({ face: rawTarget, animation });
+          return;
+        }
+
+        abortAnimation();
+        pendingNavigations.length = 0;
+      }
+
+      const from = animatingToFace ?? displayFace.value;
+      const transition = resolveTransition(from, rawTarget, opts.value, animation);
       if (transition.kind === "noop") return;
 
       isAnimatingFlag.value = true;
+      animatingFromFace = from;
+      animatingToFace = transition.to;
+
       const time = opts.value.duration + opts.value.delay;
       props.onChange?.(transition.to);
+
+      const drainQueue = () => {
+        const pending = pendingNavigations.shift();
+        if (pending) goTo(pending.face, pending.animation);
+      };
 
       if (transition.kind === "step" && transition.hasAdjust) {
         if (!transition.doAnimate) {
@@ -189,13 +223,16 @@ export const Root = defineComponent({
           faceOverrides.value = EMPTY_MAP;
           addTimeout(() => {
             isAnimatingFlag.value = false;
+            animatingFromFace = null;
+            animatingToFace = null;
             props.onAnimationEnd?.(transition.to);
             focusFace(transition.to);
+            drainQueue();
           }, time);
           return;
         }
 
-        const currentFace = displayFace.value;
+        const currentFace = from;
         shownFaces.value = new Set([currentFace, transition.to]);
         faceOverrides.value = EMPTY_MAP;
         phase.value = { kind: "adjusting", to: transition.to };
@@ -211,13 +248,16 @@ export const Root = defineComponent({
         faceOverrides.value = EMPTY_MAP;
         addTimeout(() => {
           isAnimatingFlag.value = false;
+          animatingFromFace = null;
+          animatingToFace = null;
           props.onAnimationEnd?.(to);
           focusFace(to);
+          drainQueue();
         }, time);
         return;
       }
 
-      const currentFace = displayFace.value;
+      const currentFace = from;
       shownFaces.value = new Set([currentFace, to]);
       faceOverrides.value = EMPTY_MAP;
       phase.value = { kind: "animating" }; // frame 1: apply transition CSS
@@ -231,13 +271,16 @@ export const Root = defineComponent({
           phase.value = { kind: "idle" };
           shownFaces.value = new Set([to]);
           isAnimatingFlag.value = false;
+          animatingFromFace = null;
+          animatingToFace = null;
           props.onAnimationEnd?.(to);
           nextTick(() => focusFace(to));
+          drainQueue();
         }, time);
       });
     };
 
-    const resolveCurrentFace = (): number => displayFace.value;
+    const resolveCurrentFace = (): number => animatingToFace ?? displayFace.value;
 
     const next = () => goTo(resolveCurrentFace() + 1, true);
     const prev = () => goTo(resolveCurrentFace() - 1, true);

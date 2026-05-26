@@ -89,6 +89,8 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
+    const animatingFromFaceRef = useRef<number | null>(null);
+    const pendingNavigations = useRef<Array<{ face: number; animation: boolean }>>([]);
     const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
     const stateRef = useRef(state);
     stateRef.current = state;
@@ -175,18 +177,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         ?.focus({ preventScroll: true });
     }, [focusRequest]);
 
-    useEffect(() => {
-      if (state.kind === "adjusting") {
-        const { to } = state;
-        dispatch({ type: "ENTER_ADJUST_ANIMATING", displayFace: to });
-        addTimeout(() => {
-          dispatch({ type: "COMPLETE", displayFace: to });
-          isAnimatingRef.current = false;
-          onAnimationEndRef.current?.(to);
-        }, opts.duration + opts.delay);
-      }
-    }, [state, opts, addTimeout]);
-
     const resolveCurrentFace = useCallback((): number => stateRef.current.displayFace, []);
 
     const goTo = useCallback(
@@ -194,25 +184,46 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         const fromFace = resolveCurrentFace();
 
         if (isAnimatingRef.current) {
+          const transition = resolveTransition(fromFace, rawTarget, opts, animation);
+          if (transition.kind === "noop") return;
+
+          const isImmediate = !animation || transition.to === animatingFromFaceRef.current;
+
+          if (!isImmediate) {
+            pendingNavigations.current.push({ face: rawTarget, animation });
+            return;
+          }
+
+          // 即時実行: abort current animation and clear queue
           for (const id of pendingTimers.current) clearTimeout(id);
           pendingTimers.current = [];
           dispatch({ type: "COMPLETE", displayFace: fromFace });
           isAnimatingRef.current = false;
+          animatingFromFaceRef.current = null;
+          pendingNavigations.current = [];
         }
 
         const transition = resolveTransition(fromFace, rawTarget, opts, animation);
         if (transition.kind === "noop") return;
 
         isAnimatingRef.current = true;
+        animatingFromFaceRef.current = fromFace;
         const time = opts.duration + opts.delay;
         onChangeRef.current?.(transition.to);
+
+        const drainQueue = () => {
+          const pending = pendingNavigations.current.shift();
+          if (pending) goTo(pending.face, pending.animation);
+        };
 
         if (transition.kind === "step" && transition.hasAdjust) {
           if (!transition.doAnimate) {
             dispatch(buildGoInstantAction(transition.to));
             addTimeout(() => {
               isAnimatingRef.current = false;
+              animatingFromFaceRef.current = null;
               onAnimationEndRef.current?.(transition.to);
+              drainQueue();
             }, time);
             return;
           }
@@ -225,7 +236,9 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           dispatch(buildGoInstantAction(to));
           addTimeout(() => {
             isAnimatingRef.current = false;
+            animatingFromFaceRef.current = null;
             onAnimationEndRef.current?.(to);
+            drainQueue();
           }, time);
           return;
         }
@@ -233,11 +246,28 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         addTimeout(() => {
           dispatch({ type: "COMPLETE", displayFace: to });
           isAnimatingRef.current = false;
+          animatingFromFaceRef.current = null;
           onAnimationEndRef.current?.(to);
+          drainQueue();
         }, time);
       },
       [opts, addTimeout, resolveCurrentFace],
     );
+
+    useEffect(() => {
+      if (state.kind === "adjusting") {
+        const { to } = state;
+        dispatch({ type: "ENTER_ADJUST_ANIMATING", displayFace: to });
+        addTimeout(() => {
+          dispatch({ type: "COMPLETE", displayFace: to });
+          isAnimatingRef.current = false;
+          animatingFromFaceRef.current = null;
+          onAnimationEndRef.current?.(to);
+          const pending = pendingNavigations.current.shift();
+          if (pending) goTo(pending.face, pending.animation);
+        }, opts.duration + opts.delay);
+      }
+    }, [state, opts, addTimeout, goTo]);
 
     const next = useCallback(() => goTo(resolveCurrentFace() + 1, true), [goTo, resolveCurrentFace]);
     const prev = useCallback(() => goTo(resolveCurrentFace() - 1, true), [goTo, resolveCurrentFace]);
