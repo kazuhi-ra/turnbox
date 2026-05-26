@@ -1,4 +1,5 @@
-import { useRef, useEffect } from "react";
+import { useCallback } from "react";
+import type React from "react";
 import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
 import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
@@ -28,7 +29,6 @@ const usesFaceTransform = (phase: AnimationPhase): boolean =>
 
 export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: FaceInternalProps) => {
   const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
-  const divRef = useRef<HTMLDivElement>(null);
 
   const ft = usesFaceTransform(phase)
     ? calcFaceTransform(displayFace, _faceIndex, opts)
@@ -51,14 +51,17 @@ export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: Fa
 
   const isShown = shownFaces.has(_faceIndex);
 
-  useEffect(() => {
-    if (divRef.current) divRef.current.inert = !isShown;
-  }, [isShown]);
+  const inertRef = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (el) el.inert = !isShown;
+    },
+    [isShown],
+  );
 
   return (
     <div
       {...rest}
-      ref={divRef}
+      ref={inertRef}
       data-face-index={_faceIndex}
       className={className}
       style={faceStyle}
