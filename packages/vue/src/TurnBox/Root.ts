@@ -13,7 +13,7 @@ import {
   type VNode,
   type PropType,
 } from "vue";
-import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
+import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContextKey } from "./context.js";

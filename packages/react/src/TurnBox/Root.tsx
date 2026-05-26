@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef, useState } from "react";
-import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
+import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { TurnBoxOptions, NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContext } from "./context.js";
 import { useTurnBoxConfig } from "./ConfigContext.js";
-import { toTransformString } from "./utils.js";
 import { Face } from "./Face.js";
 import {
   reducer,
