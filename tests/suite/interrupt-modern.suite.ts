@@ -98,6 +98,42 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       expect(adapter.isAnimating()).toBe(false);
     });
 
+    // ── queue seamlessness: type:skip ─────────────────────────────────────────
+    // type:skip allows multi-face jumps with CSS transition (deff>1 stays animated).
+    // Seamlessness must hold for 1-step-after-skip AND 2-step-skip-after-1-step.
+
+    it("type:skip queued 1-step after 2-step: second face shown immediately", async () => {
+      // face1→face3 (2-step skip), then next() queued → face3→face4 (1-step)
+      adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
+      adapter.goTo(3); // face1→face3 (skip)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face4
+      await adapter.advanceTime(170); // 50+170=220ms
+      expect(adapter.isFaceShown(4)).toBe(true);
+    });
+
+    it("type:skip queued 2-step after 1-step: second face shown immediately", async () => {
+      // face1→face2 (1-step), then goTo(4) queued → face2→face4 (2-step skip)
+      adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
+      adapter.next(); // face1→face2
+      await adapter.advanceTime(50);
+      adapter.goTo(4); // queue face4 (2-step skip)
+      await adapter.advanceTime(170); // 50+170=220ms
+      expect(adapter.isFaceShown(4)).toBe(true);
+    });
+
+    it("type:skip consecutive queued animations complete without inter-animation gap", async () => {
+      adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
+      adapter.next(); // face1→face2
+      await adapter.advanceTime(50);
+      adapter.goTo(4); // queue face4 (2-step skip from face2)
+      await adapter.advanceTime(370); // 50+370=420ms
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.isFaceShown(4)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+      expect(adapter.isAnimating()).toBe(false);
+    });
+
     // ── queue behavior ────────────────────────────────────────────────────────
 
     it("two next() queued during same animation: same target queued twice, executes once", async () => {

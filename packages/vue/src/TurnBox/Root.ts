@@ -262,12 +262,24 @@ export const Root = defineComponent({
       faceOverrides.value = EMPTY_MAP;
       phase.value = { kind: "animating" }; // frame 1: apply transition CSS
 
-      // Queue-drained animations skip rAF: the "from" state is already painted.
-      // setTimeout(0) gives Vue one render cycle to apply transitions before updating displayFace.
-      const scheduleStep2 = fromQueue
-        ? (fn: FrameRequestCallback) => setTimeout(fn, 0) as unknown as number
-        : scheduleRaf;
-      pendingRaf = scheduleStep2(() => {
+      if (fromQueue) {
+        // Queue-drained: "from" transforms are already painted. Update displayFace in the same
+        // render as phase="animating" so CSS transitions fire immediately with no gap.
+        displayFace.value = to;
+        addTimeout(() => {
+          phase.value = { kind: "idle" };
+          shownFaces.value = new Set([to]);
+          isAnimatingFlag.value = false;
+          animatingFromFace = null;
+          animatingToFace = null;
+          props.onAnimationEnd?.(to);
+          nextTick(() => focusFace(to));
+          drainQueue();
+        }, time);
+        return;
+      }
+
+      pendingRaf = scheduleRaf(() => {
         // frame 2: update transform
         pendingRaf = null;
         displayFace.value = to;
