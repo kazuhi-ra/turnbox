@@ -133,10 +133,10 @@ export const callbacksSuite = (adapters: AdapterList) => {
         adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY, onAnimationEnd });
         adapter.next(); // face1 → face2 (FROM=1)
         await adapter.advanceTime(50);
-        adapter.prev(); // 即時実行: abort face1→face2, start face2→face1
+        adapter.prev(); // immediate-execute: abort face1→face2, start face2→face1
         await adapter.advanceTime(AFTER_ANIMATION);
         expect(onAnimationEnd).toHaveBeenCalledTimes(1);
-        expect(onAnimationEnd).toHaveBeenCalledWith(1); // face2 は abort されたので呼ばれない
+        expect(onAnimationEnd).toHaveBeenCalledWith(1); // face2 was aborted, so its onAnimationEnd is not called
       });
 
       it("fires for each animation when queued", async () => {

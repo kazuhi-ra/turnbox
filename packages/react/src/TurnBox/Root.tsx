@@ -202,7 +202,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
             return;
           }
 
-          // 即時実行: abort current animation and clear queue
+          // immediate-execute: abort current animation and clear queue
           for (const id of pendingTimers.current) clearTimeout(id);
           pendingTimers.current = [];
           dispatch({ type: "COMPLETE", displayFace: fromFace });

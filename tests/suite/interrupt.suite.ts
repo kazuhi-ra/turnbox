@@ -209,24 +209,24 @@ export const interruptSuite = (adapters: AdapterList) => {
 
     // ── pattern coverage ──────────────────────────────────────────────────────
 
-    it("goTo(FROM) during animation: 即時実行 back to FROM face", async () => {
+    it("goTo(FROM) during animation: immediate-execute back to FROM face", async () => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.next(); // face1 → face2 (FROM=1, display=2)
       await adapter.advanceTime(50);
-      adapter.goTo(1); // target=FROM=face1 → 即時実行
+      adapter.goTo(1); // target=FROM=face1 → immediate-execute
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(1);
       expect(adapter.isFaceShown(1)).toBe(true);
       expect(adapter.isFaceShown(2)).toBe(false);
     });
 
-    it("next() during backward animation: 即時実行 back to FROM", async () => {
+    it("next() during backward animation: immediate-execute back to FROM", async () => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.goTo(3, false);
       await adapter.advanceTime(300);
       adapter.prev(); // face3 → face2 (FROM=3, display=2)
       await adapter.advanceTime(50);
-      adapter.next(); // display=2, next=3=FROM → 即時実行
+      adapter.next(); // display=2, next=3=FROM → immediate-execute
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(3);
     });
@@ -242,13 +242,13 @@ export const interruptSuite = (adapters: AdapterList) => {
       expect(adapter.getCurrentFace()).toBe(1);
     });
 
-    it("goTo(FROM) during wrap animation: 即時実行 back to FROM via wrap", async () => {
+    it("goTo(FROM) during wrap animation: immediate-execute back to FROM via wrap", async () => {
       adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
       adapter.goTo(4, false);
       await adapter.advanceTime(300);
       adapter.next(); // face4 → face1 wrap (FROM=4, display=1)
       await adapter.advanceTime(50);
-      adapter.goTo(4); // target=FROM=face4 → 即時実行 (animated in type:real)
+      adapter.goTo(4); // target=FROM=face4 → immediate-execute (animated in type:real)
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(4);
     });

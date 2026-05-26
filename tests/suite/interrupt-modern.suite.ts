@@ -159,6 +159,20 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       expect(adapter.getCurrentFace()).toBe(3);
     });
 
+    it("two sequential next() calls: both queue same target, ends at face3 not face4", async () => {
+      // Both next() calls resolve to display+1=face3 while display=face2 (face1→face2 in flight).
+      // Queue: [face3, face3]. After face2→face3 completes, the second drain is face3→face3 = noop.
+      // Final: face3. (jQuery abort-all gives face4; queue behavior gives face3.)
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2 (FROM=1, display=2)
+      await adapter.advanceTime(50);
+      adapter.next(); // display=2, next=3 ≠ FROM(1) → queue {face:3}
+      await adapter.advanceTime(50);
+      adapter.next(); // display=2, next=3 ≠ FROM(1) → queue {face:3} duplicate
+      await adapter.advanceTime(700); // all animations complete
+      expect(adapter.getCurrentFace()).toBe(3); // not face4
+    });
+
     it("multiple goTo() queued: executes in order", async () => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.next(); // face1 → face2
@@ -169,12 +183,12 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       expect(adapter.getCurrentFace()).toBe(4);
     });
 
-    it("即時実行 clears pending queue", async () => {
+    it("immediate-execute clears pending queue", async () => {
       adapter = createAdapter({ faces: 4, duration: 200 });
       adapter.next(); // face1 → face2 (FROM=1)
       await adapter.advanceTime(50);
       adapter.goTo(3); // queue face3
-      adapter.prev(); // 即時実行 (display=2, prev=1=FROM) → clears queue
+      adapter.prev(); // immediate-execute (display=2, prev=1=FROM) → clears queue
       await adapter.advanceTime(500);
       expect(adapter.getCurrentFace()).toBe(1); // face3 was cleared
     });
