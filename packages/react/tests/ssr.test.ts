@@ -87,12 +87,12 @@ describe("React SSR: renderToString + hydrateRoot", () => {
       expect(getHandle().getCurrentFace()).toBe(2);
     });
 
-    it("prev() on face 1 is a no-op", () => {
+    it("prev() on face 1 wraps to face 4 (type:real)", () => {
       const { getHandle } = mountSSR(4);
       act(() => {
         getHandle().prev();
       });
-      expect(getHandle().getCurrentFace()).toBe(1);
+      expect(getHandle().getCurrentFace()).toBe(4);
     });
   });
 });

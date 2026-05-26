@@ -103,7 +103,7 @@ export const interruptSuite = (adapters: AdapterList) => {
       adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
       adapter.goTo(4, false);
       await adapter.advanceTime(300); // settle at face4
-      adapter.next(); // face4 → face1 (wrap via virtual face5)
+      adapter.next(); // face4 → face1 (boundary wrap)
       await adapter.advanceTime(50); // mid-wrap
       adapter.goTo(3); // interrupt → face3
       await adapter.advanceTime(300);
@@ -112,7 +112,7 @@ export const interruptSuite = (adapters: AdapterList) => {
 
     it("goTo() during face1→face4 wrap animation: interrupts to arbitrary face", async () => {
       adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
-      adapter.prev(); // face1 → face4 (wrap via virtual face0)
+      adapter.prev(); // face1 → face4 (boundary wrap)
       await adapter.advanceTime(50); // mid-wrap
       adapter.goTo(3); // interrupt → face3
       await adapter.advanceTime(300);

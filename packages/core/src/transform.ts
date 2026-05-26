@@ -6,9 +6,7 @@ import type {
   Geometry,
   NormalizedOptions,
   RotationDeg,
-  VirtualWrapFace,
 } from "./types.js";
-import { VIRTUAL_NEXT_WRAP } from "./types.js";
 import { MAX_FACE_PCS } from "./normalize.js";
 
 // Named transformOrigin values for the three non-dynamic cases
@@ -34,6 +32,10 @@ const applyAnimationType = (
   if (type === "skip") {
     const clamped = Math.sign(deg) * 90;
     return isSkipWrapEdge(currentFace, faceNum) ? clamped * -1 : clamped;
+  }
+  if (type === "real" && isSkipWrapEdge(currentFace, faceNum)) {
+    const clamped = Math.sign(deg) * 90;
+    return clamped * -1;
   }
   if (type === "repeat") {
     if (getFaceParity(currentFace) === "odd" && getFaceParity(faceNum) === "even") return 90;
@@ -70,19 +72,17 @@ const calcZIndex = (deg: RotationDeg): number => Z_INDEX[faceVisibility(deg)];
 // ── Translate tables ──────────────────────────────────────────────────────────
 
 // Classifies a RotationDeg into its effective quadrant for translate lookups.
-// pos90 = +90° rotation (or equivalent -270°); neg90 = -90° (or equivalent +270°).
+// pos90 = +90° rotation; neg90 = -90°.
 type DegBucket = "zero" | "pos90" | "half" | "neg90";
 
 const classifyDeg = (deg: RotationDeg): DegBucket => {
   if (deg === 0 || Math.abs(deg) === 360) return "zero";
-  if (deg === 90 || deg === -270) return "pos90";
+  if (deg === 90) return "pos90";
   if (Math.abs(deg) === 180) return "half";
   return "neg90";
 };
 
 // Fixed geometry: translate uses changeHalf = (deg<0 ? -l : l)/2.
-// axis:Y — same formula for |deg|=90 and |deg|=270.
-// axis:X — |deg|=90 negates changeHalf for y; |deg|=270 does not.
 const calcFixedTranslate = (deg: RotationDeg, axis: Axis, length: number): [number, number, number] => {
   const abs = Math.abs(deg);
   if (abs === 0 || abs === 360) return [0, 0, 0];
@@ -90,7 +90,7 @@ const calcFixedTranslate = (deg: RotationDeg, axis: Axis, length: number): [numb
   const changeHalf = (deg < 0 ? -length : length) / 2;
   const half = length / 2;
   if (axis === "Y") return [changeHalf, 0, half];
-  return abs === 90 ? [0, -changeHalf, half] : [0, changeHalf, half];
+  return [0, -changeHalf, half];
 };
 
 type VariableTranslateFactory = (l: number, e: number) => [number, number, number];
@@ -197,14 +197,4 @@ export const calcAdjustFaceTransform = (
   const transformOrigin = geometry.axis === "X" ? TRANSFORM_ORIGIN_TOP_EDGE : TRANSFORM_ORIGIN_LEFT_EDGE;
 
   return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
-};
-
-export const calcPrePositionTransform = (via: VirtualWrapFace, opts: NormalizedOptions): string => {
-  const { geometry, direction } = opts;
-  const dirSign = direction === "negative" ? -1 : 1;
-  const shortDeg = (via === VIRTUAL_NEXT_WRAP ? 90 : -90) * dirSign;
-  const half = geometry.length / 2;
-  const changeHalf = shortDeg < 0 ? -half : half;
-  const [x, y, z]: [number, number, number] = geometry.axis === "Y" ? [changeHalf, 0, half] : [0, -changeHalf, half];
-  return `rotate${geometry.axis}(${shortDeg}deg) translate3d(${x}px, ${y}px, ${z}px)`;
 };

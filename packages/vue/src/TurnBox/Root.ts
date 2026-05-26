@@ -13,17 +13,10 @@ import {
   type VNode,
   type PropType,
 } from "vue";
-import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
+import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import {
-  calcPrePositionTransform,
-  resolveTransition,
-  VIRTUAL_PREV_WRAP,
-  VIRTUAL_NEXT_WRAP,
-  FOCUSABLE,
-} from "@kazuhi-ra/turnbox-core/internal";
+import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContextKey } from "./context.js";
-import { toTransformString } from "./utils.js";
 import type { AnimationPhase } from "./context.js";
 import { Face } from "./Face.js";
 import { injectTurnBoxConfig } from "./configContext.js";
@@ -142,28 +135,7 @@ export const Root = defineComponent({
     watch(
       phase,
       (newPhase) => {
-        if (newPhase.kind === "pre-positioning") {
-          const { via, landAt } = newPhase;
-          const restingTransform = toTransformString(calcFaceTransform(landAt, landAt, opts.value));
-
-          pendingRaf = scheduleRaf(() => {
-            pendingRaf = null;
-            displayFace.value = via;
-            phase.value = { kind: "animating" };
-            shownFaces.value = new Set([...shownFaces.value, landAt]);
-            faceOverrides.value = new Map([[landAt, restingTransform]]);
-
-            addTimeout(() => {
-              phase.value = { kind: "idle" };
-              displayFace.value = landAt;
-              shownFaces.value = new Set([landAt]);
-              faceOverrides.value = EMPTY_MAP;
-              isAnimatingFlag.value = false;
-              props.onAnimationEnd?.(landAt);
-              nextTick(() => focusFace(landAt));
-            }, opts.value.duration + opts.value.delay);
-          });
-        } else if (newPhase.kind === "adjusting") {
+        if (newPhase.kind === "adjusting") {
           const { to } = newPhase;
           phase.value = { kind: "adjust-animating" }; // frame 1: apply transition CSS
 
@@ -193,12 +165,6 @@ export const Root = defineComponent({
         cancelRaf(pendingRaf);
         pendingRaf = null;
       }
-      if (
-        phase.value.kind === "animating" &&
-        (displayFace.value === VIRTUAL_PREV_WRAP || displayFace.value === VIRTUAL_NEXT_WRAP)
-      ) {
-        displayFace.value = displayFace.value === VIRTUAL_PREV_WRAP ? 4 : 1;
-      }
       phase.value = { kind: "idle" };
       shownFaces.value = new Set([displayFace.value]);
       faceOverrides.value = EMPTY_MAP;
@@ -213,31 +179,7 @@ export const Root = defineComponent({
 
       isAnimatingFlag.value = true;
       const time = opts.value.duration + opts.value.delay;
-      const targetFace = transition.kind === "virtual-wrap" ? transition.landAt : transition.to;
-      props.onChange?.(targetFace);
-
-      if (transition.kind === "virtual-wrap") {
-        if (!transition.doAnimate) {
-          // Reactive values set synchronously; Vue re-renders before the macrotask fires
-          displayFace.value = transition.landAt;
-          phase.value = { kind: "idle" };
-          shownFaces.value = new Set([transition.landAt]);
-          faceOverrides.value = EMPTY_MAP;
-          addTimeout(() => {
-            isAnimatingFlag.value = false;
-            props.onAnimationEnd?.(transition.landAt);
-            focusFace(transition.landAt);
-          }, time);
-          return;
-        }
-
-        const incoming = transition.via === VIRTUAL_NEXT_WRAP ? 1 : 4;
-        const currentFace = displayFace.value;
-        shownFaces.value = new Set([currentFace, incoming]);
-        faceOverrides.value = new Map([[incoming, calcPrePositionTransform(transition.via, opts.value)]]);
-        phase.value = { kind: "pre-positioning", via: transition.via, landAt: transition.landAt };
-        return;
-      }
+      props.onChange?.(transition.to);
 
       if (transition.kind === "step" && transition.hasAdjust) {
         if (!transition.doAnimate) {
@@ -295,15 +237,7 @@ export const Root = defineComponent({
       });
     };
 
-    const resolveCurrentFace = (): number => {
-      if (
-        phase.value.kind === "animating" &&
-        (displayFace.value === VIRTUAL_PREV_WRAP || displayFace.value === VIRTUAL_NEXT_WRAP)
-      ) {
-        return displayFace.value === VIRTUAL_PREV_WRAP ? 4 : 1;
-      }
-      return displayFace.value;
-    };
+    const resolveCurrentFace = (): number => displayFace.value;
 
     const next = () => goTo(resolveCurrentFace() + 1, true);
     const prev = () => goTo(resolveCurrentFace() - 1, true);

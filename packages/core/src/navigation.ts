@@ -1,5 +1,4 @@
-import type { Direction, NormalizedOptions, Transition, VirtualWrapFace } from "./types.js";
-import { VIRTUAL_PREV_WRAP, VIRTUAL_NEXT_WRAP } from "./types.js";
+import type { Direction, NormalizedOptions, Transition } from "./types.js";
 import { MAX_FACE_PCS } from "./normalize.js";
 
 // Returns true if the transition should animate
@@ -16,10 +15,6 @@ export const shouldAnimate = (
   return true;
 };
 
-const isVirtualWrapFace = (f: number): f is VirtualWrapFace => f === VIRTUAL_PREV_WRAP || f === VIRTUAL_NEXT_WRAP;
-
-const resolveVirtualLanding = (via: VirtualWrapFace): 1 | 4 => (via === VIRTUAL_PREV_WRAP ? 4 : 1);
-
 // Static lookup: (currentFace, targetFace) pairs that require the variable-geometry adjust pre-phase
 const ADJUST_PAIRS: Record<Direction, readonly [number, number][]> = {
   positive: [
@@ -34,13 +29,6 @@ const ADJUST_PAIRS: Record<Direction, readonly [number, number][]> = {
   ],
 };
 
-const resolveVirtualWrapVia = (from: number, to: number, opts: NormalizedOptions): VirtualWrapFace | null => {
-  if (opts.type !== "real" || opts.faces !== MAX_FACE_PCS) return null;
-  if (from === 1 && to === opts.faces) return VIRTUAL_PREV_WRAP;
-  if (from === opts.faces && to === 1) return VIRTUAL_NEXT_WRAP;
-  return null;
-};
-
 const needsAdjust = (from: number, to: number, opts: NormalizedOptions): boolean => {
   if (opts.geometry.kind === "fixed" || opts.type !== "real") return false;
   return ADJUST_PAIRS[opts.direction].some(([c, t]) => c === from && t === to);
@@ -52,21 +40,10 @@ type BoundaryResult = { kind: "noop" } | { kind: "resolved"; to: number; isDirec
 
 const resolveBoundary = (rawTarget: number, opts: NormalizedOptions): BoundaryResult => {
   if (opts.faces === MAX_FACE_PCS) {
-    if (opts.type === "real") {
-      if (rawTarget < 0) return { kind: "noop" };
-      return {
-        kind: "resolved",
-        to: rawTarget > 5 ? opts.faces : rawTarget,
-        isDirectWrap: false,
-      };
-    }
-    if (opts.type === "repeat" || opts.type === "skip") {
-      if (rawTarget === opts.faces + 1) return { kind: "resolved", to: 1, isDirectWrap: true };
-      if (rawTarget === 0) return { kind: "resolved", to: opts.faces, isDirectWrap: true };
-      if (rawTarget < 1 || rawTarget > opts.faces) return { kind: "noop" };
-      return { kind: "resolved", to: rawTarget, isDirectWrap: false };
-    }
-    if (rawTarget < 1 || rawTarget > opts.faces) return { kind: "noop" };
+    if (rawTarget === opts.faces + 1) return { kind: "resolved", to: 1, isDirectWrap: true };
+    if (rawTarget === 0) return { kind: "resolved", to: opts.faces, isDirectWrap: true };
+    if (rawTarget > opts.faces + 1) return { kind: "resolved", to: opts.faces, isDirectWrap: false };
+    if (rawTarget < 0) return { kind: "noop" };
     return { kind: "resolved", to: rawTarget, isDirectWrap: false };
   }
   if (rawTarget < 1) return { kind: "noop" };
@@ -84,29 +61,17 @@ export const resolveTransition = (
 
   const { to, isDirectWrap } = boundary;
 
-  if (isDirectWrap) {
-    // type:repeat wrap: shouldAnimate rejects large diffs, so bypass it
-    const doAnimate = opts.type === "repeat" ? animationFlag : shouldAnimate(from, to, opts, animationFlag);
-    return { kind: "direct-wrap", to, doAnimate };
-  }
+  // For type:"real" 4-face boxes, directly addressing the opposite boundary face
+  // (goTo(4) from face 1, or goTo(1) from face 4) is also a wrap transition.
+  const isRealBoundaryDirectAddress =
+    !isDirectWrap &&
+    opts.type === "real" &&
+    opts.faces === MAX_FACE_PCS &&
+    ((from === 1 && to === opts.faces) || (from === opts.faces && to === 1));
 
-  if (isVirtualWrapFace(to)) {
-    return {
-      kind: "virtual-wrap",
-      via: to,
-      landAt: resolveVirtualLanding(to),
-      doAnimate: shouldAnimate(from, to, opts, animationFlag),
-    };
-  }
-
-  const virtualVia = resolveVirtualWrapVia(from, to, opts);
-  if (virtualVia !== null) {
-    return {
-      kind: "virtual-wrap",
-      via: virtualVia,
-      landAt: resolveVirtualLanding(virtualVia),
-      doAnimate: shouldAnimate(from, virtualVia, opts, animationFlag),
-    };
+  if (isDirectWrap || isRealBoundaryDirectAddress) {
+    // boundary wraps always animate based on animationFlag — shouldAnimate rejects large diffs
+    return { kind: "direct-wrap", to, doAnimate: animationFlag };
   }
 
   return {

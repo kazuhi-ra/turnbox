@@ -31,9 +31,9 @@ export const transformValuesSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(3).transform).toBe("rotateX(180deg) translate3d(0px, 0px, 50px)");
       });
 
-      it("face4 is at bottom: rotateX(270deg) translate3d(0, 25px, 25px)", () => {
+      it("face4 is at bottom: rotateX(-90deg) translate3d(0, 25px, 25px)", () => {
         adapter = createAdapter({ faces: 4, width: 200, height: 50, axis: "X" });
-        expect(adapter.getFaceState(4).transform).toBe("rotateX(270deg) translate3d(0px, 25px, 25px)");
+        expect(adapter.getFaceState(4).transform).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
       });
     });
 
@@ -72,9 +72,9 @@ export const transformValuesSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(3).transform).toBe("rotateY(180deg) translate3d(0px, 0px, 200px)");
       });
 
-      it("face4 is at left: rotateY(270deg) translate3d(100px, 0, 100px)", () => {
+      it("face4 is at left: rotateY(-90deg) translate3d(-100px, 0, 100px)", () => {
         adapter = createAdapter({ faces: 4, width: 200, height: 50, axis: "Y" });
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(270deg) translate3d(100px, 0px, 100px)");
+        expect(adapter.getFaceState(4).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
       });
     });
 
@@ -113,7 +113,7 @@ export const transformValuesSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(2).transform).toBe("rotateX(-90deg) translate3d(0px, 25px, 25px)");
       });
 
-      it("face4 is at -270deg", () => {
+      it("face4 is at 90deg", () => {
         adapter = createAdapter({
           faces: 4,
           width: 200,
@@ -121,7 +121,7 @@ export const transformValuesSuite = (adapters: AdapterList) => {
           axis: "X",
           direction: "negative",
         });
-        expect(adapter.getFaceState(4).transform).toBe("rotateX(-270deg) translate3d(0px, -25px, 25px)");
+        expect(adapter.getFaceState(4).transform).toBe("rotateX(90deg) translate3d(0px, -25px, 25px)");
       });
     });
 
@@ -148,7 +148,7 @@ export const transformValuesSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(3).transform).toBe("rotateY(-180deg) translate3d(0px, 0px, 200px)");
       });
 
-      it("face4 is at -270deg with negative x translate", () => {
+      it("face4 is at 90deg with positive x translate", () => {
         adapter = createAdapter({
           faces: 4,
           width: 200,
@@ -156,7 +156,7 @@ export const transformValuesSuite = (adapters: AdapterList) => {
           axis: "Y",
           direction: "negative",
         });
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(-270deg) translate3d(-100px, 0px, 100px)");
+        expect(adapter.getFaceState(4).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
       });
     });
 

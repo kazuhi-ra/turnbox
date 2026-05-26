@@ -1,17 +1,15 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef, useState } from "react";
-import { normalizeOptions, calcFaceTransform, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
+import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { TurnBoxOptions, NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { resolveTransition, FOCUSABLE, VIRTUAL_PREV_WRAP, VIRTUAL_NEXT_WRAP } from "@kazuhi-ra/turnbox-core/internal";
+import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContext } from "./context.js";
 import { useTurnBoxConfig } from "./ConfigContext.js";
-import { toTransformString } from "./utils.js";
 import { Face } from "./Face.js";
 import {
   reducer,
   toPhase,
   INITIAL_STATE,
   buildGoInstantAction,
-  buildGoPrePositioningAction,
   buildGoAdjustingAction,
   buildGoStepAction,
 } from "./reducer.js";
@@ -92,7 +90,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
     const isAnimatingRef = useRef(false);
     const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-    const rafIdRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
     const stateRef = useRef(state);
     stateRef.current = state;
     const onChangeRef = useRef(onChange);
@@ -178,36 +175,8 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         ?.focus({ preventScroll: true });
     }, [focusRequest]);
 
-    // Handle 2-phase transitions: fires after browser paints the pre-phase
     useEffect(() => {
-      if (state.kind === "pre-positioning") {
-        const { via, landAt } = state;
-        const restingTransform = toTransformString(calcFaceTransform(landAt, landAt, opts));
-
-        // rAF defers the transition start until the next paint, so the pre-position
-        // is observable at t=0 (required by tests and correct browser behavior).
-        const id = requestAnimationFrame(() => {
-          rafIdRef.current = null;
-          dispatch({
-            type: "ENTER_ANIMATING",
-            displayFace: via,
-            landAt,
-            shownFaces: new Set([...state.shownFaces, landAt]),
-            faceOverrides: new Map([[landAt, restingTransform]]),
-          });
-          addTimeout(() => {
-            dispatch({ type: "COMPLETE", displayFace: landAt });
-            isAnimatingRef.current = false;
-            onAnimationEndRef.current?.(landAt);
-          }, opts.duration + opts.delay);
-        });
-        rafIdRef.current = id;
-
-        return () => {
-          cancelAnimationFrame(id);
-          if (rafIdRef.current === id) rafIdRef.current = null;
-        };
-      } else if (state.kind === "adjusting") {
+      if (state.kind === "adjusting") {
         const { to } = state;
         dispatch({ type: "ENTER_ADJUST_ANIMATING", displayFace: to });
         addTimeout(() => {
@@ -218,13 +187,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
       }
     }, [state, opts, addTimeout]);
 
-    const resolveCurrentFace = useCallback((): number => {
-      const s = stateRef.current;
-      if (s.kind === "animating" && (s.displayFace === VIRTUAL_PREV_WRAP || s.displayFace === VIRTUAL_NEXT_WRAP)) {
-        return s.displayFace === VIRTUAL_PREV_WRAP ? 4 : 1;
-      }
-      return s.displayFace;
-    }, []);
+    const resolveCurrentFace = useCallback((): number => stateRef.current.displayFace, []);
 
     const goTo = useCallback(
       (rawTarget: number, animation = true) => {
@@ -233,10 +196,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         if (isAnimatingRef.current) {
           for (const id of pendingTimers.current) clearTimeout(id);
           pendingTimers.current = [];
-          if (rafIdRef.current !== null) {
-            cancelAnimationFrame(rafIdRef.current);
-            rafIdRef.current = null;
-          }
           dispatch({ type: "COMPLETE", displayFace: fromFace });
           isAnimatingRef.current = false;
         }
@@ -246,21 +205,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
         isAnimatingRef.current = true;
         const time = opts.duration + opts.delay;
-        const targetFace = transition.kind === "virtual-wrap" ? transition.landAt : transition.to;
-        onChangeRef.current?.(targetFace);
-
-        if (transition.kind === "virtual-wrap") {
-          if (!transition.doAnimate) {
-            dispatch(buildGoInstantAction(transition.landAt));
-            addTimeout(() => {
-              isAnimatingRef.current = false;
-              onAnimationEndRef.current?.(transition.landAt);
-            }, time);
-            return;
-          }
-          dispatch(buildGoPrePositioningAction(transition.via, transition.landAt, fromFace, opts));
-          return;
-        }
+        onChangeRef.current?.(transition.to);
 
         if (transition.kind === "step" && transition.hasAdjust) {
           if (!transition.doAnimate) {

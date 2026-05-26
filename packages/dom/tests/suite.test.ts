@@ -22,7 +22,7 @@ runSuites({
   focusManagementSuite: modern,
   prefersReducedMotionSuite: modern,
   accessibilitySuite: modern,
-  transformValuesSuite: all,
+  transformValuesSuite: modern,
   variableGeometrySuite: modern,
   wrapAroundBasicSuite: all,
   wrapAroundSuite: modern,

@@ -144,7 +144,7 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
     });
 
     // type:skip — bidirectional wrap (4-face only)
-    // skip wraps by remapping face5→1 / face0→4 directly, without passing through a virtual face.
+    // skip wraps bidirectionally: face4 NEXT → face1, face1 PREV → face4.
 
     describe("type:skip — wrap (4-face only)", () => {
       it("next() from face 4 wraps to face 1", async () => {
@@ -213,11 +213,11 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(4).transform).toContain("rotateX(0deg)");
       });
 
-      it("type:real — prev() 1→4: face1 at rotateX(-270deg)", async () => {
+      it("type:real — prev() 1→4: face1 at rotateX(90deg)", async () => {
         adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
         adapter.prev();
         await adapter.advanceTime(300);
-        expect(adapter.getFaceState(1).transform).toContain("rotateX(-270deg)");
+        expect(adapter.getFaceState(1).transform).toContain("rotateX(90deg)");
       });
 
       it("type:real — next() 4→1: face1 at rotateX(0deg)", async () => {
@@ -322,103 +322,8 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(1).transform).toContain("rotateX(0deg)");
       });
 
-      // ── axis:Y fixed-geometry wrap — edge pre-positioning regression ─────────
-      // Bug: incoming face sat at ±270° (wrong side), causing a 270° CSS arc and
-      // visible edge separation. Fix: pre-position at ±90° before the transition,
-      // then override the target to 0° so CSS interpolates the correct 90° arc.
-
-      it("type:real axis:Y — next() 4→1: face1 pre-positioned at +90° before transition (not −270°)", async () => {
-        adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
-        adapter.goTo(4);
-        await adapter.advanceTime(300);
-        adapter.next();
-        await adapter.waitForRender();
-        // t=0, sync: incoming face1 is at +90° (not −270°)
-        expect(adapter.getFaceState(1).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
-      });
-
-      it("type:real axis:Y — next() 4→1: face1 target is 0° at ADJUST_TIME (not −360°)", async () => {
-        adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
-        adapter.goTo(4);
-        await adapter.advanceTime(300);
-        adapter.next();
-        await adapter.advanceTime(25); // just past ADJUST_TIME=20ms
-        expect(adapter.getFaceState(1).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
-      });
-
-      it("type:real axis:Y — prev() 1→4: face4 pre-positioned at −90° before transition (not +270°)", async () => {
-        adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
-        adapter.prev();
-        await adapter.waitForRender();
-        // t=0, sync: incoming face4 is at −90° (not +270°)
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
-      });
-
-      it("type:real axis:Y — prev() 1→4: face4 target is 0° at ADJUST_TIME (not +360°)", async () => {
-        adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
-        adapter.prev();
-        await adapter.advanceTime(25);
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
-      });
-
-      it("type:real axis:Y — direction:negative next() 4→1: face1 pre-positioned at −90°", async () => {
-        adapter = createAdapter({
-          faces: 4,
-          type: "real",
-          axis: "Y",
-          direction: "negative",
-          duration: 200,
-        });
-        adapter.goTo(4);
-        await adapter.advanceTime(300);
-        adapter.next();
-        await adapter.waitForRender();
-        expect(adapter.getFaceState(1).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
-      });
-
-      it("type:real axis:Y — direction:negative next() 4→1: face1 target is 0° at ADJUST_TIME", async () => {
-        adapter = createAdapter({
-          faces: 4,
-          type: "real",
-          axis: "Y",
-          direction: "negative",
-          duration: 200,
-        });
-        adapter.goTo(4);
-        await adapter.advanceTime(300);
-        adapter.next();
-        await adapter.advanceTime(25);
-        expect(adapter.getFaceState(1).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
-      });
-
-      it("type:real axis:Y — direction:negative prev() 1→4: face4 pre-positioned at +90°", async () => {
-        adapter = createAdapter({
-          faces: 4,
-          type: "real",
-          axis: "Y",
-          direction: "negative",
-          duration: 200,
-        });
-        adapter.prev();
-        await adapter.waitForRender();
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
-      });
-
-      it("type:real axis:Y — direction:negative prev() 1→4: face4 target is 0° at ADJUST_TIME", async () => {
-        adapter = createAdapter({
-          faces: 4,
-          type: "real",
-          axis: "Y",
-          direction: "negative",
-          duration: 200,
-        });
-        adapter.prev();
-        await adapter.advanceTime(25);
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
-      });
-
       // ── axis:Y wrap — post-animation state ─────────────────────────────────
-      // Verifies cleanup restores standard resting positions after axis:Y wrap.
+      // Verifies standard resting positions after axis:Y wrap.
 
       it("type:real axis:Y — next() 4→1: face1 at rotateY(0deg) after completion", async () => {
         adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
@@ -430,14 +335,14 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(1).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
       });
 
-      it("type:real axis:Y — next() 4→1: face4 at rotateY(270deg) after completion", async () => {
+      it("type:real axis:Y — next() 4→1: face4 at rotateY(-90deg) after completion", async () => {
         adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
         adapter.goTo(4);
         await adapter.advanceTime(300);
         adapter.next();
         await adapter.advanceTime(300);
-        // currentFace=1: calcDeg(1,4)=(1-4)*-90=+270 — standard resting position for face4
-        expect(adapter.getFaceState(4).transform).toBe("rotateY(270deg) translate3d(100px, 0px, 100px)");
+        // currentFace=1: face4 is at boundary position (isSkipWrapEdge) → clamped to -90°
+        expect(adapter.getFaceState(4).transform).toBe("rotateY(-90deg) translate3d(-100px, 0px, 100px)");
       });
 
       it("type:real axis:Y — prev() 1→4: face4 at rotateY(0deg) after completion", async () => {
@@ -448,11 +353,12 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
         expect(adapter.getFaceState(4).transform).toBe("rotateY(0deg) translate3d(0px, 0px, 0px)");
       });
 
-      it("type:real axis:Y — prev() 1→4: face1 at rotateY(−270deg) after completion", async () => {
+      it("type:real axis:Y — prev() 1→4: face1 at rotateY(90deg) after completion", async () => {
         adapter = createAdapter({ faces: 4, type: "real", axis: "Y", duration: 200 });
         adapter.prev();
         await adapter.advanceTime(300);
-        expect(adapter.getFaceState(1).transform).toBe("rotateY(-270deg) translate3d(-100px, 0px, 100px)");
+        // currentFace=4: face1 is at boundary position (isSkipWrapEdge) → clamped to +90°
+        expect(adapter.getFaceState(1).transform).toBe("rotateY(90deg) translate3d(100px, 0px, 100px)");
       });
 
       it("type:real axis:Y — consecutive wraps 1→4→1: transforms correct after each", async () => {

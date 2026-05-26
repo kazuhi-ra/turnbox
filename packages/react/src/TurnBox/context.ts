@@ -3,7 +3,6 @@ import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 
 export type AnimationPhase =
   | { kind: "idle" }
-  | { kind: "pre-positioning"; via: 0 | 5; landAt: 1 | 4 }
   | { kind: "animating" }
   | { kind: "adjusting"; to: number }
   | { kind: "adjust-animating" };
