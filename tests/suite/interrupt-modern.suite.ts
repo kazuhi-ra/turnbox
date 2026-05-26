@@ -64,5 +64,133 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       await adapter.advanceTime(300);
       expect(adapter.getCurrentFace()).toBe(3);
     });
+
+    // ── queue seamlessness ────────────────────────────────────────────────────
+    // Queued animations must start immediately when the previous one completes,
+    // with no inter-animation gap. ADJUST_TIME is only needed for the very first
+    // animation (to ensure transforms are painted before CSS transition starts).
+    // For queue-drained animations the transforms are already in the correct
+    // painted state, so the delay must be 0.
+
+    it("queued animation: second face shown immediately when first completes", async () => {
+      // face1→face2 completes at ADJUST_TIME(20) + DURATION(200) = 220ms from t=0
+      // With 0ms gap: face3 shown at t=220ms
+      // With 20ms gap (bug): face3 shown at t=240ms → this assertion fails
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      await adapter.advanceTime(170); // 50+170=220ms total
+      expect(adapter.isFaceShown(3)).toBe(true);
+    });
+
+    it("consecutive queued animations complete without inter-animation gap", async () => {
+      // With 20ms gap (bug): 20 + 200 + 20 + 200 = 440ms total
+      // With 0ms gap (fix):  20 + 200 +  0 + 200 = 420ms total
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      await adapter.advanceTime(370); // 50+370=420ms total
+      expect(adapter.getCurrentFace()).toBe(3);
+      expect(adapter.isFaceShown(3)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+      expect(adapter.isAnimating()).toBe(false);
+    });
+
+    // ── queue seamlessness: type:skip ─────────────────────────────────────────
+    // type:skip allows multi-face jumps with CSS transition (deff>1 stays animated).
+    // Seamlessness must hold for 1-step-after-skip AND 2-step-skip-after-1-step.
+
+    it("type:skip queued 1-step after 2-step: second face shown immediately", async () => {
+      // face1→face3 (2-step skip), then next() queued → face3→face4 (1-step)
+      adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
+      adapter.goTo(3); // face1→face3 (skip)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face4
+      await adapter.advanceTime(170); // 50+170=220ms
+      expect(adapter.isFaceShown(4)).toBe(true);
+    });
+
+    it("type:skip queued 2-step after 1-step: second face shown immediately", async () => {
+      // face1→face2 (1-step), then goTo(4) queued → face2→face4 (2-step skip)
+      adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
+      adapter.next(); // face1→face2
+      await adapter.advanceTime(50);
+      adapter.goTo(4); // queue face4 (2-step skip)
+      await adapter.advanceTime(170); // 50+170=220ms
+      expect(adapter.isFaceShown(4)).toBe(true);
+    });
+
+    it("type:skip consecutive queued animations complete without inter-animation gap", async () => {
+      adapter = createAdapter({ faces: 4, type: "skip", duration: 200 });
+      adapter.next(); // face1→face2
+      await adapter.advanceTime(50);
+      adapter.goTo(4); // queue face4 (2-step skip from face2)
+      await adapter.advanceTime(370); // 50+370=420ms
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.isFaceShown(4)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+      expect(adapter.isAnimating()).toBe(false);
+    });
+
+    // ── queue behavior ────────────────────────────────────────────────────────
+
+    it("two next() queued during same animation: same target queued twice, executes once", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2 (FROM=1, display=2)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3 (next from display=2)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3 again (display still 2)
+      await adapter.advanceTime(600); // face1→face2 + face2→face3 complete
+      expect(adapter.getCurrentFace()).toBe(3);
+    });
+
+    it("next() queued: isAnimating stays true through both animations", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1→face2 (≈220ms)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      await adapter.advanceTime(200); // 250ms: face1→face2 still in progress
+      expect(adapter.isAnimating()).toBe(true);
+      await adapter.advanceTime(300); // 550ms: both complete
+      expect(adapter.isAnimating()).toBe(false);
+      expect(adapter.getCurrentFace()).toBe(3);
+    });
+
+    it("two sequential next() calls: both queue same target, ends at face3 not face4", async () => {
+      // Both next() calls resolve to display+1=face3 while display=face2 (face1→face2 in flight).
+      // Queue: [face3, face3]. After face2→face3 completes, the second drain is face3→face3 = noop.
+      // Final: face3. (jQuery abort-all gives face4; queue behavior gives face3.)
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2 (FROM=1, display=2)
+      await adapter.advanceTime(50);
+      adapter.next(); // display=2, next=3 ≠ FROM(1) → queue {face:3}
+      await adapter.advanceTime(50);
+      adapter.next(); // display=2, next=3 ≠ FROM(1) → queue {face:3} duplicate
+      await adapter.advanceTime(700); // all animations complete
+      expect(adapter.getCurrentFace()).toBe(3); // not face4
+    });
+
+    it("multiple goTo() queued: executes in order", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.goTo(3); // queue face3
+      adapter.goTo(4); // queue face4
+      await adapter.advanceTime(800); // all animations complete
+      expect(adapter.getCurrentFace()).toBe(4);
+    });
+
+    it("immediate-execute clears pending queue", async () => {
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2 (FROM=1)
+      await adapter.advanceTime(50);
+      adapter.goTo(3); // queue face3
+      adapter.prev(); // immediate-execute (display=2, prev=1=FROM) → clears queue
+      await adapter.advanceTime(500);
+      expect(adapter.getCurrentFace()).toBe(1); // face3 was cleared
+    });
   });
 };

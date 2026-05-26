@@ -155,6 +155,7 @@ export const createReactAdapter = (options: CreateAdapterOptions): TurnBoxTestAd
     async advanceTime(ms) {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(ms);
+        await vi.advanceTimersByTimeAsync(1);
       });
     },
 

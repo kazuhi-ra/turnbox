@@ -69,11 +69,17 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
   let currentFace = 1;
   let isAnimating = false;
+  let animatingFromFace: number | null = null;
+  let animatingDisplayFace: number | null = null;
   const pendingTimers: ReturnType<typeof setTimeout>[] = [];
+  const pendingNavigations: Array<{ face: number; animation: boolean }> = [];
 
   const schedule = (fn: () => void, delay: number): void => {
     pendingTimers.push(setTimeout(fn, delay));
   };
+
+  const getDisplayFace = (): number =>
+    isAnimating && animatingDisplayFace !== null ? animatingDisplayFace : currentFace;
 
   const setCurrentFace = (n: number): void => {
     container.classList.remove(`turnBoxCurrentFace${currentFace}`);
@@ -133,28 +139,53 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     });
     container.style.transition = "";
     container.classList.remove("turnBoxAdjust");
-    setCurrentFace(currentFace);
-    applyFaceTransforms(faces, currentFace, opts);
+    const settleFace = animatingDisplayFace ?? currentFace;
+    setCurrentFace(settleFace);
+    applyFaceTransforms(faces, settleFace, opts);
     faces.forEach((_, i) => {
       const faceNum = i + 1;
-      if (faceNum === currentFace) showFace(faceNum);
+      if (faceNum === settleFace) showFace(faceNum);
       else hideFace(faceNum);
     });
     isAnimating = false;
+    animatingFromFace = null;
+    animatingDisplayFace = null;
   };
 
-  const animate = (rawTarget: number, animationFlag: boolean): void => {
-    if (isAnimating) abortAnimation();
+  const animate = (rawTarget: number, animationFlag: boolean, startDelay = ADJUST_TIME): void => {
+    if (isAnimating) {
+      const displayFace = getDisplayFace();
+      const checkTransition = resolveTransition(displayFace, rawTarget, opts, animationFlag);
+      if (checkTransition.kind === "noop") return;
 
-    const transition = resolveTransition(currentFace, rawTarget, opts, animationFlag);
+      const isImmediate = !animationFlag || checkTransition.to === animatingFromFace;
+
+      if (!isImmediate) {
+        pendingNavigations.push({ face: rawTarget, animation: animationFlag });
+        return;
+      }
+
+      abortAnimation();
+      pendingNavigations.length = 0;
+    }
+
+    const from = getDisplayFace();
+    const transition = resolveTransition(from, rawTarget, opts, animationFlag);
     if (transition.kind === "noop") return;
 
     isAnimating = true;
+    animatingFromFace = from;
+    animatingDisplayFace = transition.to;
+
     const time = opts.duration + opts.delay;
-    const from = currentFace;
     const hasAdjust = transition.kind === "step" && transition.hasAdjust;
     const finalFace = transition.to;
     options.onChange?.(finalFace);
+
+    const drainQueue = (): void => {
+      const pending = pendingNavigations.shift();
+      if (pending) animate(pending.face, pending.animation, 0);
+    };
 
     if (hasAdjust) {
       container.classList.add("turnBoxAdjust");
@@ -164,8 +195,11 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           container.classList.remove("turnBoxAdjust");
           applyFaceTransforms(faces, currentFace, opts);
           isAnimating = false;
+          animatingFromFace = null;
+          animatingDisplayFace = null;
           options.onAnimationEnd?.(finalFace);
           faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+          drainQueue();
         },
         time + ADJUST_TIME * 2,
       );
@@ -173,7 +207,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
     const targetFace = transition.to;
 
-    schedule(() => {
+    const step = (): void => {
       if (transition.doAnimate) {
         faces.forEach((f) => {
           f.classList.add("turnBoxTransition");
@@ -198,6 +232,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
         faces.forEach((f) => {
           f.classList.remove("turnBoxTransition");
           f.style.transition = "";
+          // Cancel compositor transition: forces committed inline value as CSS "before-change style".
+          for (const anim of f.getAnimations?.() ?? []) anim.cancel();
         });
         if (geometry.kind === "variable") {
           container.style.transition = "";
@@ -206,11 +242,16 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
         if (!hasAdjust) {
           isAnimating = false;
+          animatingFromFace = null;
+          animatingDisplayFace = null;
           options.onAnimationEnd?.(finalFace);
           faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+          drainQueue();
         }
       }, time);
-    }, ADJUST_TIME);
+    };
+
+    schedule(step, startDelay);
   };
 
   const getCurrentFace = (): number => currentFace;
@@ -220,10 +261,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       animate(face, animation);
     },
     next() {
-      animate(currentFace + 1, true);
+      animate(getDisplayFace() + 1, true);
     },
     prev() {
-      animate(currentFace - 1, true);
+      animate(getDisplayFace() - 1, true);
     },
     getCurrentFace,
     isAnimating: () => isAnimating,

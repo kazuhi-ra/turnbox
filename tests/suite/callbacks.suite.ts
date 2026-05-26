@@ -55,14 +55,16 @@ export const callbacksSuite = (adapters: AdapterList) => {
         expect(onChange).not.toHaveBeenCalled();
       });
 
-      it("fires for each interrupt: rapid next() calls fire onChange per call", async () => {
+      it("rapid next() calls: second call is queued, onChange fires once at start", async () => {
         const onChange = vi.fn();
         adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY, onChange });
-        adapter.next(); // face1 → face2: onChange(2)
-        adapter.next(); // interrupt (currentFace still 1): face1 → face2 again: onChange(2)
-        await adapter.advanceTime(AFTER_ANIMATION);
-        expect(onChange).toHaveBeenCalledTimes(2);
+        adapter.next(); // face1 → face2: onChange(2) fires
+        adapter.next(); // queue face3 (next from display=2)
+        expect(onChange).toHaveBeenCalledTimes(1);
         expect(onChange).toHaveBeenCalledWith(2);
+        await adapter.advanceTime(AFTER_ANIMATION * 2 + 100); // both animations complete
+        expect(onChange).toHaveBeenCalledTimes(2);
+        expect(onChange).toHaveBeenNthCalledWith(2, 3);
       });
 
       it("fires with destination face for wrap animation", async () => {
@@ -124,6 +126,45 @@ export const callbacksSuite = (adapters: AdapterList) => {
         adapter.goTo(3, false);
         await adapter.advanceTime(AFTER_ANIMATION);
         expect(onAnimationEnd).toHaveBeenCalledWith(3);
+      });
+
+      it("not called for aborted animation, called only for completing animation", async () => {
+        const onAnimationEnd = vi.fn();
+        adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY, onAnimationEnd });
+        adapter.next(); // face1 → face2 (FROM=1)
+        await adapter.advanceTime(50);
+        adapter.prev(); // immediate-execute: abort face1→face2, start face2→face1
+        await adapter.advanceTime(AFTER_ANIMATION);
+        expect(onAnimationEnd).toHaveBeenCalledTimes(1);
+        expect(onAnimationEnd).toHaveBeenCalledWith(1); // face2 was aborted, so its onAnimationEnd is not called
+      });
+
+      it("fires for each animation when queued", async () => {
+        const onAnimationEnd = vi.fn();
+        adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY, onAnimationEnd });
+        adapter.next(); // face1 → face2
+        await adapter.advanceTime(50);
+        adapter.next(); // queue face3
+        await adapter.advanceTime(600); // both animations complete
+        expect(onAnimationEnd).toHaveBeenCalledTimes(2);
+        expect(onAnimationEnd).toHaveBeenNthCalledWith(1, 2);
+        expect(onAnimationEnd).toHaveBeenNthCalledWith(2, 3);
+      });
+    });
+
+    // ── onChange + queue ────────────────────────────────────────────────────────
+
+    describe("onChange with queue", () => {
+      it("fires when queued animation starts, not when queued", async () => {
+        const onChange = vi.fn();
+        adapter = createAdapter({ faces: 4, duration: DURATION, delay: DELAY, onChange });
+        adapter.next(); // face1 → face2: onChange(2) fires
+        await adapter.advanceTime(50);
+        adapter.next(); // queue face3: onChange does NOT fire yet
+        expect(onChange).toHaveBeenCalledTimes(1);
+        await adapter.advanceTime(600); // both complete
+        expect(onChange).toHaveBeenCalledTimes(2);
+        expect(onChange).toHaveBeenNthCalledWith(2, 3);
       });
     });
   });
