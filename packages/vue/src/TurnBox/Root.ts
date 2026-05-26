@@ -157,7 +157,7 @@ export const Root = defineComponent({
               props.onAnimationEnd?.(to);
               nextTick(() => focusFace(to));
               const pending = pendingNavigations.shift();
-              if (pending) goTo(pending.face, pending.animation);
+              if (pending) goTo(pending.face, pending.animation, true);
             }, opts.value.duration + opts.value.delay);
           });
         }
@@ -182,7 +182,7 @@ export const Root = defineComponent({
       animatingToFace = null;
     };
 
-    const goTo = (rawTarget: number, animation = true) => {
+    const goTo = (rawTarget: number, animation = true, fromQueue = false) => {
       if (isAnimatingFlag.value) {
         const from = animatingToFace ?? displayFace.value;
         const checkTransition = resolveTransition(from, rawTarget, opts.value, animation);
@@ -212,7 +212,7 @@ export const Root = defineComponent({
 
       const drainQueue = () => {
         const pending = pendingNavigations.shift();
-        if (pending) goTo(pending.face, pending.animation);
+        if (pending) goTo(pending.face, pending.animation, true);
       };
 
       if (transition.kind === "step" && transition.hasAdjust) {
@@ -262,7 +262,12 @@ export const Root = defineComponent({
       faceOverrides.value = EMPTY_MAP;
       phase.value = { kind: "animating" }; // frame 1: apply transition CSS
 
-      pendingRaf = scheduleRaf(() => {
+      // Queue-drained animations skip rAF: the "from" state is already painted.
+      // setTimeout(0) gives Vue one render cycle to apply transitions before updating displayFace.
+      const scheduleStep2 = fromQueue
+        ? (fn: FrameRequestCallback) => setTimeout(fn, 0) as unknown as number
+        : scheduleRaf;
+      pendingRaf = scheduleStep2(() => {
         // frame 2: update transform
         pendingRaf = null;
         displayFace.value = to;

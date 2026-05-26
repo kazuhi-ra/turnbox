@@ -152,7 +152,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     animatingDisplayFace = null;
   };
 
-  const animate = (rawTarget: number, animationFlag: boolean): void => {
+  const animate = (rawTarget: number, animationFlag: boolean, startDelay = ADJUST_TIME): void => {
     if (isAnimating) {
       const displayFace = getDisplayFace();
       const checkTransition = resolveTransition(displayFace, rawTarget, opts, animationFlag);
@@ -184,7 +184,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
     const drainQueue = (): void => {
       const pending = pendingNavigations.shift();
-      if (pending) animate(pending.face, pending.animation);
+      if (pending) animate(pending.face, pending.animation, 0);
     };
 
     if (hasAdjust) {
@@ -207,7 +207,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
     const targetFace = transition.to;
 
-    schedule(() => {
+    const step = (): void => {
       if (transition.doAnimate) {
         faces.forEach((f) => {
           f.classList.add("turnBoxTransition");
@@ -247,7 +247,15 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           drainQueue();
         }
       }, time);
-    }, ADJUST_TIME);
+    };
+
+    // Queue-drained animations skip the ADJUST_TIME delay: the previous animation's
+    // transforms are already painted, so we can start the next step immediately.
+    if (startDelay === 0) {
+      step();
+    } else {
+      schedule(step, startDelay);
+    }
   };
 
   const getCurrentFace = (): number => currentFace;

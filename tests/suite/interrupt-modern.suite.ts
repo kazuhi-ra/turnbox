@@ -65,6 +65,39 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       expect(adapter.getCurrentFace()).toBe(3);
     });
 
+    // ── queue seamlessness ────────────────────────────────────────────────────
+    // Queued animations must start immediately when the previous one completes,
+    // with no inter-animation gap. ADJUST_TIME is only needed for the very first
+    // animation (to ensure transforms are painted before CSS transition starts).
+    // For queue-drained animations the transforms are already in the correct
+    // painted state, so the delay must be 0.
+
+    it("queued animation: second face shown immediately when first completes", async () => {
+      // face1→face2 completes at ADJUST_TIME(20) + DURATION(200) = 220ms from t=0
+      // With 0ms gap: face3 shown at t=220ms
+      // With 20ms gap (bug): face3 shown at t=240ms → this assertion fails
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      await adapter.advanceTime(170); // 50+170=220ms total
+      expect(adapter.isFaceShown(3)).toBe(true);
+    });
+
+    it("consecutive queued animations complete without inter-animation gap", async () => {
+      // With 20ms gap (bug): 20 + 200 + 20 + 200 = 440ms total
+      // With 0ms gap (fix):  20 + 200 +  0 + 200 = 420ms total
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      await adapter.advanceTime(370); // 50+370=420ms total
+      expect(adapter.getCurrentFace()).toBe(3);
+      expect(adapter.isFaceShown(3)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+      expect(adapter.isAnimating()).toBe(false);
+    });
+
     // ── queue behavior ────────────────────────────────────────────────────────
 
     it("two next() queued during same animation: same target queued twice, executes once", async () => {
