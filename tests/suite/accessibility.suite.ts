@@ -74,12 +74,12 @@ export const accessibilitySuite = (adapters: AdapterList) => {
       expect(adapter.getAriaHidden(1)).toBe("true");
     });
 
-    // ── virtual-wrap ─────────────────────────────────────────────────────────────
+    // ── boundary wrap ────────────────────────────────────────────────────────────
 
-    it("aria-hidden is correct after virtual-wrap (face4→face1)", async () => {
+    it("aria-hidden is correct after boundary wrap (face4→face1)", async () => {
       adapter.goTo(4, false);
       await adapter.advanceTime(TOTAL + 50);
-      adapter.next(); // face4 → face1 (virtual-wrap)
+      adapter.next(); // face4 → face1 (boundary wrap)
       await adapter.advanceTime(TOTAL + 50);
       expect(adapter.getAriaHidden(1)).toBeNull();
       expect(adapter.getAriaHidden(4)).toBe("true");

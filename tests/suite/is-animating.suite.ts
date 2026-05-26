@@ -57,12 +57,12 @@ export const isAnimatingSuite = (adapters: AdapterList) => {
       expect(adapter.isAnimating()).toBe(true);
     });
 
-    it("is false after virtual-wrap animation completes", async () => {
+    it("is false after boundary wrap animation completes", async () => {
       vi.useFakeTimers();
       adapter = createAdapter({ faces: 4, type: "real", duration: DURATION, delay: DELAY });
       adapter.goTo(4, false);
       await adapter.advanceTime(ADJUST_TIME + TOTAL + 1);
-      adapter.next(); // face4 → virtual5 → face1
+      adapter.next(); // face4 → face1 (boundary wrap)
       await adapter.advanceTime(ADJUST_TIME + TOTAL + 1);
       expect(adapter.isAnimating()).toBe(false);
     });

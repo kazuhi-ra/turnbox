@@ -12,7 +12,6 @@ export type IdleState = {
 export type AnimatingState = {
   kind: "animating";
   displayFace: number;
-  landAt: number;
   shownFaces: ReadonlySet<number>;
   faceOverrides: ReadonlyMap<number, string>;
 };
@@ -60,7 +59,6 @@ export const reducer = (state: TurnBoxState, action: TurnBoxAction): TurnBoxStat
       return {
         kind: "animating",
         displayFace: action.to,
-        landAt: action.to,
         shownFaces: action.shownFaces,
         faceOverrides: EMPTY_MAP,
       };
