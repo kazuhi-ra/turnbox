@@ -52,21 +52,10 @@ type BoundaryResult = { kind: "noop" } | { kind: "resolved"; to: number; isDirec
 
 const resolveBoundary = (rawTarget: number, opts: NormalizedOptions): BoundaryResult => {
   if (opts.faces === MAX_FACE_PCS) {
-    if (opts.type === "real") {
-      if (rawTarget < 0) return { kind: "noop" };
-      return {
-        kind: "resolved",
-        to: rawTarget > 5 ? opts.faces : rawTarget,
-        isDirectWrap: false,
-      };
-    }
-    if (opts.type === "repeat" || opts.type === "skip") {
-      if (rawTarget === opts.faces + 1) return { kind: "resolved", to: 1, isDirectWrap: true };
-      if (rawTarget === 0) return { kind: "resolved", to: opts.faces, isDirectWrap: true };
-      if (rawTarget < 1 || rawTarget > opts.faces) return { kind: "noop" };
-      return { kind: "resolved", to: rawTarget, isDirectWrap: false };
-    }
-    if (rawTarget < 1 || rawTarget > opts.faces) return { kind: "noop" };
+    if (rawTarget === opts.faces + 1) return { kind: "resolved", to: 1, isDirectWrap: true };
+    if (rawTarget === 0) return { kind: "resolved", to: opts.faces, isDirectWrap: true };
+    if (rawTarget > opts.faces + 1) return { kind: "resolved", to: opts.faces, isDirectWrap: false };
+    if (rawTarget < 0) return { kind: "noop" };
     return { kind: "resolved", to: rawTarget, isDirectWrap: false };
   }
   if (rawTarget < 1) return { kind: "noop" };
@@ -85,9 +74,8 @@ export const resolveTransition = (
   const { to, isDirectWrap } = boundary;
 
   if (isDirectWrap) {
-    // type:repeat wrap: shouldAnimate rejects large diffs, so bypass it
-    const doAnimate = opts.type === "repeat" ? animationFlag : shouldAnimate(from, to, opts, animationFlag);
-    return { kind: "direct-wrap", to, doAnimate };
+    // boundary wraps always animate based on animationFlag — shouldAnimate rejects large diffs
+    return { kind: "direct-wrap", to, doAnimate: animationFlag };
   }
 
   if (isVirtualWrapFace(to)) {

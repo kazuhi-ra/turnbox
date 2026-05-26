@@ -35,6 +35,10 @@ const applyAnimationType = (
     const clamped = Math.sign(deg) * 90;
     return isSkipWrapEdge(currentFace, faceNum) ? clamped * -1 : clamped;
   }
+  if (type === "real" && isSkipWrapEdge(currentFace, faceNum)) {
+    const clamped = Math.sign(deg) * 90;
+    return clamped * -1;
+  }
   if (type === "repeat") {
     if (getFaceParity(currentFace) === "odd" && getFaceParity(faceNum) === "even") return 90;
     if (getFaceParity(currentFace) === "even" && getFaceParity(faceNum) === "odd") return -90;
