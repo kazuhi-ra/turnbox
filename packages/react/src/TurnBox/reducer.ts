@@ -1,5 +1,3 @@
-import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { calcPrePositionTransform, VIRTUAL_NEXT_WRAP } from "@kazuhi-ra/turnbox-core/internal";
 import type { AnimationPhase } from "./context.js";
 
 // ─── State types ──────────────────────────────────────────────────────────────
@@ -7,15 +5,6 @@ import type { AnimationPhase } from "./context.js";
 export type IdleState = {
   kind: "idle";
   displayFace: number;
-  shownFaces: ReadonlySet<number>;
-  faceOverrides: ReadonlyMap<number, string>;
-};
-
-export type PrePositioningState = {
-  kind: "pre-positioning";
-  displayFace: number;
-  via: 0 | 5;
-  landAt: 1 | 4;
   shownFaces: ReadonlySet<number>;
   faceOverrides: ReadonlyMap<number, string>;
 };
@@ -43,29 +32,14 @@ export type AdjustAnimatingState = {
   faceOverrides: ReadonlyMap<number, string>;
 };
 
-export type TurnBoxState = IdleState | PrePositioningState | AnimatingState | AdjustingState | AdjustAnimatingState;
+export type TurnBoxState = IdleState | AnimatingState | AdjustingState | AdjustAnimatingState;
 
 // ─── Action types ─────────────────────────────────────────────────────────────
 
 export type TurnBoxAction =
   | { type: "GO_STEP"; to: number; shownFaces: ReadonlySet<number> }
   | { type: "GO_INSTANT"; displayFace: number }
-  | {
-      type: "GO_PRE_POSITIONING";
-      displayFace: number;
-      via: 0 | 5;
-      landAt: 1 | 4;
-      faceOverrides: ReadonlyMap<number, string>;
-      shownFaces: ReadonlySet<number>;
-    }
   | { type: "GO_ADJUSTING"; to: number; shownFaces: ReadonlySet<number> }
-  | {
-      type: "ENTER_ANIMATING";
-      displayFace: number;
-      landAt: number;
-      shownFaces: ReadonlySet<number>;
-      faceOverrides: ReadonlyMap<number, string>;
-    }
   | { type: "ENTER_ADJUST_ANIMATING"; displayFace: number }
   | { type: "COMPLETE"; displayFace: number };
 
@@ -97,15 +71,6 @@ export const reducer = (state: TurnBoxState, action: TurnBoxAction): TurnBoxStat
         shownFaces: new Set([action.displayFace]),
         faceOverrides: EMPTY_MAP,
       };
-    case "GO_PRE_POSITIONING":
-      return {
-        kind: "pre-positioning",
-        displayFace: action.displayFace,
-        via: action.via,
-        landAt: action.landAt,
-        shownFaces: action.shownFaces,
-        faceOverrides: action.faceOverrides,
-      };
     case "GO_ADJUSTING":
       return {
         kind: "adjusting",
@@ -113,14 +78,6 @@ export const reducer = (state: TurnBoxState, action: TurnBoxAction): TurnBoxStat
         to: action.to,
         shownFaces: action.shownFaces,
         faceOverrides: EMPTY_MAP,
-      };
-    case "ENTER_ANIMATING":
-      return {
-        kind: "animating",
-        displayFace: action.displayFace,
-        landAt: action.landAt,
-        shownFaces: action.shownFaces,
-        faceOverrides: action.faceOverrides,
       };
     case "ENTER_ADJUST_ANIMATING":
       return {
@@ -146,23 +103,6 @@ export const buildGoInstantAction = (displayFace: number): TurnBoxAction => ({
   displayFace,
 });
 
-export const buildGoPrePositioningAction = (
-  via: 0 | 5,
-  landAt: 1 | 4,
-  currentFace: number,
-  opts: NormalizedOptions,
-): TurnBoxAction => {
-  const incoming = via === VIRTUAL_NEXT_WRAP ? 1 : 4;
-  return {
-    type: "GO_PRE_POSITIONING",
-    displayFace: currentFace,
-    via,
-    landAt,
-    faceOverrides: new Map([[incoming, calcPrePositionTransform(via, opts)]]),
-    shownFaces: new Set([currentFace, incoming]),
-  };
-};
-
 export const buildGoAdjustingAction = (to: number, currentFace: number): TurnBoxAction => ({
   type: "GO_ADJUSTING",
   to,
@@ -181,8 +121,6 @@ export const toPhase = (state: TurnBoxState): AnimationPhase => {
   switch (state.kind) {
     case "idle":
       return { kind: "idle" };
-    case "pre-positioning":
-      return { kind: "pre-positioning", via: state.via, landAt: state.landAt };
     case "animating":
       return { kind: "animating" };
     case "adjusting":

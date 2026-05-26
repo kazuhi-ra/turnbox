@@ -2,10 +2,7 @@ import {
   normalizeOptions,
   calcFaceTransform,
   calcAdjustFaceTransform,
-  calcPrePositionTransform,
   resolveTransition,
-  VIRTUAL_PREV_WRAP,
-  VIRTUAL_NEXT_WRAP,
   FOCUSABLE,
   type TurnBoxOptions,
   type NormalizedOptions,
@@ -92,14 +89,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     }
   };
 
-  const resolveRealFace = (faceNum: number): number => {
-    if (faceNum === VIRTUAL_PREV_WRAP) return 4;
-    if (faceNum === VIRTUAL_NEXT_WRAP) return 1;
-    return faceNum;
-  };
-
   const showFace = (faceNum: number): void => {
-    const face = faces[resolveRealFace(faceNum) - 1];
+    const face = faces[faceNum - 1];
     if (!face) return;
     face.classList.add("turnBoxShow");
     face.removeAttribute("aria-hidden");
@@ -107,7 +98,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   };
 
   const hideFace = (faceNum: number): void => {
-    const face = faces[resolveRealFace(faceNum) - 1];
+    const face = faces[faceNum - 1];
     if (!face) return;
     face.classList.remove("turnBoxShow");
     face.setAttribute("aria-hidden", "true");
@@ -142,7 +133,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     });
     container.style.transition = "";
     container.classList.remove("turnBoxAdjust");
-    setCurrentFace(resolveRealFace(currentFace));
+    setCurrentFace(currentFace);
     applyFaceTransforms(faces, currentFace, opts);
     faces.forEach((_, i) => {
       const faceNum = i + 1;
@@ -150,15 +141,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       else hideFace(faceNum);
     });
     isAnimating = false;
-  };
-
-  // Fixed-geometry wrap: override incoming face to 0° so transition goes
-  // from the pre-positioned ±90° to 0°, not from ±90° to ±360°.
-  const overrideIncomingFaceToResting = (landAt: 1 | 4): void => {
-    const incomingFaceEl = faces[landAt - 1];
-    if (!incomingFaceEl) return;
-    const t = calcFaceTransform(landAt, landAt, opts);
-    incomingFaceEl.style.transform = toTransformString(t);
   };
 
   const animate = (rawTarget: number, animationFlag: boolean): void => {
@@ -171,7 +153,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     const time = opts.duration + opts.delay;
     const from = currentFace;
     const hasAdjust = transition.kind === "step" && transition.hasAdjust;
-    const finalFace: number = transition.kind === "virtual-wrap" ? transition.landAt : transition.to;
+    const finalFace = transition.to;
     options.onChange?.(finalFace);
 
     if (hasAdjust) {
@@ -189,13 +171,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       );
     }
 
-    if (transition.kind === "virtual-wrap") {
-      const incomingNum = transition.via === VIRTUAL_NEXT_WRAP ? 1 : 4;
-      const incomingFaceEl = faces[incomingNum - 1];
-      if (incomingFaceEl) incomingFaceEl.style.transform = calcPrePositionTransform(transition.via, opts);
-    }
-
-    const targetFace = transition.kind === "virtual-wrap" ? transition.via : transition.to;
+    const targetFace = transition.to;
 
     schedule(() => {
       if (transition.doAnimate) {
@@ -216,9 +192,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
         applyAdjustTransforms(faces, targetFace, opts);
       } else {
         applyFaceTransforms(faces, targetFace, opts);
-        if (transition.kind === "virtual-wrap") {
-          overrideIncomingFaceToResting(transition.landAt);
-        }
       }
 
       schedule(() => {
@@ -230,13 +203,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           container.style.transition = "";
         }
         hideFace(from);
-
-        if (transition.kind === "virtual-wrap") {
-          container.classList.remove(`turnBoxCurrentFace${transition.via}`);
-          container.classList.add(`turnBoxCurrentFace${transition.landAt}`);
-          currentFace = transition.landAt;
-          applyFaceTransforms(faces, transition.landAt, opts);
-        }
 
         if (!hasAdjust) {
           isAnimating = false;
@@ -254,10 +220,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       animate(face, animation);
     },
     next() {
-      animate(resolveRealFace(currentFace) + 1, true);
+      animate(currentFace + 1, true);
     },
     prev() {
-      animate(resolveRealFace(currentFace) - 1, true);
+      animate(currentFace - 1, true);
     },
     getCurrentFace,
     isAnimating: () => isAnimating,

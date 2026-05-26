@@ -2,21 +2,13 @@ export type Axis = "X" | "Y";
 export type Direction = "positive" | "negative";
 export type AnimationType = "real" | "repeat" | "skip";
 
-// type:real, 4-face: face1-prev passes through virtual face 0 and lands at face4
-export const VIRTUAL_PREV_WRAP = 0 as const;
-// type:real, 4-face: face4-next passes through virtual face 5 and lands at face1
-export const VIRTUAL_NEXT_WRAP = 5 as const;
-
-export type VirtualWrapFace = typeof VIRTUAL_PREV_WRAP | typeof VIRTUAL_NEXT_WRAP;
-
 export type Transition =
   | { kind: "noop" }
   | { kind: "step"; to: number; doAnimate: boolean; hasAdjust: boolean }
-  | { kind: "virtual-wrap"; via: VirtualWrapFace; landAt: 1 | 4; doAnimate: boolean }
   | { kind: "direct-wrap"; to: number; doAnimate: boolean };
 
 // The constrained set of rotation angles calcDeg can produce
-export type RotationDeg = -360 | -270 | -180 | -90 | 0 | 90 | 180 | 270 | 360;
+export type RotationDeg = -360 | -180 | -90 | 0 | 90 | 180 | 360;
 
 // Visibility of a face from the viewer's perspective — drives z-index layering
 export type FaceVisibility = "front" | "side" | "hidden";
