@@ -65,13 +65,13 @@ export const callbacksSuite = (adapters: AdapterList) => {
         expect(onChange).toHaveBeenCalledWith(2);
       });
 
-      it("fires with landAt face (not virtual) for wrap animation", async () => {
+      it("fires with destination face for wrap animation", async () => {
         const onChange = vi.fn();
         adapter = createAdapter({ faces: 4, type: "real", duration: DURATION, delay: DELAY, onChange });
         adapter.goTo(4, false);
         await adapter.advanceTime(AFTER_ANIMATION);
         onChange.mockClear();
-        adapter.next(); // face4 → virtual5 → face1
+        adapter.next(); // face4 → face1 (boundary wrap)
         await adapter.advanceTime(AFTER_ANIMATION);
         expect(onChange).toHaveBeenCalledWith(1);
       });
@@ -113,7 +113,7 @@ export const callbacksSuite = (adapters: AdapterList) => {
         adapter.goTo(4, false);
         await adapter.advanceTime(AFTER_ANIMATION);
         onAnimationEnd.mockClear();
-        adapter.next(); // face4 → virtual5 → face1
+        adapter.next(); // face4 → face1 (boundary wrap)
         await adapter.advanceTime(AFTER_ANIMATION);
         expect(onAnimationEnd).toHaveBeenCalledWith(1);
       });

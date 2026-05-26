@@ -144,7 +144,7 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
     });
 
     // type:skip — bidirectional wrap (4-face only)
-    // skip wraps by remapping face5→1 / face0→4 directly, without passing through a virtual face.
+    // skip wraps bidirectionally: face4 NEXT → face1, face1 PREV → face4.
 
     describe("type:skip — wrap (4-face only)", () => {
       it("next() from face 4 wraps to face 1", async () => {
