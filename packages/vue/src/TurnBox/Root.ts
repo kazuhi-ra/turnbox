@@ -86,6 +86,14 @@ export const Root = defineComponent({
 
     const boxRef = ref<HTMLElement | null>(null);
 
+    const cancelFaceAnimations = (): void => {
+      const box = boxRef.value;
+      if (!box) return;
+      for (const el of box.querySelectorAll<HTMLElement>("[data-face-index]")) {
+        for (const anim of el.getAnimations?.() ?? []) anim.cancel();
+      }
+    };
+
     const focusFace = (faceIndex: number): void => {
       const box = boxRef.value;
       if (!box) return;
@@ -148,6 +156,7 @@ export const Root = defineComponent({
             displayFace.value = to;
 
             addTimeout(() => {
+              cancelFaceAnimations();
               phase.value = { kind: "idle" };
               shownFaces.value = new Set([to]);
               faceOverrides.value = EMPTY_MAP;
@@ -267,6 +276,7 @@ export const Root = defineComponent({
         // render as phase="animating" so CSS transitions fire immediately with no gap.
         displayFace.value = to;
         addTimeout(() => {
+          cancelFaceAnimations();
           phase.value = { kind: "idle" };
           shownFaces.value = new Set([to]);
           isAnimatingFlag.value = false;
@@ -285,6 +295,7 @@ export const Root = defineComponent({
         displayFace.value = to;
 
         addTimeout(() => {
+          cancelFaceAnimations();
           phase.value = { kind: "idle" };
           shownFaces.value = new Set([to]);
           isAnimatingFlag.value = false;

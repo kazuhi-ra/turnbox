@@ -232,6 +232,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
         faces.forEach((f) => {
           f.classList.remove("turnBoxTransition");
           f.style.transition = "";
+          // Cancel compositor transition: forces committed inline value as CSS "before-change style".
+          for (const anim of f.getAnimations?.() ?? []) anim.cancel();
         });
         if (geometry.kind === "variable") {
           container.style.transition = "";
@@ -249,13 +251,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       }, time);
     };
 
-    // Queue-drained animations skip the ADJUST_TIME delay: the previous animation's
-    // transforms are already painted, so we can start the next step immediately.
-    if (startDelay === 0) {
-      step();
-    } else {
-      schedule(step, startDelay);
-    }
+    schedule(step, startDelay);
   };
 
   const getCurrentFace = (): number => currentFace;

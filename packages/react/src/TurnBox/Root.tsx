@@ -101,6 +101,14 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     const boxRef = useRef<HTMLDivElement>(null);
 
+    const cancelFaceAnimations = useCallback((): void => {
+      const box = boxRef.current;
+      if (!box) return;
+      for (const el of box.querySelectorAll<HTMLElement>("[data-face-index]")) {
+        for (const anim of el.getAnimations?.() ?? []) anim.cancel();
+      }
+    }, []);
+
     const opts = useMemo(() => {
       const base = normalizeOptions({
         faces,
@@ -244,6 +252,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         }
         dispatch(buildGoStepAction(to, fromFace));
         addTimeout(() => {
+          cancelFaceAnimations();
           dispatch({ type: "COMPLETE", displayFace: to });
           isAnimatingRef.current = false;
           animatingFromFaceRef.current = null;
@@ -251,7 +260,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           drainQueue();
         }, time);
       },
-      [opts, addTimeout, resolveCurrentFace],
+      [opts, addTimeout, resolveCurrentFace, cancelFaceAnimations],
     );
 
     useEffect(() => {
@@ -259,6 +268,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         const { to } = state;
         dispatch({ type: "ENTER_ADJUST_ANIMATING", displayFace: to });
         addTimeout(() => {
+          cancelFaceAnimations();
           dispatch({ type: "COMPLETE", displayFace: to });
           isAnimatingRef.current = false;
           animatingFromFaceRef.current = null;
@@ -267,7 +277,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           if (pending) goTo(pending.face, pending.animation);
         }, opts.duration + opts.delay);
       }
-    }, [state, opts, addTimeout, goTo]);
+    }, [state, opts, addTimeout, goTo, cancelFaceAnimations]);
 
     const next = useCallback(() => goTo(resolveCurrentFace() + 1, true), [goTo, resolveCurrentFace]);
     const prev = useCallback(() => goTo(resolveCurrentFace() - 1, true), [goTo, resolveCurrentFace]);

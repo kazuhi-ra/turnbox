@@ -95,6 +95,7 @@ export const createDomAdapter = (options: CreateAdapterOptions): TurnBoxTestAdap
 
     async advanceTime(ms) {
       await vi.advanceTimersByTimeAsync(ms);
+      await vi.advanceTimersByTimeAsync(1);
     },
 
     destroy() {
