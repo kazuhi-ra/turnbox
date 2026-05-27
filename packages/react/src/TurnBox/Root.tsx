@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useImperativeHandle, useMemo, useReducer, useRef, useState } from "react";
 import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { TurnBoxOptions, NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
+import { FOCUSABLE, resolveNavigation, buildDrainResult } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContext } from "./context.js";
 import { useTurnBoxConfig } from "./ConfigContext.js";
 import { Face } from "./Face.js";
@@ -194,63 +194,41 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     const goTo = useCallback(
       (rawTarget: number, animation = true) => {
-        const s = stateRef.current;
-        const fromFace = s.displayFace;
-
-        if (s.kind !== "idle") {
-          const transition = resolveTransition(fromFace, rawTarget, opts, animation);
-          if (transition.kind === "noop") return;
-
-          const isImmediate = !animation || transition.to === s.from;
-
-          if (!isImmediate) {
-            dispatchAndSync({ type: "ENQUEUE", nav: { face: transition.to, animation } });
-            return;
+        // drainQueue is local to goTo so it can call goTo recursively without a circular
+        // useCallback dependency. It receives the queue snapshot captured before COMPLETE/SETTLE.
+        const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
+          const result = buildDrainResult(settledFace, queue, opts);
+          if (result.kind === "empty") return;
+          goTo(result.nav.face, result.nav.animation);
+          if (stateRef.current.kind !== "idle") {
+            for (const item of result.enqueue) dispatchAndSync({ type: "ENQUEUE", nav: item });
           }
+        };
 
-          // immediate-execute: abort current animation and clear queue.
+        let decision = resolveNavigation(stateRef.current, rawTarget, opts, animation);
+        if (decision.kind === "noop") return;
+        if (decision.kind === "enqueue") {
+          dispatchAndSync({ type: "ENQUEUE", nav: decision.nav });
+          return;
+        }
+        if (decision.kind === "abort") {
           // Do NOT call cancelFaceAnimations() here — the new animation's CSS transition will
           // use the compositor mid-value as before-change style for smooth reversal.
           // anim.cancel() belongs only in the completion cleanup timer.
           for (const id of pendingTimers.current) clearTimeout(id);
           pendingTimers.current = [];
-          dispatchAndSync({ type: "ABORT", displayFace: fromFace });
-          // dispatchAndSync updated stateRef to idle; fall through to start new navigation
+          dispatchAndSync({ type: "ABORT", displayFace: stateRef.current.displayFace });
+          decision = resolveNavigation(stateRef.current, rawTarget, opts, animation);
+          if (decision.kind !== "go") return;
         }
 
-        // drainQueue is local to goTo so it can call goTo recursively without a circular
-        // useCallback dependency. It receives the queue snapshot captured before COMPLETE/SETTLE.
-        const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
-          while (queue.length > 0) {
-            // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
-            const pending = queue.shift()!;
-            const t = resolveTransition(settledFace, pending.face, opts, pending.animation);
-            if (t.kind !== "noop") {
-              goTo(pending.face, pending.animation);
-              // Transfer any remaining items into the new animation's queue so they survive
-              // subsequent drain cycles — mirrors DOM's state.queue.unshift(...queue).
-              if (stateRef.current.kind !== "idle" && queue.length > 0) {
-                for (const item of queue) {
-                  dispatchAndSync({ type: "ENQUEUE", nav: item });
-                }
-                queue.length = 0;
-              }
-              return;
-            }
-          }
-        };
-
-        const transition = resolveTransition(fromFace, rawTarget, opts, animation);
-        if (transition.kind === "noop") return;
-
+        const { from: fromFace, to, doAnimate } = decision;
         const time = opts.duration + opts.delay;
-        onChangeRef.current?.(transition.to);
+        onChangeRef.current?.(to);
 
-        const { to, doAnimate } = transition;
         if (!doAnimate) {
           dispatchAndSync(buildGoInstantAction(to, fromFace));
           addTimeout(() => {
-            // Capture queue before SETTLE resets state to idle (dropping queue).
             const currentState = stateRef.current;
             const pendingQueue: PendingNav[] = currentState.kind === "settling" ? [...currentState.queue] : [];
             dispatchAndSync({ type: "SETTLE" });
@@ -262,7 +240,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         dispatchAndSync(buildGoStepAction(to, fromFace));
         addTimeout(() => {
           cancelFaceAnimations();
-          // Capture queue before COMPLETE resets state to idle (dropping queue).
           const currentState = stateRef.current;
           const pendingQueue: PendingNav[] = currentState.kind === "animating" ? [...currentState.queue] : [];
           dispatchAndSync({ type: "COMPLETE", displayFace: to });

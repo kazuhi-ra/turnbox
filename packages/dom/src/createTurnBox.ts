@@ -1,12 +1,13 @@
 import {
   normalizeOptions,
   calcFaceTransform,
-  resolveTransition,
   FOCUSABLE,
   INITIAL_STATE,
   reducer,
   buildGoStepAction,
   buildGoInstantAction,
+  resolveNavigation,
+  buildDrainResult,
   type TurnBoxOptions,
   type NormalizedOptions,
   type ReduceAnimation,
@@ -188,43 +189,29 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   // Processes pending navigations accumulated during the animation that just completed.
   // queue is a snapshot captured before COMPLETE/SETTLE dispatch (which drops the queue).
   const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
-    while (queue.length > 0) {
-      // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
-      const pending = queue.shift()!;
-      const t = resolveTransition(settledFace, pending.face, opts, pending.animation);
-      if (t.kind !== "noop") {
-        animate(pending.face, pending.animation);
-        if (state.kind !== "idle" && queue.length > 0) {
-          for (const item of queue) dispatch({ type: "ENQUEUE", nav: item });
-          queue.length = 0;
-        }
-        return;
-      }
+    const result = buildDrainResult(settledFace, queue, opts);
+    if (result.kind === "empty") return;
+    animate(result.nav.face, result.nav.animation);
+    if (state.kind !== "idle") {
+      for (const item of result.enqueue) dispatch({ type: "ENQUEUE", nav: item });
     }
   };
 
   const animate = (rawTarget: number, animationFlag: boolean): void => {
-    if (state.kind !== "idle") {
-      const checkTransition = resolveTransition(state.displayFace, rawTarget, opts, animationFlag);
-      if (checkTransition.kind === "noop") return;
-
-      const isImmediate = !animationFlag || checkTransition.to === state.from;
-
-      if (!isImmediate) {
-        dispatch({ type: "ENQUEUE", nav: { face: checkTransition.to, animation: animationFlag } });
-        return;
-      }
-
-      // abortAnimation transitions state to idle, implicitly dropping the queue.
+    let decision = resolveNavigation(state, rawTarget, opts, animationFlag);
+    if (decision.kind === "noop") return;
+    if (decision.kind === "enqueue") {
+      dispatch({ type: "ENQUEUE", nav: decision.nav });
+      return;
+    }
+    if (decision.kind === "abort") {
       abortAnimation();
+      decision = resolveNavigation(state, rawTarget, opts, animationFlag);
+      if (decision.kind !== "go") return;
     }
 
-    const from = state.displayFace;
-    const transition = resolveTransition(from, rawTarget, opts, animationFlag);
-    if (transition.kind === "noop") return;
-
+    const { from, to, doAnimate } = decision;
     const time = opts.duration + opts.delay;
-    const { to, doAnimate } = transition;
     options.onChange?.(to);
 
     if (doAnimate) {
