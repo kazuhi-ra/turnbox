@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { reducer, toPhase, INITIAL_STATE, buildGoStepAction, buildGoInstantAction } from "../src/TurnBox/reducer.js";
-import type { TurnBoxState } from "../src/TurnBox/reducer.js";
+import {
+  reducer,
+  toPhase,
+  INITIAL_STATE,
+  buildGoStepAction,
+  buildGoInstantAction,
+} from "@kazuhi-ra/turnbox-core/internal";
+import type { TurnBoxState } from "@kazuhi-ra/turnbox-core/internal";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
