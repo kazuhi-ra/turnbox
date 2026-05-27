@@ -5,21 +5,14 @@ import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContext } from "./context.js";
 import { useTurnBoxConfig } from "./ConfigContext.js";
 import { Face } from "./Face.js";
-import {
-  reducer,
-  toPhase,
-  INITIAL_STATE,
-  buildGoInstantAction,
-  buildGoAdjustingAction,
-  buildGoStepAction,
-} from "./reducer.js";
+import { reducer, toPhase, INITIAL_STATE, buildGoInstantAction, buildGoStepAction } from "./reducer.js";
 import type { TurnBoxState } from "./reducer.js";
 
 const calcContainerDynStyle = (state: TurnBoxState, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
   if (geometry.kind !== "variable") return {};
   const isEven = state.displayFace % 2 === 0;
-  const isAnimating = state.kind === "animating" || state.kind === "adjust-animating";
+  const isAnimating = state.kind === "animating";
   const transition = isAnimating
     ? `${geometry.axis === "X" ? "height" : "left"} ${opts.duration}ms ${opts.easing} ${opts.delay}ms`
     : undefined;
@@ -198,7 +191,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           const isImmediate = !animation || transition.to === animatingFromFaceRef.current;
 
           if (!isImmediate) {
-            pendingNavigations.current.push({ face: rawTarget, animation });
+            pendingNavigations.current.push({ face: transition.to, animation });
             return;
           }
 
@@ -219,25 +212,17 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         const time = opts.duration + opts.delay;
         onChangeRef.current?.(transition.to);
 
-        const drainQueue = () => {
-          const pending = pendingNavigations.current.shift();
-          if (pending) goTo(pending.face, pending.animation);
-        };
-
-        if (transition.kind === "step" && transition.hasAdjust) {
-          if (!transition.doAnimate) {
-            dispatch(buildGoInstantAction(transition.to));
-            addTimeout(() => {
-              isAnimatingRef.current = false;
-              animatingFromFaceRef.current = null;
-              onAnimationEndRef.current?.(transition.to);
-              drainQueue();
-            }, time);
-            return;
+        const drainQueue = (settledFace: number) => {
+          while (pendingNavigations.current.length > 0) {
+            // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
+            const pending = pendingNavigations.current.shift()!;
+            const t = resolveTransition(settledFace, pending.face, opts, pending.animation);
+            if (t.kind !== "noop") {
+              goTo(pending.face, pending.animation);
+              return;
+            }
           }
-          dispatch(buildGoAdjustingAction(transition.to, fromFace));
-          return;
-        }
+        };
 
         const { to, doAnimate } = transition;
         if (!doAnimate) {
@@ -246,7 +231,7 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
             isAnimatingRef.current = false;
             animatingFromFaceRef.current = null;
             onAnimationEndRef.current?.(to);
-            drainQueue();
+            drainQueue(to);
           }, time);
           return;
         }
@@ -257,27 +242,11 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
           isAnimatingRef.current = false;
           animatingFromFaceRef.current = null;
           onAnimationEndRef.current?.(to);
-          drainQueue();
+          drainQueue(to);
         }, time);
       },
       [opts, addTimeout, resolveCurrentFace, cancelFaceAnimations],
     );
-
-    useEffect(() => {
-      if (state.kind === "adjusting") {
-        const { to } = state;
-        dispatch({ type: "ENTER_ADJUST_ANIMATING", displayFace: to });
-        addTimeout(() => {
-          cancelFaceAnimations();
-          dispatch({ type: "COMPLETE", displayFace: to });
-          isAnimatingRef.current = false;
-          animatingFromFaceRef.current = null;
-          onAnimationEndRef.current?.(to);
-          const pending = pendingNavigations.current.shift();
-          if (pending) goTo(pending.face, pending.animation);
-        }, opts.duration + opts.delay);
-      }
-    }, [state, opts, addTimeout, goTo, cancelFaceAnimations]);
 
     const next = useCallback(() => goTo(resolveCurrentFace() + 1, true), [goTo, resolveCurrentFace]);
     const prev = useCallback(() => goTo(resolveCurrentFace() - 1, true), [goTo, resolveCurrentFace]);
@@ -294,7 +263,6 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
         displayFace: state.displayFace,
         phase: toPhase(state),
         shownFaces: state.shownFaces,
-        faceOverrides: state.faceOverrides,
         goTo,
         next,
         prev,
