@@ -15,13 +15,14 @@ import {
 import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import {
-  resolveTransition,
   FOCUSABLE,
   INITIAL_STATE,
   reducer,
   toPhase,
   buildGoStepAction,
   buildGoInstantAction,
+  resolveNavigation,
+  buildDrainResult,
 } from "@kazuhi-ra/turnbox-core/internal";
 import type { TurnBoxState, TurnBoxAction, PendingNav } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContextKey } from "./context.js";
@@ -174,46 +175,30 @@ export const Root = defineComponent({
     };
 
     const goTo = (rawTarget: number, animation = true, fromQueue = false) => {
-      if (machineState.value.kind !== "idle") {
-        const from = machineState.value.displayFace;
-        const checkTransition = resolveTransition(from, rawTarget, opts.value, animation);
-        if (checkTransition.kind === "noop") return;
-
-        const isImmediate = !animation || checkTransition.to === machineState.value.from;
-
-        if (!isImmediate) {
-          dispatch({ type: "ENQUEUE", nav: { face: checkTransition.to, animation } });
-          return;
-        }
-
-        abortAnimation();
-        // abortAnimation resets state to idle; fall through to start new navigation
-      }
-
-      const from = machineState.value.displayFace;
-      const transition = resolveTransition(from, rawTarget, opts.value, animation);
-      if (transition.kind === "noop") return;
-
-      const time = opts.value.duration + opts.value.delay;
-      props.onChange?.(transition.to);
-
-      const { to, doAnimate } = transition;
-
       const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
-        while (queue.length > 0) {
-          // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
-          const pending = queue.shift()!;
-          const t = resolveTransition(settledFace, pending.face, opts.value, pending.animation);
-          if (t.kind !== "noop") {
-            goTo(pending.face, pending.animation, true);
-            if (machineState.value.kind !== "idle" && queue.length > 0) {
-              for (const item of queue) dispatch({ type: "ENQUEUE", nav: item });
-              queue.length = 0;
-            }
-            return;
-          }
+        const result = buildDrainResult(settledFace, queue, opts.value);
+        if (result.kind === "empty") return;
+        goTo(result.nav.face, result.nav.animation, true); // fromQueue=true: skip rafPendingFrom
+        if (machineState.value.kind !== "idle") {
+          for (const item of result.enqueue) dispatch({ type: "ENQUEUE", nav: item });
         }
       };
+
+      let decision = resolveNavigation(machineState.value, rawTarget, opts.value, animation);
+      if (decision.kind === "noop") return;
+      if (decision.kind === "enqueue") {
+        dispatch({ type: "ENQUEUE", nav: decision.nav });
+        return;
+      }
+      if (decision.kind === "abort") {
+        abortAnimation();
+        decision = resolveNavigation(machineState.value, rawTarget, opts.value, animation);
+        if (decision.kind !== "go") return;
+      }
+
+      const { from, to, doAnimate } = decision;
+      const time = opts.value.duration + opts.value.delay;
+      props.onChange?.(to);
 
       if (!doAnimate) {
         dispatch(buildGoInstantAction(to, from)); // → settling, shownFaces = {to}
