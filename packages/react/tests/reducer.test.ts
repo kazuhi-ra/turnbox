@@ -4,9 +4,13 @@ import type { TurnBoxState } from "../src/TurnBox/reducer.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const atFace2 = (): TurnBoxState => reducer(INITIAL_STATE, buildGoInstantAction(2));
+const atFace2 = (): TurnBoxState => reducer(INITIAL_STATE, buildGoInstantAction(2, 1));
 
-const animatingState = (): TurnBoxState => reducer(atFace2(), buildGoStepAction(3, 2));
+const settlingState = (): TurnBoxState => atFace2(); // kind:"settling"
+
+const animatingState = (): TurnBoxState => reducer(INITIAL_STATE, buildGoStepAction(3, 2));
+
+const idleAtFace2 = (): TurnBoxState => reducer(settlingState(), { type: "SETTLE" });
 
 // ─── GO_STEP / "animating" state ─────────────────────────────────────────────
 
@@ -19,6 +23,11 @@ describe("GO_STEP / animating state", () => {
     expect(animatingState().displayFace).toBe(3);
   });
 
+  it("from is the origin face", () => {
+    const s = animatingState();
+    expect(s.kind === "animating" && s.from).toBe(2);
+  });
+
   it("shownFaces includes both from and target faces", () => {
     expect(animatingState().shownFaces.has(2)).toBe(true);
     expect(animatingState().shownFaces.has(3)).toBe(true);
@@ -27,27 +36,91 @@ describe("GO_STEP / animating state", () => {
   it("shownFaces has exactly two faces", () => {
     expect(animatingState().shownFaces.size).toBe(2);
   });
+
+  it("queue starts empty", () => {
+    const s = animatingState();
+    expect(s.kind === "animating" && s.queue.length).toBe(0);
+  });
 });
 
-// ─── GO_INSTANT / idle state ──────────────────────────────────────────────────
+// ─── GO_INSTANT / "settling" state ───────────────────────────────────────────
 
-describe("GO_INSTANT / idle state", () => {
-  it("kind is 'idle'", () => {
-    const state = reducer(INITIAL_STATE, buildGoInstantAction(3));
-    expect(state.kind).toBe("idle");
+describe("GO_INSTANT / settling state", () => {
+  it("kind is 'settling'", () => {
+    expect(settlingState().kind).toBe("settling");
+  });
+
+  it("displayFace is the target face", () => {
+    expect(settlingState().displayFace).toBe(2);
+  });
+
+  it("from is the origin face", () => {
+    const s = settlingState();
+    expect(s.kind === "settling" && s.from).toBe(1);
   });
 
   it("shownFaces contains only the target face", () => {
-    const state = reducer(INITIAL_STATE, buildGoInstantAction(3));
-    expect(state.shownFaces.has(3)).toBe(true);
-    expect(state.shownFaces.size).toBe(1);
+    expect(settlingState().shownFaces.has(2)).toBe(true);
+    expect(settlingState().shownFaces.size).toBe(1);
   });
 
-  it("does not leak faces from a prior animating state", () => {
-    // animating has shownFaces = {2, 3}; GO_INSTANT must clear that
-    const state = reducer(animatingState(), buildGoInstantAction(4));
-    expect(state.shownFaces.size).toBe(1);
-    expect(state.shownFaces.has(4)).toBe(true);
+  it("queue starts empty", () => {
+    const s = settlingState();
+    expect(s.kind === "settling" && s.queue.length).toBe(0);
+  });
+});
+
+// ─── SETTLE ───────────────────────────────────────────────────────────────────
+
+describe("SETTLE", () => {
+  it("transitions settling → idle", () => {
+    const s = reducer(settlingState(), { type: "SETTLE" });
+    expect(s.kind).toBe("idle");
+    expect(s.displayFace).toBe(2);
+    expect(s.shownFaces.size).toBe(1);
+    expect(s.shownFaces.has(2)).toBe(true);
+  });
+
+  it("is a no-op when not settling", () => {
+    const s = reducer(INITIAL_STATE, { type: "SETTLE" });
+    expect(s).toBe(INITIAL_STATE);
+  });
+});
+
+// ─── ENQUEUE ──────────────────────────────────────────────────────────────────
+
+describe("ENQUEUE", () => {
+  it("appends a pending nav to animating queue", () => {
+    const s = reducer(animatingState(), { type: "ENQUEUE", nav: { face: 4, animation: true } });
+    expect(s.kind === "animating" && s.queue).toEqual([{ face: 4, animation: true }]);
+  });
+
+  it("appends a pending nav to settling queue", () => {
+    const s = reducer(settlingState(), { type: "ENQUEUE", nav: { face: 3, animation: false } });
+    expect(s.kind === "settling" && s.queue).toEqual([{ face: 3, animation: false }]);
+  });
+
+  it("is a no-op when idle", () => {
+    const s = reducer(INITIAL_STATE, { type: "ENQUEUE", nav: { face: 2, animation: true } });
+    expect(s).toBe(INITIAL_STATE);
+  });
+});
+
+// ─── ABORT ────────────────────────────────────────────────────────────────────
+
+describe("ABORT", () => {
+  it("transitions animating → idle and sets displayFace", () => {
+    const s = reducer(animatingState(), { type: "ABORT", displayFace: 2 });
+    expect(s.kind).toBe("idle");
+    expect(s.displayFace).toBe(2);
+    expect(s.shownFaces.size).toBe(1);
+    expect(s.shownFaces.has(2)).toBe(true);
+  });
+
+  it("transitions settling → idle", () => {
+    const s = reducer(settlingState(), { type: "ABORT", displayFace: 1 });
+    expect(s.kind).toBe("idle");
+    expect(s.displayFace).toBe(1);
   });
 });
 
@@ -77,17 +150,32 @@ describe("COMPLETE reducer", () => {
 // ─── Full animate cycle ───────────────────────────────────────────────────────
 
 describe("full animate cycle: shownFaces visibility invariants", () => {
-  it("target face is visible during animating and isolated after complete", () => {
-    const s0 = atFace2(); // idle, shownFaces: {2}
+  it("animated: target face visible during animating, isolated after complete", () => {
+    const s0 = idleAtFace2(); // idle, shownFaces: {2}
 
     const s1 = reducer(s0, buildGoStepAction(3, 2));
-    expect(s1.shownFaces.has(3)).toBe(true); // target visible (transition started)
+    expect(s1.shownFaces.has(3)).toBe(true); // target visible
     expect(s1.shownFaces.has(2)).toBe(true); // from face also visible during transition
 
     const s2 = reducer(s1, { type: "COMPLETE", displayFace: 3 });
-    expect(s2.shownFaces.size).toBe(1); // only target remains
+    expect(s2.shownFaces.size).toBe(1);
     expect(s2.shownFaces.has(3)).toBe(true);
-    expect(s2.shownFaces.has(2)).toBe(false); // from face cleaned up
+    expect(s2.shownFaces.has(2)).toBe(false);
+  });
+
+  it("instant: only target face shown during settling, same after settle", () => {
+    const s0 = idleAtFace2();
+
+    const s1 = reducer(s0, buildGoInstantAction(4, 2));
+    expect(s1.kind).toBe("settling");
+    expect(s1.shownFaces.size).toBe(1); // only target face shown
+    expect(s1.shownFaces.has(4)).toBe(true);
+    expect(s1.shownFaces.has(2)).toBe(false);
+
+    const s2 = reducer(s1, { type: "SETTLE" });
+    expect(s2.kind).toBe("idle");
+    expect(s2.shownFaces.size).toBe(1);
+    expect(s2.shownFaces.has(4)).toBe(true);
   });
 });
 
@@ -110,6 +198,10 @@ describe("INITIAL_STATE", () => {
 describe("toPhase", () => {
   it("idle → { kind: 'idle' }", () => {
     expect(toPhase(INITIAL_STATE)).toEqual({ kind: "idle" });
+  });
+
+  it("settling → { kind: 'idle' } (no CSS transition for instant)", () => {
+    expect(toPhase(settlingState())).toEqual({ kind: "idle" });
   });
 
   it("animating → { kind: 'animating' }", () => {
