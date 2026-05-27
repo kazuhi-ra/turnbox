@@ -17,39 +17,48 @@ export const getFaceParity = (faceNum: number): FaceParity => (faceNum % 2 !== 0
 
 const calcBaseDeg = (currentFace: number, faceNum: number): number => (currentFace - faceNum) * -90;
 
-const isSkipWrapEdge = (currentFace: number, faceNum: number): boolean =>
+const isWrapEdge = (currentFace: number, faceNum: number): boolean =>
   (currentFace === MAX_FACE_PCS && faceNum === 1) || (currentFace === 1 && faceNum === MAX_FACE_PCS);
 
-const applyAnimationType = (
-  deg: number,
-  currentFace: number,
-  faceNum: number,
-  type: NormalizedOptions["type"],
-): number => {
-  if (type === "skip") {
-    const clamped = Math.sign(deg) * 90;
-    return isSkipWrapEdge(currentFace, faceNum) ? clamped * -1 : clamped;
-  }
-  if (type === "real" && isSkipWrapEdge(currentFace, faceNum)) {
-    const clamped = Math.sign(deg) * 90;
-    return clamped * -1;
-  }
-  if (type === "repeat") {
-    if (getFaceParity(currentFace) === "odd" && getFaceParity(faceNum) === "even") return 90;
-    if (getFaceParity(currentFace) === "even" && getFaceParity(faceNum) === "odd") return -90;
-  }
-  return deg;
+// skip: all faces clamped to ±90° (no face ever passes through 180°).
+// At the wrap edge (face1↔face4), the sign flips so the face approaches from the
+// opposite side — consistent with the wrap direction.
+const calcDegSkip = (base: number, currentFace: number, faceNum: number): number => {
+  const clamped = Math.sign(base) * 90;
+  return isWrapEdge(currentFace, faceNum) ? -clamped : clamped;
+};
+
+// real: sequential rotation; wrap edges clamped to ±90° to prevent 270° backward spin.
+// Without clamping, face4 at currentFace=1 would be at -270° (visually same as 90°,
+// but animates backward through 180° when transitioning).
+const calcDegReal = (base: number, currentFace: number, faceNum: number): number => {
+  if (!isWrapEdge(currentFace, faceNum)) return base;
+  return Math.sign(base) * -90;
+};
+
+// repeat: parity determines side — odd current→even face = +90°, even current→odd face = -90°.
+// Non-parity pairs (odd→odd, even→even) fall through to sequential rotation.
+const calcDegRepeat = (base: number, currentFace: number, faceNum: number): number => {
+  if (getFaceParity(currentFace) === "odd" && getFaceParity(faceNum) === "even") return 90;
+  if (getFaceParity(currentFace) === "even" && getFaceParity(faceNum) === "odd") return -90;
+  return base;
 };
 
 const applyDirection = (deg: number, direction: NormalizedOptions["direction"]): number => {
   if (direction !== "negative") return deg;
   const flipped = deg * -1;
+  // deg=0 (currentFace===faceNum) yields -0, which would render as "-0deg" in CSS
   return Object.is(flipped, -0) ? 0 : flipped;
 };
 
 const calcDeg = (currentFace: number, faceNum: number, options: NormalizedOptions): RotationDeg => {
   const base = calcBaseDeg(currentFace, faceNum);
-  const typed = applyAnimationType(base, currentFace, faceNum, options.type);
+  const typed =
+    options.type === "skip"
+      ? calcDegSkip(base, currentFace, faceNum)
+      : options.type === "repeat"
+        ? calcDegRepeat(base, currentFace, faceNum)
+        : calcDegReal(base, currentFace, faceNum);
   return applyDirection(typed, options.direction) as RotationDeg;
 };
 
