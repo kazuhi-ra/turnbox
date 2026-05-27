@@ -1,15 +1,5 @@
-import type {
-  Axis,
-  FaceParity,
-  FaceTransform,
-  FaceVisibility,
-  Geometry,
-  NormalizedOptions,
-  RotationDeg,
-} from "./types.js";
+import type { Axis, FaceParity, FaceTransform, FaceVisibility, NormalizedOptions, RotationDeg } from "./types.js";
 import { MAX_FACE_PCS } from "./normalize.js";
-
-const TRANSFORM_ORIGIN_CENTER = "50% 50%"; // fixed geometry: center pivot
 
 export const getFaceParity = (faceNum: number): FaceParity => (faceNum % 2 !== 0 ? "odd" : "even");
 
@@ -75,85 +65,69 @@ const Z_INDEX: Record<FaceVisibility, number> = { front: 20, side: 10, hidden: 0
 
 const calcZIndex = (deg: RotationDeg): number => Z_INDEX[faceVisibility(deg)];
 
-// ── Translate tables ──────────────────────────────────────────────────────────
+// ── Translate calculation ─────────────────────────────────────────────────────
 
-// Classifies a RotationDeg into its effective quadrant for translate lookups.
-// pos90 = +90° rotation; neg90 = -90°.
-type DegBucket = "zero" | "pos90" | "half" | "neg90";
-
-const classifyDeg = (deg: RotationDeg): DegBucket => {
-  if (deg === 0 || Math.abs(deg) === 360) return "zero";
-  if (deg === 90) return "pos90";
-  if (Math.abs(deg) === 180) return "half";
-  return "neg90";
-};
-
-// Fixed geometry: translate uses changeHalf = (deg<0 ? -l : l)/2.
-const calcFixedTranslate = (deg: RotationDeg, axis: Axis, length: number): [number, number, number] => {
-  const abs = Math.abs(deg);
-  if (abs === 0 || abs === 360) return [0, 0, 0];
-  if (abs === 180) return [0, 0, length];
-  const changeHalf = (deg < 0 ? -length : length) / 2;
-  const half = length / 2;
-  if (axis === "Y") return [changeHalf, 0, half];
-  return [0, -changeHalf, half];
-};
-
-type VariableTranslateFactory = (l: number, e: number) => [number, number, number];
-
-const variableTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
-  Y: {
-    odd: {
-      zero: () => [0, 0, 0],
-      pos90: (_l, e) => [e, 0, 0],
-      half: (l, e) => [e * 2 - l, 0, e],
-      neg90: (l, e) => [e - l, 0, e],
-    },
-    even: {
-      zero: () => [0, 0, 0],
-      pos90: (l, e) => [e, 0, -(e - l)],
-      half: (l, e) => [e, 0, l],
-      neg90: (_l, e) => [0, 0, e],
-    },
-  },
-  X: {
-    odd: {
-      zero: () => [0, 0, 0],
-      pos90: (l, e) => [0, e - l, e],
-      half: (l, e) => [0, e * 2 - l, e],
-      neg90: (_l, e) => [0, e, 0],
-    },
-    even: {
-      zero: () => [0, 0, 0],
-      pos90: (_l, e) => [0, 0, e],
-      half: (l, e) => [0, e, l],
-      neg90: (l, e) => [0, e, -(e - l)],
-    },
-  },
-};
-
-const lookupTranslate = (
+// Unified translate for fixed (pivot=length/2, evenSize=length) and variable
+// (pivot=even, evenSize=even) geometries.  Geometric constraint: adjacent faces
+// share their connecting edge in world coordinates.
+//
+// For ±90°, isPos===isY groups the axis/direction pairs that share a formula:
+//   Y.odd.pos90 ≡ X.odd.neg90  and  Y.odd.neg90 ≡ X.odd.pos90
+//   Y.even.pos90 ≡ X.even.neg90  and  Y.even.neg90 ≡ X.even.pos90
+const calcTranslate = (
   deg: RotationDeg,
   faceNum: number,
-  geometry: Extract<Geometry, { kind: "variable" }>,
-): [number, number, number] =>
-  variableTranslateTable[geometry.axis][getFaceParity(faceNum)][classifyDeg(deg)](geometry.length, geometry.even);
+  axis: Axis,
+  length: number,
+  pivot: number,
+  evenSize: number,
+): [number, number, number] => {
+  const abs = Math.abs(deg);
+  if (abs === 0 || abs === 360) return [0, 0, 0];
+
+  const parity = getFaceParity(faceNum);
+
+  if (abs === 180) {
+    const lateral = parity === "odd" ? 2 * pivot - length : 2 * pivot - evenSize;
+    const tz = parity === "odd" ? evenSize : length;
+    return axis === "Y" ? [lateral, 0, tz] : [0, lateral, tz];
+  }
+
+  const isPos = deg > 0;
+  const isY = axis === "Y";
+  let lateral: number;
+  let tz: number;
+
+  if (parity === "odd") {
+    if (isPos === isY) {
+      lateral = pivot;
+      tz = evenSize - pivot;
+    } else {
+      lateral = pivot - length;
+      tz = pivot;
+    }
+  } else {
+    if (isPos === isY) {
+      lateral = pivot;
+      tz = length - pivot;
+    } else {
+      lateral = pivot - evenSize;
+      tz = pivot;
+    }
+  }
+
+  return axis === "Y" ? [lateral, 0, tz] : [0, lateral, tz];
+};
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export const calcFaceTransform = (currentFace: number, faceNum: number, options: NormalizedOptions): FaceTransform => {
   const { geometry } = options;
   const deg = calcDeg(currentFace, faceNum, options);
-  const [x, y, z] =
-    geometry.kind === "fixed"
-      ? calcFixedTranslate(deg, geometry.axis, geometry.length)
-      : lookupTranslate(deg, faceNum, geometry);
-  const transformOrigin =
-    geometry.kind === "fixed"
-      ? TRANSFORM_ORIGIN_CENTER
-      : geometry.axis === "X"
-        ? `50% ${geometry.even}px`
-        : `${geometry.even}px 50%`;
+  const pivot = geometry.kind === "fixed" ? geometry.length / 2 : geometry.even;
+  const evenSize = geometry.kind === "fixed" ? geometry.length : geometry.even;
+  const [x, y, z] = calcTranslate(deg, faceNum, geometry.axis, geometry.length, pivot, evenSize);
+  const transformOrigin = geometry.axis === "X" ? `50% ${pivot}px` : `${pivot}px 50%`;
 
   return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
 };
