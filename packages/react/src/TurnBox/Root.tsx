@@ -6,7 +6,7 @@ import { TurnBoxContext } from "./context.js";
 import { useTurnBoxConfig } from "./ConfigContext.js";
 import { Face } from "./Face.js";
 import { reducer, toPhase, INITIAL_STATE, buildGoInstantAction, buildGoStepAction } from "./reducer.js";
-import type { TurnBoxState } from "./reducer.js";
+import type { TurnBoxState, TurnBoxAction, PendingNav } from "./reducer.js";
 
 const calcContainerDynStyle = (state: TurnBoxState, opts: NormalizedOptions): React.CSSProperties => {
   const { geometry } = opts;
@@ -81,18 +81,28 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     const effectiveReduceAnimation = config.reduceAnimation;
 
     const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-    const isAnimatingRef = useRef(false);
-    const animatingFromFaceRef = useRef<number | null>(null);
-    const pendingNavigations = useRef<Array<{ face: number; animation: boolean }>>([]);
-    const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
-    const stateRef = useRef(state);
+
+    // stateRef mirrors reducer state and is updated both on every render and immediately
+    // after every dispatch via dispatchAndSync. This gives stable callbacks (not recreated
+    // on every render) access to the latest state without waiting for a render cycle.
+    const stateRef = useRef<TurnBoxState>(state);
     stateRef.current = state;
+
+    const pendingTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
     const onChangeRef = useRef(onChange);
     const onAnimationEndRef = useRef(onAnimationEnd);
     onChangeRef.current = onChange;
     onAnimationEndRef.current = onAnimationEnd;
 
     const boxRef = useRef<HTMLDivElement>(null);
+
+    // Runs the reducer synchronously to update stateRef, then dispatches for React render.
+    // Without the synchronous update, multiple goTo calls in the same synchronous block
+    // (e.g. inside act()) would all read stale state because React batches renders.
+    const dispatchAndSync = useCallback((action: TurnBoxAction): void => {
+      stateRef.current = reducer(stateRef.current, action);
+      dispatch(action);
+    }, []);
 
     const cancelFaceAnimations = useCallback((): void => {
       const box = boxRef.current;
@@ -153,19 +163,21 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
     // ── Focus management ───────────────────────────────────────────────────────
     // Detect navigation completion during render (pattern: store prev with useState).
     // We track both kind and displayFace because instant transitions (GO_INSTANT)
-    // keep kind==="idle" throughout — only displayFace changes.
+    // keep kind==="settling" then become "idle" — only displayFace changes for instant.
     // focusRequest bundles the target face + a seq counter into one state so the
     // effect deps are exhaustive — no stale closure on state.displayFace.
-    const [prevKind, setPrevKind] = useState(state.kind);
+    const [prevKind, setPrevKind] = useState<TurnBoxState["kind"]>(state.kind);
     const [prevFace, setPrevFace] = useState(state.displayFace);
     const [focusRequest, setFocusRequest] = useState<{ face: number; seq: number } | null>(null);
 
     if (state.kind !== prevKind || state.displayFace !== prevFace) {
       setPrevKind(state.kind);
       setPrevFace(state.displayFace);
-      // Fire when landing on idle: either kind just became idle (animated) or
-      // face changed while kind stayed idle (instant).
-      if (state.kind === "idle" && (prevKind !== "idle" || state.displayFace !== prevFace)) {
+      // Fire focus when the user has "arrived" at a new face:
+      // - Animated: kind transitions animating → idle (COMPLETE fired).
+      // - Instant: kind transitions to settling (GO_INSTANT; face is immediately visible,
+      //   no CSS transition). Settling → idle (SETTLE) does NOT re-fire — focus already moved.
+      if ((state.kind === "idle" && prevKind === "animating") || state.kind === "settling") {
         setFocusRequest((prev) => ({ face: state.displayFace, seq: (prev?.seq ?? 0) + 1 }));
       }
     }
@@ -182,70 +194,83 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     const goTo = useCallback(
       (rawTarget: number, animation = true) => {
-        const fromFace = resolveCurrentFace();
+        const s = stateRef.current;
+        const fromFace = s.displayFace;
 
-        if (isAnimatingRef.current) {
+        if (s.kind !== "idle") {
           const transition = resolveTransition(fromFace, rawTarget, opts, animation);
           if (transition.kind === "noop") return;
 
-          const isImmediate = !animation || transition.to === animatingFromFaceRef.current;
+          const isImmediate = !animation || transition.to === s.from;
 
           if (!isImmediate) {
-            pendingNavigations.current.push({ face: transition.to, animation });
+            dispatchAndSync({ type: "ENQUEUE", nav: { face: transition.to, animation } });
             return;
           }
 
-          // immediate-execute: abort current animation and clear queue
+          // immediate-execute: abort current animation and clear queue.
+          // Do NOT call cancelFaceAnimations() here — the new animation's CSS transition will
+          // use the compositor mid-value as before-change style for smooth reversal.
+          // anim.cancel() belongs only in the completion cleanup timer.
           for (const id of pendingTimers.current) clearTimeout(id);
           pendingTimers.current = [];
-          dispatch({ type: "COMPLETE", displayFace: fromFace });
-          isAnimatingRef.current = false;
-          animatingFromFaceRef.current = null;
-          pendingNavigations.current = [];
+          dispatchAndSync({ type: "ABORT", displayFace: fromFace });
+          // dispatchAndSync updated stateRef to idle; fall through to start new navigation
         }
 
-        const transition = resolveTransition(fromFace, rawTarget, opts, animation);
-        if (transition.kind === "noop") return;
-
-        isAnimatingRef.current = true;
-        animatingFromFaceRef.current = fromFace;
-        const time = opts.duration + opts.delay;
-        onChangeRef.current?.(transition.to);
-
-        const drainQueue = (settledFace: number) => {
-          while (pendingNavigations.current.length > 0) {
+        // drainQueue is local to goTo so it can call goTo recursively without a circular
+        // useCallback dependency. It receives the queue snapshot captured before COMPLETE/SETTLE.
+        const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
+          while (queue.length > 0) {
             // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
-            const pending = pendingNavigations.current.shift()!;
+            const pending = queue.shift()!;
             const t = resolveTransition(settledFace, pending.face, opts, pending.animation);
             if (t.kind !== "noop") {
               goTo(pending.face, pending.animation);
+              // Transfer any remaining items into the new animation's queue so they survive
+              // subsequent drain cycles — mirrors DOM's state.queue.unshift(...queue).
+              if (stateRef.current.kind !== "idle" && queue.length > 0) {
+                for (const item of queue) {
+                  dispatchAndSync({ type: "ENQUEUE", nav: item });
+                }
+                queue.length = 0;
+              }
               return;
             }
           }
         };
 
+        const transition = resolveTransition(fromFace, rawTarget, opts, animation);
+        if (transition.kind === "noop") return;
+
+        const time = opts.duration + opts.delay;
+        onChangeRef.current?.(transition.to);
+
         const { to, doAnimate } = transition;
         if (!doAnimate) {
-          dispatch(buildGoInstantAction(to));
+          dispatchAndSync(buildGoInstantAction(to, fromFace));
           addTimeout(() => {
-            isAnimatingRef.current = false;
-            animatingFromFaceRef.current = null;
+            // Capture queue before SETTLE resets state to idle (dropping queue).
+            const currentState = stateRef.current;
+            const pendingQueue: PendingNav[] = currentState.kind === "settling" ? [...currentState.queue] : [];
+            dispatchAndSync({ type: "SETTLE" });
             onAnimationEndRef.current?.(to);
-            drainQueue(to);
+            drainQueue(to, pendingQueue);
           }, time);
           return;
         }
-        dispatch(buildGoStepAction(to, fromFace));
+        dispatchAndSync(buildGoStepAction(to, fromFace));
         addTimeout(() => {
           cancelFaceAnimations();
-          dispatch({ type: "COMPLETE", displayFace: to });
-          isAnimatingRef.current = false;
-          animatingFromFaceRef.current = null;
+          // Capture queue before COMPLETE resets state to idle (dropping queue).
+          const currentState = stateRef.current;
+          const pendingQueue: PendingNav[] = currentState.kind === "animating" ? [...currentState.queue] : [];
+          dispatchAndSync({ type: "COMPLETE", displayFace: to });
           onAnimationEndRef.current?.(to);
-          drainQueue(to);
+          drainQueue(to, pendingQueue);
         }, time);
       },
-      [opts, addTimeout, resolveCurrentFace, cancelFaceAnimations],
+      [opts, addTimeout, cancelFaceAnimations, dispatchAndSync],
     );
 
     const next = useCallback(() => goTo(resolveCurrentFace() + 1, true), [goTo, resolveCurrentFace]);
@@ -253,7 +278,13 @@ export const Root = React.forwardRef<TurnBoxRootHandle, RootProps>(
 
     useImperativeHandle(
       ref,
-      () => ({ goTo, getCurrentFace: () => state.displayFace, isAnimating: () => isAnimatingRef.current, next, prev }),
+      () => ({
+        goTo,
+        getCurrentFace: () => state.displayFace,
+        isAnimating: () => stateRef.current.kind !== "idle",
+        next,
+        prev,
+      }),
       [goTo, next, prev, state.displayFace],
     );
 
