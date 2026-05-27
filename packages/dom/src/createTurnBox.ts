@@ -156,6 +156,9 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     faces.forEach((f) => {
       f.classList.remove("turnBoxTransition");
       f.style.transition = "";
+      // Do NOT cancel WAAPI here. The new animation's CSS transition will use the current
+      // compositor mid-value as its before-change style, enabling smooth reversal.
+      // anim.cancel() belongs only in the completion cleanup timer (below in step()).
     });
     geoOps.clearTransition();
     container.classList.remove("turnBoxAdjust");
