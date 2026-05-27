@@ -20,6 +20,14 @@ export type TurnBoxInstance = {
 
 type DomOptions = TurnBoxOptions & { ariaLabel?: string; reduceAnimation?: ReduceAnimation };
 
+type PendingNav = { face: number; animation: boolean };
+
+// Animation state machine.
+// idle:      not animating; face is the settled face.
+// animating: CSS transition in progress; from/to are the origin and destination faces;
+//            queue holds navigations received while this animation is in flight.
+type AnimState = { kind: "idle"; face: number } | { kind: "animating"; from: number; to: number; queue: PendingNav[] };
+
 const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
     const faceNum = i + 1;
@@ -54,20 +62,21 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     }
   });
 
+  let state: AnimState = { kind: "idle", face: 1 };
+
+  // Tracks which turnBoxCurrentFaceN CSS class is currently applied to the container.
+  // Updated by setCurrentFace() inside step(); kept separate from AnimState because it
+  // reflects DOM-committed state rather than animation-phase state.
   let currentFace = 1;
-  let isAnimating = false;
-  let animatingFromFace: number | null = null;
-  let animatingDisplayFace: number | null = null;
+
   let pendingRaf: number | null = null;
   const pendingTimers: ReturnType<typeof setTimeout>[] = [];
-  const pendingNavigations: Array<{ face: number; animation: boolean }> = [];
 
   const schedule = (fn: () => void, delay: number): void => {
     pendingTimers.push(setTimeout(fn, delay));
   };
 
-  const getDisplayFace = (): number =>
-    isAnimating && animatingDisplayFace !== null ? animatingDisplayFace : currentFace;
+  const getDisplayFace = (): number => (state.kind === "animating" ? state.to : state.face);
 
   const setCurrentFace = (n: number): void => {
     container.classList.remove(`turnBoxCurrentFace${currentFace}`);
@@ -131,7 +140,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     });
     container.style.transition = "";
     container.classList.remove("turnBoxAdjust");
-    const settleFace = animatingDisplayFace ?? currentFace;
+    const settleFace = state.kind === "animating" ? state.to : state.face;
     setCurrentFace(settleFace);
     applyFaceTransforms(faces, settleFace, opts);
     faces.forEach((_, i) => {
@@ -139,53 +148,58 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       if (faceNum === settleFace) showFace(faceNum);
       else hideFace(faceNum);
     });
-    isAnimating = false;
-    animatingFromFace = null;
-    animatingDisplayFace = null;
+    // Transitioning to idle drops the queue — the animating state object (and its queue)
+    // is discarded. Callers that want to clear the queue can rely on this implicitly.
+    state = { kind: "idle", face: settleFace };
+  };
+
+  // Processes pending navigations accumulated during the animation that just completed.
+  // queue is extracted from the animating state before transitioning to idle, then passed
+  // here so that state is already idle when animate() is called for the next item.
+  // After animate() establishes a new animating state, any remaining queue items are
+  // transferred into it so they survive subsequent drain cycles.
+  const drainQueue = (queue: PendingNav[]): void => {
+    while (queue.length > 0) {
+      // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
+      const pending = queue.shift()!;
+      const t = resolveTransition(getDisplayFace(), pending.face, opts, pending.animation);
+      if (t.kind !== "noop") {
+        animate(pending.face, pending.animation);
+        if (state.kind === "animating" && queue.length > 0) {
+          state.queue.unshift(...queue);
+          queue.length = 0;
+        }
+        return;
+      }
+    }
   };
 
   const animate = (rawTarget: number, animationFlag: boolean): void => {
-    if (isAnimating) {
-      const displayFace = getDisplayFace();
-      const checkTransition = resolveTransition(displayFace, rawTarget, opts, animationFlag);
+    if (state.kind === "animating") {
+      const checkTransition = resolveTransition(state.to, rawTarget, opts, animationFlag);
       if (checkTransition.kind === "noop") return;
 
-      const isImmediate = !animationFlag || checkTransition.to === animatingFromFace;
+      const isImmediate = !animationFlag || checkTransition.to === state.from;
 
       if (!isImmediate) {
-        pendingNavigations.push({ face: checkTransition.to, animation: animationFlag });
+        state.queue.push({ face: checkTransition.to, animation: animationFlag });
         return;
       }
 
+      // abortAnimation transitions state to idle, implicitly dropping the queue.
       abortAnimation();
-      pendingNavigations.length = 0;
     }
 
     const from = getDisplayFace();
     const transition = resolveTransition(from, rawTarget, opts, animationFlag);
     if (transition.kind === "noop") return;
 
-    isAnimating = true;
-    animatingFromFace = from;
-    animatingDisplayFace = transition.to;
+    state = { kind: "animating", from, to: transition.to, queue: [] };
 
     const time = opts.duration + opts.delay;
     const finalFace = transition.to;
-    options.onChange?.(finalFace);
-
-    const drainQueue = (): void => {
-      while (pendingNavigations.length > 0) {
-        // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
-        const pending = pendingNavigations.shift()!;
-        const t = resolveTransition(getDisplayFace(), pending.face, opts, pending.animation);
-        if (t.kind !== "noop") {
-          animate(pending.face, pending.animation);
-          return;
-        }
-      }
-    };
-
     const targetFace = transition.to;
+    options.onChange?.(finalFace);
 
     const step = (): void => {
       if (transition.doAnimate) {
@@ -214,12 +228,12 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           container.style.transition = "";
         }
         hideFace(from);
-        isAnimating = false;
-        animatingFromFace = null;
-        animatingDisplayFace = null;
+        // Extract queue before transitioning to idle so drainQueue can process it.
+        const pendingQueue = state.kind === "animating" ? state.queue : [];
+        state = { kind: "idle", face: finalFace };
         options.onAnimationEnd?.(finalFace);
         faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
-        drainQueue();
+        drainQueue(pendingQueue);
       }, time);
     };
 
@@ -231,8 +245,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     schedule(step, 0);
   };
 
-  const getCurrentFace = (): number => currentFace;
-
   return {
     goTo(face, animation = true) {
       animate(face, animation);
@@ -243,8 +255,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     prev() {
       animate(getDisplayFace() - 1, true);
     },
-    getCurrentFace,
-    isAnimating: () => isAnimating,
+    getCurrentFace: () => currentFace,
+    isAnimating: () => state.kind === "animating",
     destroy() {
       for (const id of pendingTimers) clearTimeout(id);
       pendingTimers.length = 0;
