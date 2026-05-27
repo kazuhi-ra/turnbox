@@ -9,10 +9,7 @@ import type {
 } from "./types.js";
 import { MAX_FACE_PCS } from "./normalize.js";
 
-// Named transformOrigin values for the three non-dynamic cases
 const TRANSFORM_ORIGIN_CENTER = "50% 50%"; // fixed geometry: center pivot
-const TRANSFORM_ORIGIN_TOP_EDGE = "50% 0px"; // variable axis:X adjust: top-edge pivot
-const TRANSFORM_ORIGIN_LEFT_EDGE = "0px 50%"; // variable axis:Y adjust: left-edge pivot
 
 export const getFaceParity = (faceNum: number): FaceParity => (faceNum % 2 !== 0 ? "odd" : "even");
 
@@ -126,44 +123,12 @@ const variableTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, 
   },
 };
 
-const adjustTranslateTable: Record<Axis, Record<FaceParity, Record<DegBucket, VariableTranslateFactory>>> = {
-  Y: {
-    odd: {
-      zero: () => [0, 0, 0],
-      pos90: (_l, e) => [0, 0, e],
-      half: (l, e) => [-l, 0, e],
-      neg90: (l, _e) => [-l, 0, 0],
-    },
-    even: {
-      zero: () => [0, 0, 0],
-      pos90: (l, _e) => [0, 0, l],
-      half: (l, e) => [-e, 0, l],
-      neg90: (_l, e) => [-e, 0, 0],
-    },
-  },
-  X: {
-    odd: {
-      zero: () => [0, 0, 0],
-      pos90: (l, _e) => [0, -l, 0],
-      half: (l, e) => [0, -l, e],
-      neg90: (_l, e) => [0, 0, e],
-    },
-    even: {
-      zero: () => [0, 0, 0],
-      pos90: (_l, e) => [0, -e, 0],
-      half: (l, e) => [0, -e, l],
-      neg90: (l, _e) => [0, 0, l],
-    },
-  },
-};
-
 const lookupTranslate = (
-  table: typeof variableTranslateTable,
   deg: RotationDeg,
   faceNum: number,
   geometry: Extract<Geometry, { kind: "variable" }>,
 ): [number, number, number] =>
-  table[geometry.axis][getFaceParity(faceNum)][classifyDeg(deg)](geometry.length, geometry.even);
+  variableTranslateTable[geometry.axis][getFaceParity(faceNum)][classifyDeg(deg)](geometry.length, geometry.even);
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -173,28 +138,13 @@ export const calcFaceTransform = (currentFace: number, faceNum: number, options:
   const [x, y, z] =
     geometry.kind === "fixed"
       ? calcFixedTranslate(deg, geometry.axis, geometry.length)
-      : lookupTranslate(variableTranslateTable, deg, faceNum, geometry);
+      : lookupTranslate(deg, faceNum, geometry);
   const transformOrigin =
     geometry.kind === "fixed"
       ? TRANSFORM_ORIGIN_CENTER
       : geometry.axis === "X"
         ? `50% ${geometry.even}px`
         : `${geometry.even}px 50%`;
-
-  return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
-};
-
-export const calcAdjustFaceTransform = (
-  currentFace: number,
-  faceNum: number,
-  options: NormalizedOptions,
-): FaceTransform => {
-  const { geometry } = options;
-  const deg = calcDeg(currentFace, faceNum, options);
-  // adjust is only used for variable geometry (fixed geometry never reaches hasAdjust=true)
-  const [x, y, z] =
-    geometry.kind === "variable" ? lookupTranslate(adjustTranslateTable, deg, faceNum, geometry) : [0, 0, 0];
-  const transformOrigin = geometry.axis === "X" ? TRANSFORM_ORIGIN_TOP_EDGE : TRANSFORM_ORIGIN_LEFT_EDGE;
 
   return { axis: geometry.axis, deg, x, y, z, zIndex: calcZIndex(deg), transformOrigin };
 };

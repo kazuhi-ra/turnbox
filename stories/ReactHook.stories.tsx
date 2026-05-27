@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
-import { TurnBox } from "@kazuhi-ra/turnbox-react";
-import type { TurnBoxOptions, TurnBoxRootHandle } from "@kazuhi-ra/turnbox-react";
+import { useTurnBox, TurnBox } from "@kazuhi-ra/turnbox-react";
+import type { TurnBoxOptions } from "@kazuhi-ra/turnbox-react";
 
 type Args = {
   faces: 2 | 3 | 4;
@@ -27,20 +27,7 @@ const btnStyle: React.CSSProperties = {
   color: "white",
 };
 
-const faceStyle = (i: number): React.CSSProperties => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: faceColors[i],
-  color: "white",
-  fontSize: 22,
-  fontWeight: "bold",
-  borderRadius: 8,
-  boxSizing: "border-box",
-});
-
-const ReactComponentDemo = (args: Args) => {
-  const ref = useRef<TurnBoxRootHandle>(null);
+const ReactHookDemo = (args: Args) => {
   const [currentFace, setCurrentFace] = useState(1);
   const count = args.faces;
   const options: TurnBoxOptions = {
@@ -55,24 +42,51 @@ const ReactComponentDemo = (args: Args) => {
     onChange: setCurrentFace,
   };
 
+  const { containerRef, goTo, next, prev } = useTurnBox(options);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, padding: 40 }}>
-      <TurnBox.Root {...options} ref={ref}>
-        {Array.from({ length: count }, (_, i) => (
-          <TurnBox.Face key={faceColors[i]} style={faceStyle(i)}>
-            {faceLabels[i]}
-          </TurnBox.Face>
-        ))}
-      </TurnBox.Root>
+      <style>{`
+        .turnBoxFace { backface-visibility: hidden; }
+        .turnBoxFace:not(.turnBoxShow) { opacity: 0; pointer-events: none; }
+        .turnBoxFace.turnBoxTransition { transition: transform ${args.duration}ms ease 50ms; }
+      `}</style>
+      <div style={{ width: args.width, height: args.height, perspective: 1000, position: "relative" }}>
+        <div
+          ref={containerRef as React.RefObject<HTMLDivElement>}
+          style={{ width: args.width, height: args.height, position: "relative", transformStyle: "preserve-3d" }}
+        >
+          {Array.from({ length: count }, (_, i) => (
+            <div
+              key={faceColors[i]}
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 22,
+                fontWeight: "bold",
+                color: "white",
+                background: faceColors[i],
+                borderRadius: 8,
+                boxSizing: "border-box",
+              }}
+            >
+              {faceLabels[i]}
+            </div>
+          ))}
+        </div>
+      </div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
-        <button style={btnStyle} type="button" onClick={() => ref.current?.prev()}>
+        <button style={btnStyle} type="button" onClick={() => prev()}>
           ◀ Prev
         </button>
-        <button style={btnStyle} type="button" onClick={() => ref.current?.next()}>
+        <button style={btnStyle} type="button" onClick={() => next()}>
           Next ▶
         </button>
         {Array.from({ length: count }, (_, i) => (
-          <button key={i} style={btnStyle} type="button" onClick={() => ref.current?.goTo(i + 1)}>
+          <button key={i} style={btnStyle} type="button" onClick={() => goTo(i + 1)}>
             Go {i + 1}
           </button>
         ))}
@@ -83,8 +97,12 @@ const ReactComponentDemo = (args: Args) => {
 };
 
 const meta: Meta<Args> = {
-  title: "packages/react-component",
-  render: (args) => <ReactComponentDemo key={args.faces} {...args} />,
+  title: "packages/react",
+  render: (args) => (
+    <TurnBox.Provider reduceAnimation="never">
+      <ReactHookDemo key={args.faces} {...args} />
+    </TurnBox.Provider>
+  ),
   argTypes: {
     faces: { control: { type: "select" }, options: [2, 3, 4] },
     axis: { control: { type: "radio" }, options: ["X", "Y"] },

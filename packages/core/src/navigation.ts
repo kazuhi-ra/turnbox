@@ -1,4 +1,4 @@
-import type { Direction, NormalizedOptions, Transition } from "./types.js";
+import type { NormalizedOptions, Transition } from "./types.js";
 import { MAX_FACE_PCS } from "./normalize.js";
 
 // Returns true if the transition should animate
@@ -13,25 +13,6 @@ export const shouldAnimate = (
   const diff = Math.abs(targetFace - currentFace);
   if (options.type !== "skip" && diff > 1) return false;
   return true;
-};
-
-// Static lookup: (currentFace, targetFace) pairs that require the variable-geometry adjust pre-phase
-const ADJUST_PAIRS: Record<Direction, readonly [number, number][]> = {
-  positive: [
-    [2, 3],
-    [3, 2],
-  ],
-  negative: [
-    [1, 2],
-    [2, 1],
-    [3, 4],
-    [4, 3],
-  ],
-};
-
-const needsAdjust = (from: number, to: number, opts: NormalizedOptions): boolean => {
-  if (opts.geometry.kind === "fixed" || opts.type !== "real") return false;
-  return ADJUST_PAIRS[opts.direction].some(([c, t]) => c === from && t === to);
 };
 
 // Resolves rawTarget to a canonical face number and wrap kind.
@@ -69,7 +50,16 @@ export const resolveTransition = (
     opts.faces === MAX_FACE_PCS &&
     ((from === 1 && to === opts.faces) || (from === opts.faces && to === 1));
 
-  if (isDirectWrap || isRealBoundaryDirectAddress) {
+  // For type:"repeat" 4-face boxes, the same applies. When a queued Next/Prev stores the
+  // resolved face (e.g. face1 from Next@face4), drain re-evaluates with rawTarget=1 which
+  // loses the isDirectWrap flag. Without this check diff=3>1 → doAnimate:false → snap.
+  const isRepeatBoundaryDirectAddress =
+    !isDirectWrap &&
+    opts.type === "repeat" &&
+    opts.faces === MAX_FACE_PCS &&
+    ((from === 1 && to === opts.faces) || (from === opts.faces && to === 1));
+
+  if (isDirectWrap || isRealBoundaryDirectAddress || isRepeatBoundaryDirectAddress) {
     // boundary wraps always animate based on animationFlag — shouldAnimate rejects large diffs
     return { kind: "direct-wrap", to, doAnimate: animationFlag };
   }
@@ -78,6 +68,5 @@ export const resolveTransition = (
     kind: "step",
     to,
     doAnimate: shouldAnimate(from, to, opts, animationFlag),
-    hasAdjust: needsAdjust(from, to, opts),
   };
 };

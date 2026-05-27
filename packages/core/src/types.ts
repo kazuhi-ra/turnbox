@@ -4,7 +4,7 @@ export type AnimationType = "real" | "repeat" | "skip";
 
 export type Transition =
   | { kind: "noop" }
-  | { kind: "step"; to: number; doAnimate: boolean; hasAdjust: boolean }
+  | { kind: "step"; to: number; doAnimate: boolean }
   | { kind: "direct-wrap"; to: number; doAnimate: boolean };
 
 // The constrained set of rotation angles calcDeg can produce

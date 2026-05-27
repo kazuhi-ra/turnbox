@@ -11,5 +11,5 @@ export type {
 } from "./types.js";
 export { MAX_FACE_PCS } from "./normalize.js";
 export { FOCUSABLE } from "./focus.js";
-export { calcAdjustFaceTransform, getFaceParity } from "./transform.js";
+export { getFaceParity } from "./transform.js";
 export { shouldAnimate, resolveTransition } from "./navigation.js";

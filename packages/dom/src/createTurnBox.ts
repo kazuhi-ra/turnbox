@@ -1,7 +1,6 @@
 import {
   normalizeOptions,
   calcFaceTransform,
-  calcAdjustFaceTransform,
   resolveTransition,
   FOCUSABLE,
   type TurnBoxOptions,
@@ -21,22 +20,10 @@ export type TurnBoxInstance = {
 
 type DomOptions = TurnBoxOptions & { ariaLabel?: string; reduceAnimation?: ReduceAnimation };
 
-const ADJUST_TIME = 20;
-
 const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
     const faceNum = i + 1;
     const t = calcFaceTransform(currentFace, faceNum, opts);
-    face.style.transform = toTransformString(t);
-    face.style.zIndex = String(t.zIndex);
-    face.style.transformOrigin = t.transformOrigin;
-  });
-};
-
-const applyAdjustTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
-  faces.forEach((face, i) => {
-    const faceNum = i + 1;
-    const t = calcAdjustFaceTransform(currentFace, faceNum, opts);
     face.style.transform = toTransformString(t);
     face.style.zIndex = String(t.zIndex);
     face.style.transformOrigin = t.transformOrigin;
@@ -71,6 +58,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   let isAnimating = false;
   let animatingFromFace: number | null = null;
   let animatingDisplayFace: number | null = null;
+  let pendingRaf: number | null = null;
   const pendingTimers: ReturnType<typeof setTimeout>[] = [];
   const pendingNavigations: Array<{ face: number; animation: boolean }> = [];
 
@@ -133,6 +121,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   const abortAnimation = (): void => {
     for (const id of pendingTimers) clearTimeout(id);
     pendingTimers.length = 0;
+    if (pendingRaf !== null) {
+      cancelAnimationFrame(pendingRaf);
+      pendingRaf = null;
+    }
     faces.forEach((f) => {
       f.classList.remove("turnBoxTransition");
       f.style.transition = "";
@@ -152,7 +144,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     animatingDisplayFace = null;
   };
 
-  const animate = (rawTarget: number, animationFlag: boolean, startDelay = ADJUST_TIME): void => {
+  const animate = (rawTarget: number, animationFlag: boolean): void => {
     if (isAnimating) {
       const displayFace = getDisplayFace();
       const checkTransition = resolveTransition(displayFace, rawTarget, opts, animationFlag);
@@ -161,7 +153,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       const isImmediate = !animationFlag || checkTransition.to === animatingFromFace;
 
       if (!isImmediate) {
-        pendingNavigations.push({ face: rawTarget, animation: animationFlag });
+        pendingNavigations.push({ face: checkTransition.to, animation: animationFlag });
         return;
       }
 
@@ -178,32 +170,20 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     animatingDisplayFace = transition.to;
 
     const time = opts.duration + opts.delay;
-    const hasAdjust = transition.kind === "step" && transition.hasAdjust;
     const finalFace = transition.to;
     options.onChange?.(finalFace);
 
     const drainQueue = (): void => {
-      const pending = pendingNavigations.shift();
-      if (pending) animate(pending.face, pending.animation, 0);
+      while (pendingNavigations.length > 0) {
+        // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
+        const pending = pendingNavigations.shift()!;
+        const t = resolveTransition(getDisplayFace(), pending.face, opts, pending.animation);
+        if (t.kind !== "noop") {
+          animate(pending.face, pending.animation);
+          return;
+        }
+      }
     };
-
-    if (hasAdjust) {
-      container.classList.add("turnBoxAdjust");
-      applyAdjustTransforms(faces, from, opts);
-      schedule(
-        () => {
-          container.classList.remove("turnBoxAdjust");
-          applyFaceTransforms(faces, currentFace, opts);
-          isAnimating = false;
-          animatingFromFace = null;
-          animatingDisplayFace = null;
-          options.onAnimationEnd?.(finalFace);
-          faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
-          drainQueue();
-        },
-        time + ADJUST_TIME * 2,
-      );
-    }
 
     const targetFace = transition.to;
 
@@ -221,12 +201,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
       showFace(targetFace);
       setCurrentFace(targetFace);
-
-      if (hasAdjust) {
-        applyAdjustTransforms(faces, targetFace, opts);
-      } else {
-        applyFaceTransforms(faces, targetFace, opts);
-      }
+      applyFaceTransforms(faces, targetFace, opts);
 
       schedule(() => {
         faces.forEach((f) => {
@@ -239,19 +214,21 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           container.style.transition = "";
         }
         hideFace(from);
-
-        if (!hasAdjust) {
-          isAnimating = false;
-          animatingFromFace = null;
-          animatingDisplayFace = null;
-          options.onAnimationEnd?.(finalFace);
-          faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
-          drainQueue();
-        }
+        isAnimating = false;
+        animatingFromFace = null;
+        animatingDisplayFace = null;
+        options.onAnimationEnd?.(finalFace);
+        faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
+        drainQueue();
       }, time);
     };
 
-    schedule(step, startDelay);
+    // Show targetFace now so a paint between this task and step()'s setTimeout
+    // task doesn't flash it invisible. At this point targetFace is at its
+    // rotated idle position (≈90° edge-on) — geometrically invisible due to
+    // backface-visibility:hidden — so showing it early causes no visual glitch.
+    showFace(targetFace);
+    schedule(step, 0);
   };
 
   const getCurrentFace = (): number => currentFace;
@@ -271,6 +248,10 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     destroy() {
       for (const id of pendingTimers) clearTimeout(id);
       pendingTimers.length = 0;
+      if (pendingRaf !== null) {
+        cancelAnimationFrame(pendingRaf);
+        pendingRaf = null;
+      }
       faces.forEach((face) => {
         face.classList.remove(
           "turnBoxFace",

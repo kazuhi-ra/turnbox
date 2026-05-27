@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import type React from "react";
 import { calcFaceTransform } from "@kazuhi-ra/turnbox-core";
-import { calcAdjustFaceTransform } from "@kazuhi-ra/turnbox-core/internal";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
 import { useTurnBoxContext } from "./context.js";
 import type { AnimationPhase } from "./context.js";
@@ -21,21 +20,13 @@ const faceDimStyle = (faceIndex: number, opts: NormalizedOptions): React.CSSProp
   return { width: isEven ? geometry.even : geometry.length, height: "100%" };
 };
 
-const hasTransition = (phase: AnimationPhase): boolean =>
-  phase.kind === "animating" || phase.kind === "adjust-animating";
-
-const usesFaceTransform = (phase: AnimationPhase): boolean =>
-  phase.kind !== "adjusting" && phase.kind !== "adjust-animating";
+const hasTransition = (phase: AnimationPhase): boolean => phase.kind === "animating";
 
 export const Face = ({ children, className, style, _faceIndex = 0, ...rest }: FaceInternalProps) => {
-  const { opts, displayFace, phase, shownFaces, faceOverrides } = useTurnBoxContext();
+  const { opts, displayFace, phase, shownFaces } = useTurnBoxContext();
 
-  const ft = usesFaceTransform(phase)
-    ? calcFaceTransform(displayFace, _faceIndex, opts)
-    : calcAdjustFaceTransform(displayFace, _faceIndex, opts);
-
-  const override = faceOverrides.get(_faceIndex);
-  const transformStr = override ?? toTransformString(ft);
+  const ft = calcFaceTransform(displayFace, _faceIndex, opts);
+  const transformStr = toTransformString(ft);
 
   const faceStyle: React.CSSProperties = {
     ...style,
