@@ -48,18 +48,51 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   const { geometry } = opts;
   const faces = Array.from(container.children).slice(0, opts.faces) as HTMLElement[];
 
+  // Geometry-specific DOM operations, resolved once at init.
+  // Fixed geometry: all methods are no-ops (faces are square; container needs no resizing).
+  // Variable geometry: manages per-face sizing and container dimension/transition updates.
+  const geoOps =
+    geometry.kind === "variable"
+      ? {
+          initFace(face: HTMLElement, faceNum: number) {
+            const isEven = faceNum % 2 === 0;
+            face.style[geometry.axis === "X" ? "height" : "width"] = isEven
+              ? `${geometry.even}px`
+              : `${geometry.length}px`;
+          },
+          initContainer() {
+            container.style[geometry.axis === "X" ? "height" : "left"] =
+              geometry.axis === "X" ? `${geometry.length}px` : "0px";
+          },
+          onFaceChange(faceNum: number) {
+            const isEven = faceNum % 2 === 0;
+            if (geometry.axis === "X") {
+              container.style.height = isEven ? `${geometry.even}px` : `${geometry.length}px`;
+            } else {
+              container.style.left = isEven ? `${(geometry.length - geometry.even) / 2}px` : "0px";
+            }
+          },
+          applyTransition() {
+            const prop = geometry.axis === "X" ? "height" : "left";
+            container.style.transition = `${prop} ${opts.duration}ms ${opts.easing} ${opts.delay}ms`;
+          },
+          clearTransition() {
+            container.style.transition = "";
+          },
+        }
+      : {
+          initFace(_face: HTMLElement, _faceNum: number) {},
+          initContainer() {},
+          onFaceChange(_faceNum: number) {},
+          applyTransition() {},
+          clearTransition() {},
+        };
+
   // Mark face elements and set dimensions for variable geometry
   faces.forEach((face, i) => {
     const faceNum = i + 1;
     face.classList.add("turnBoxFace", `turnBoxFaceNum${faceNum}`);
-    if (geometry.kind === "variable") {
-      const isEven = faceNum % 2 === 0;
-      if (geometry.axis === "X") {
-        face.style.height = isEven ? `${geometry.even}px` : `${geometry.length}px`;
-      } else {
-        face.style.width = isEven ? `${geometry.even}px` : `${geometry.length}px`;
-      }
-    }
+    geoOps.initFace(face, faceNum);
   });
 
   let state: AnimState = { kind: "idle", face: 1 };
@@ -69,7 +102,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   // reflects DOM-committed state rather than animation-phase state.
   let currentFace = 1;
 
-  let pendingRaf: number | null = null;
   const pendingTimers: ReturnType<typeof setTimeout>[] = [];
 
   const schedule = (fn: () => void, delay: number): void => {
@@ -82,14 +114,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     container.classList.remove(`turnBoxCurrentFace${currentFace}`);
     currentFace = n;
     container.classList.add(`turnBoxCurrentFace${n}`);
-    if (geometry.kind === "variable") {
-      const isEven = n % 2 === 0;
-      if (geometry.axis === "X") {
-        container.style.height = isEven ? `${geometry.even}px` : `${geometry.length}px`;
-      } else {
-        container.style.left = isEven ? `${(geometry.length - geometry.even) / 2}px` : "0px";
-      }
-    }
+    geoOps.onFaceChange(n);
   };
 
   const showFace = (faceNum: number): void => {
@@ -117,9 +142,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   }
   container.style.perspective = `${opts.perspective}px`;
   container.classList.add("turnBoxContainer", `turnBoxCurrentFace${currentFace}`);
-  if (geometry.kind === "variable") {
-    container.style[geometry.axis === "X" ? "height" : "left"] = geometry.axis === "X" ? `${geometry.length}px` : "0px";
-  }
+  geoOps.initContainer();
   applyFaceTransforms(faces, currentFace, opts);
   faces[0]?.classList.add("turnBoxShow");
   for (const face of faces.slice(1)) {
@@ -130,15 +153,11 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   const abortAnimation = (): void => {
     for (const id of pendingTimers) clearTimeout(id);
     pendingTimers.length = 0;
-    if (pendingRaf !== null) {
-      cancelAnimationFrame(pendingRaf);
-      pendingRaf = null;
-    }
     faces.forEach((f) => {
       f.classList.remove("turnBoxTransition");
       f.style.transition = "";
     });
-    container.style.transition = "";
+    geoOps.clearTransition();
     container.classList.remove("turnBoxAdjust");
     const settleFace = state.kind === "animating" ? state.to : state.face;
     setCurrentFace(settleFace);
@@ -207,10 +226,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           f.classList.add("turnBoxTransition");
           f.style.transition = `transform ${opts.duration}ms ${opts.easing} ${opts.delay}ms`;
         });
-        if (geometry.kind === "variable") {
-          const prop = geometry.axis === "X" ? "height" : "left";
-          container.style.transition = `${prop} ${opts.duration}ms ${opts.easing} ${opts.delay}ms`;
-        }
+        geoOps.applyTransition();
       }
 
       showFace(targetFace);
@@ -224,9 +240,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           // Cancel compositor transition: forces committed inline value as CSS "before-change style".
           for (const anim of f.getAnimations?.() ?? []) anim.cancel();
         });
-        if (geometry.kind === "variable") {
-          container.style.transition = "";
-        }
+        geoOps.clearTransition();
         hideFace(from);
         // Extract queue before transitioning to idle so drainQueue can process it.
         const pendingQueue = state.kind === "animating" ? state.queue : [];
@@ -260,10 +274,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     destroy() {
       for (const id of pendingTimers) clearTimeout(id);
       pendingTimers.length = 0;
-      if (pendingRaf !== null) {
-        cancelAnimationFrame(pendingRaf);
-        pendingRaf = null;
-      }
       faces.forEach((face) => {
         face.classList.remove(
           "turnBoxFace",
