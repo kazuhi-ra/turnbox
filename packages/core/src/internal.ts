@@ -23,3 +23,5 @@ export type {
   TurnBoxAction,
 } from "./state-machine.js";
 export { INITIAL_STATE, reducer, toPhase, buildGoStepAction, buildGoInstantAction } from "./state-machine.js";
+export type { NavigationDecision, DrainResult } from "./orchestration.js";
+export { resolveNavigation, buildDrainResult } from "./orchestration.js";
