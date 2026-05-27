@@ -42,24 +42,18 @@ export const resolveTransition = (
 
   const { to, isDirectWrap } = boundary;
 
-  // For type:"real" 4-face boxes, directly addressing the opposite boundary face
-  // (goTo(4) from face 1, or goTo(1) from face 4) is also a wrap transition.
-  const isRealBoundaryDirectAddress =
+  // For type:"real" and type:"repeat" 4-face boxes, directly addressing the opposite
+  // boundary face (goTo(4) from face 1, or goTo(1) from face 4) is a wrap transition.
+  // This also applies when the queue stores a resolved face number (e.g. face1 from
+  // Next@face4) and drain re-evaluates — without this, diff=3>1 → doAnimate:false → snap.
+  // (type:"skip" is exempt: shouldAnimate allows non-adjacent jumps for skip.)
+  const isBoundaryDirectAddress =
     !isDirectWrap &&
-    opts.type === "real" &&
+    (opts.type === "real" || opts.type === "repeat") &&
     opts.faces === MAX_FACE_PCS &&
     ((from === 1 && to === opts.faces) || (from === opts.faces && to === 1));
 
-  // For type:"repeat" 4-face boxes, the same applies. When a queued Next/Prev stores the
-  // resolved face (e.g. face1 from Next@face4), drain re-evaluates with rawTarget=1 which
-  // loses the isDirectWrap flag. Without this check diff=3>1 → doAnimate:false → snap.
-  const isRepeatBoundaryDirectAddress =
-    !isDirectWrap &&
-    opts.type === "repeat" &&
-    opts.faces === MAX_FACE_PCS &&
-    ((from === 1 && to === opts.faces) || (from === opts.faces && to === 1));
-
-  if (isDirectWrap || isRealBoundaryDirectAddress || isRepeatBoundaryDirectAddress) {
+  if (isDirectWrap || isBoundaryDirectAddress) {
     // boundary wraps always animate based on animationFlag — shouldAnimate rejects large diffs
     return { kind: "direct-wrap", to, doAnimate: animationFlag };
   }

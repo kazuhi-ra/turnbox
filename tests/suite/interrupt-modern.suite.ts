@@ -172,6 +172,42 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       expect(adapter.getCurrentFace()).toBe(3);
     });
 
+    // ── queue seamlessness: type:real boundary wrap ───────────────────────────
+    // Same scenario as type:repeat above, but for type:real.
+
+    it("type:real queued next() face4→face1: boundary wrap animates (not snap)", async () => {
+      adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
+      adapter.goTo(3, false); // instant to face3
+      await adapter.advanceTime(300); // settle
+      adapter.next(); // face3→face4 (t=300)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face1 (next at displayFace=4 → rawTarget=5 → stored as {face:1})
+      // face3→face4 cleanup fires at t=500ms; drainQueue starts face4→face1
+      await adapter.advanceTime(210); // total 560ms; second animation 60ms in
+      expect(adapter.isAnimating()).toBe(true); // still animating — proves it didn't snap
+      expect(adapter.getCurrentFace()).toBe(1);
+      await adapter.advanceTime(200);
+      expect(adapter.isAnimating()).toBe(false);
+      expect(adapter.getCurrentFace()).toBe(1);
+    });
+
+    it("type:real queued prev() face1→face4: boundary wrap animates (not snap)", async () => {
+      adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
+      adapter.next(); // face1→face2 (t=0)
+      await adapter.advanceTime(50);
+      adapter.prev(); // immediate-execute: abort → face2→face1
+      await adapter.advanceTime(300); // settle at face1
+      adapter.prev(); // face1→face4 boundary wrap (t=350)
+      await adapter.advanceTime(50);
+      adapter.prev(); // queue face3 (prev from displayFace=4)
+      await adapter.advanceTime(160); // face1→face4 cleanup fires at 200ms; drain starts at 200ms
+      expect(adapter.isAnimating()).toBe(true);
+      expect(adapter.getCurrentFace()).toBe(3);
+      await adapter.advanceTime(200);
+      expect(adapter.isAnimating()).toBe(false);
+      expect(adapter.getCurrentFace()).toBe(3);
+    });
+
     // ── queue behavior ────────────────────────────────────────────────────────
 
     it("two next() queued during same animation: same target queued twice, executes once", async () => {
