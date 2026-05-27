@@ -141,6 +141,28 @@ export const wrapAroundSuite = (adapters: AdapterList) => {
         await adapter.advanceTime(300);
         expect(adapter.getCurrentFace()).toBe(4);
       });
+
+      it("goTo(4) from face 1 animates (both faces shown mid-animation)", async () => {
+        adapter = createAdapter({ faces: 4, type: "repeat", duration: 200 });
+        adapter.goTo(4, true);
+        await adapter.advanceTime(50);
+        expect(adapter.isFaceShown(1)).toBe(true);
+        expect(adapter.isFaceShown(4)).toBe(true);
+        await adapter.advanceTime(300);
+        expect(adapter.getCurrentFace()).toBe(4);
+      });
+
+      it("goTo(1) from face 4 animates (both faces shown mid-animation)", async () => {
+        adapter = createAdapter({ faces: 4, type: "repeat", duration: 200 });
+        adapter.goTo(4);
+        await adapter.advanceTime(300);
+        adapter.goTo(1, true);
+        await adapter.advanceTime(50);
+        expect(adapter.isFaceShown(4)).toBe(true);
+        expect(adapter.isFaceShown(1)).toBe(true);
+        await adapter.advanceTime(300);
+        expect(adapter.getCurrentFace()).toBe(1);
+      });
     });
 
     // type:skip — bidirectional wrap (4-face only)
