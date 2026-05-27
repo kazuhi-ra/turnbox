@@ -1,14 +1,15 @@
 import { inject } from "vue";
-import type { ComputedRef, InjectionKey, Ref, ShallowRef } from "vue";
+import type { ComputedRef, InjectionKey, Ref } from "vue";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
+import type { AnimationPhase } from "@kazuhi-ra/turnbox-core/internal";
 
-export type AnimationPhase = { kind: "idle" } | { kind: "animating" };
+export type { AnimationPhase };
 
 export type TurnBoxContextValue = {
   opts: ComputedRef<NormalizedOptions>;
   displayFace: Ref<number>;
-  phase: ShallowRef<AnimationPhase>;
-  shownFaces: ShallowRef<ReadonlySet<number>>;
+  phase: Ref<AnimationPhase>;
+  shownFaces: Ref<ReadonlySet<number>>;
   goTo: (rawTarget: number, animation?: boolean) => void;
   next: () => void;
   prev: () => void;

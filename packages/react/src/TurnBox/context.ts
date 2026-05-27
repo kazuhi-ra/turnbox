@@ -1,7 +1,8 @@
 import { createContext, useContext } from "react";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
+import type { AnimationPhase } from "@kazuhi-ra/turnbox-core/internal";
 
-export type AnimationPhase = { kind: "idle" } | { kind: "animating" };
+export type { AnimationPhase };
 
 export type TurnBoxContextValue = {
   opts: NormalizedOptions;

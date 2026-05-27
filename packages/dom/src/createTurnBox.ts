@@ -3,9 +3,16 @@ import {
   calcFaceTransform,
   resolveTransition,
   FOCUSABLE,
+  INITIAL_STATE,
+  reducer,
+  buildGoStepAction,
+  buildGoInstantAction,
   type TurnBoxOptions,
   type NormalizedOptions,
   type ReduceAnimation,
+  type TurnBoxState,
+  type TurnBoxAction,
+  type PendingNav,
 } from "@kazuhi-ra/turnbox-core/internal";
 import { toTransformString } from "./css.js";
 
@@ -20,13 +27,11 @@ export type TurnBoxInstance = {
 
 type DomOptions = TurnBoxOptions & { ariaLabel?: string; reduceAnimation?: ReduceAnimation };
 
-type PendingNav = { face: number; animation: boolean };
-
-// Animation state machine.
-// idle:      not animating; face is the settled face.
-// animating: CSS transition in progress; from/to are the origin and destination faces;
-//            queue holds navigations received while this animation is in flight.
-type AnimState = { kind: "idle"; face: number } | { kind: "animating"; from: number; to: number; queue: PendingNav[] };
+// Animation state machine — shared with React and Vue via @kazuhi-ra/turnbox-core/internal.
+// idle:      not animating; displayFace is the settled face.
+// settling:  instant transition in-flight (doAnimate:false); timer fires to release isAnimating.
+// animating: CSS transition in progress; from/to tracked in state.queue holds navigations
+//            received while this animation is in flight.
 
 const applyFaceTransforms = (faces: HTMLElement[], currentFace: number, opts: NormalizedOptions): void => {
   faces.forEach((face, i) => {
@@ -95,10 +100,14 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     geoOps.initFace(face, faceNum);
   });
 
-  let state: AnimState = { kind: "idle", face: 1 };
+  let state: TurnBoxState = INITIAL_STATE;
+
+  const dispatch = (action: TurnBoxAction): void => {
+    state = reducer(state, action);
+  };
 
   // Tracks which turnBoxCurrentFaceN CSS class is currently applied to the container.
-  // Updated by setCurrentFace() inside step(); kept separate from AnimState because it
+  // Updated by setCurrentFace() inside step(); kept separate from state because it
   // reflects DOM-committed state rather than animation-phase state.
   let currentFace = 1;
 
@@ -107,8 +116,6 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   const schedule = (fn: () => void, delay: number): void => {
     pendingTimers.push(setTimeout(fn, delay));
   };
-
-  const getDisplayFace = (): number => (state.kind === "animating" ? state.to : state.face);
 
   const setCurrentFace = (n: number): void => {
     container.classList.remove(`turnBoxCurrentFace${currentFace}`);
@@ -131,6 +138,15 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     face.classList.remove("turnBoxShow");
     face.setAttribute("aria-hidden", "true");
     face.inert = true;
+  };
+
+  // Reconcile DOM face visibility with state.shownFaces.
+  const syncFaceVisibility = (): void => {
+    faces.forEach((_, i) => {
+      const faceNum = i + 1;
+      if (state.shownFaces.has(faceNum)) showFace(faceNum);
+      else hideFace(faceNum);
+    });
   };
 
   // Initialize
@@ -162,33 +178,24 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     });
     geoOps.clearTransition();
     container.classList.remove("turnBoxAdjust");
-    const settleFace = state.kind === "animating" ? state.to : state.face;
+    const settleFace = state.displayFace;
+    dispatch({ type: "ABORT", displayFace: settleFace });
     setCurrentFace(settleFace);
     applyFaceTransforms(faces, settleFace, opts);
-    faces.forEach((_, i) => {
-      const faceNum = i + 1;
-      if (faceNum === settleFace) showFace(faceNum);
-      else hideFace(faceNum);
-    });
-    // Transitioning to idle drops the queue — the animating state object (and its queue)
-    // is discarded. Callers that want to clear the queue can rely on this implicitly.
-    state = { kind: "idle", face: settleFace };
+    syncFaceVisibility();
   };
 
   // Processes pending navigations accumulated during the animation that just completed.
-  // queue is extracted from the animating state before transitioning to idle, then passed
-  // here so that state is already idle when animate() is called for the next item.
-  // After animate() establishes a new animating state, any remaining queue items are
-  // transferred into it so they survive subsequent drain cycles.
-  const drainQueue = (queue: PendingNav[]): void => {
+  // queue is a snapshot captured before COMPLETE/SETTLE dispatch (which drops the queue).
+  const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
     while (queue.length > 0) {
       // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
       const pending = queue.shift()!;
-      const t = resolveTransition(getDisplayFace(), pending.face, opts, pending.animation);
+      const t = resolveTransition(settledFace, pending.face, opts, pending.animation);
       if (t.kind !== "noop") {
         animate(pending.face, pending.animation);
-        if (state.kind === "animating" && queue.length > 0) {
-          state.queue.unshift(...queue);
+        if (state.kind !== "idle" && queue.length > 0) {
+          for (const item of queue) dispatch({ type: "ENQUEUE", nav: item });
           queue.length = 0;
         }
         return;
@@ -197,14 +204,14 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   };
 
   const animate = (rawTarget: number, animationFlag: boolean): void => {
-    if (state.kind === "animating") {
-      const checkTransition = resolveTransition(state.to, rawTarget, opts, animationFlag);
+    if (state.kind !== "idle") {
+      const checkTransition = resolveTransition(state.displayFace, rawTarget, opts, animationFlag);
       if (checkTransition.kind === "noop") return;
 
       const isImmediate = !animationFlag || checkTransition.to === state.from;
 
       if (!isImmediate) {
-        state.queue.push({ face: checkTransition.to, animation: animationFlag });
+        dispatch({ type: "ENQUEUE", nav: { face: checkTransition.to, animation: animationFlag } });
         return;
       }
 
@@ -212,19 +219,25 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       abortAnimation();
     }
 
-    const from = getDisplayFace();
+    const from = state.displayFace;
     const transition = resolveTransition(from, rawTarget, opts, animationFlag);
     if (transition.kind === "noop") return;
 
-    state = { kind: "animating", from, to: transition.to, queue: [] };
-
     const time = opts.duration + opts.delay;
-    const finalFace = transition.to;
-    const targetFace = transition.to;
-    options.onChange?.(finalFace);
+    const { to, doAnimate } = transition;
+    options.onChange?.(to);
+
+    if (doAnimate) {
+      dispatch(buildGoStepAction(to, from)); // shownFaces = {from, to}
+    } else {
+      dispatch(buildGoInstantAction(to, from)); // shownFaces = {to}
+    }
+    // Show targetFace now so a paint between this task and step()'s setTimeout
+    // task doesn't flash it invisible. syncFaceVisibility handles this via shownFaces.
+    syncFaceVisibility();
 
     const step = (): void => {
-      if (transition.doAnimate) {
+      if (doAnimate) {
         faces.forEach((f) => {
           f.classList.add("turnBoxTransition");
           f.style.transition = `transform ${opts.duration}ms ${opts.easing} ${opts.delay}ms`;
@@ -232,9 +245,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
         geoOps.applyTransition();
       }
 
-      showFace(targetFace);
-      setCurrentFace(targetFace);
-      applyFaceTransforms(faces, targetFace, opts);
+      setCurrentFace(to);
+      applyFaceTransforms(faces, to, opts);
 
       schedule(() => {
         faces.forEach((f) => {
@@ -244,21 +256,22 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
           for (const anim of f.getAnimations?.() ?? []) anim.cancel();
         });
         geoOps.clearTransition();
-        hideFace(from);
-        // Extract queue before transitioning to idle so drainQueue can process it.
-        const pendingQueue = state.kind === "animating" ? state.queue : [];
-        state = { kind: "idle", face: finalFace };
-        options.onAnimationEnd?.(finalFace);
+
+        // Capture queue before COMPLETE/SETTLE resets state to idle (dropping queue).
+        const pendingQueue: PendingNav[] = state.kind !== "idle" ? [...state.queue] : [];
+        if (doAnimate) {
+          dispatch({ type: "COMPLETE", displayFace: to });
+        } else {
+          dispatch({ type: "SETTLE" });
+        }
+        syncFaceVisibility(); // hide from-face after animation completes
+
+        options.onAnimationEnd?.(to);
         faces[currentFace - 1]?.querySelector<HTMLElement>(FOCUSABLE)?.focus({ preventScroll: true });
-        drainQueue(pendingQueue);
+        drainQueue(to, pendingQueue);
       }, time);
     };
 
-    // Show targetFace now so a paint between this task and step()'s setTimeout
-    // task doesn't flash it invisible. At this point targetFace is at its
-    // rotated idle position (≈90° edge-on) — geometrically invisible due to
-    // backface-visibility:hidden — so showing it early causes no visual glitch.
-    showFace(targetFace);
     schedule(step, 0);
   };
 
@@ -267,13 +280,13 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
       animate(face, animation);
     },
     next() {
-      animate(getDisplayFace() + 1, true);
+      animate(state.displayFace + 1, true);
     },
     prev() {
-      animate(getDisplayFace() - 1, true);
+      animate(state.displayFace - 1, true);
     },
     getCurrentFace: () => currentFace,
-    isAnimating: () => state.kind === "animating",
+    isAnimating: () => state.kind !== "idle",
     destroy() {
       for (const id of pendingTimers) clearTimeout(id);
       pendingTimers.length = 0;
