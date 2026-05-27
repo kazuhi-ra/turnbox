@@ -147,14 +147,14 @@ export const variableGeometrySuite = (adapters: AdapterList) => {
     });
 
     describe("fixed geometry (even === height)", () => {
-      it("transformOrigin is '50% 50%' when even equals height (axis:X)", () => {
+      it("transformOrigin is '50% 100px' when even equals height (axis:X, height=200)", () => {
         adapter = createAdapter({ faces: 4, axis: "X", height: 200, even: 200 });
-        expect(adapter.getFaceState(1).transformOrigin).toBe("50% 50%");
+        expect(adapter.getFaceState(1).transformOrigin).toBe("50% 100px");
       });
 
-      it("transformOrigin is '50% 50%' when even equals width (axis:Y)", () => {
+      it("transformOrigin is '100px 50%' when even equals width (axis:Y, width=200)", () => {
         adapter = createAdapter({ faces: 4, axis: "Y", width: 200, even: 200 });
-        expect(adapter.getFaceState(1).transformOrigin).toBe("50% 50%");
+        expect(adapter.getFaceState(1).transformOrigin).toBe("100px 50%");
       });
     });
 
