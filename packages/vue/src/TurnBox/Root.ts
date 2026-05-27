@@ -14,9 +14,17 @@ import {
 } from "vue";
 import { normalizeOptions, DEFAULT_SIZE, DEFAULT_HEIGHT } from "@kazuhi-ra/turnbox-core";
 import type { NormalizedOptions } from "@kazuhi-ra/turnbox-core";
-import { resolveTransition, FOCUSABLE } from "@kazuhi-ra/turnbox-core/internal";
+import {
+  resolveTransition,
+  FOCUSABLE,
+  INITIAL_STATE,
+  reducer,
+  toPhase,
+  buildGoStepAction,
+  buildGoInstantAction,
+} from "@kazuhi-ra/turnbox-core/internal";
+import type { TurnBoxState, TurnBoxAction, PendingNav } from "@kazuhi-ra/turnbox-core/internal";
 import { TurnBoxContextKey } from "./context.js";
-import type { AnimationPhase } from "./context.js";
 import { Face } from "./Face.js";
 import { injectTurnBoxConfig } from "./configContext.js";
 
@@ -27,7 +35,7 @@ const flattenVNodes = (nodes: VNode[]): VNode[] =>
 
 const calcContainerDynStyle = (
   displayFace: number,
-  phaseKind: AnimationPhase["kind"],
+  phaseKind: "idle" | "animating",
   opts: NormalizedOptions,
 ): Record<string, string | undefined> => {
   const { geometry } = opts;
@@ -70,15 +78,27 @@ export const Root = defineComponent({
   },
   setup(props, { slots, expose }) {
     const config = injectTurnBoxConfig();
-    const displayFace = ref(1);
-    const phase = shallowRef<AnimationPhase>({ kind: "idle" });
-    const shownFaces = shallowRef<ReadonlySet<number>>(new Set([1]));
-    const isAnimatingFlag = ref(false);
+
+    // ── State machine ─────────────────────────────────────────────────────────
+    const machineState = shallowRef<TurnBoxState>(INITIAL_STATE);
+
+    // Frame-1 display override for the 2-frame animation strategy.
+    // When non-null, computed displayFace returns this value instead of machineState.displayFace.
+    // Holds the "from" face during the single RAF gap so CSS transitions are applied before
+    // the transform changes.
+    const rafPendingFrom = shallowRef<number | null>(null);
+
+    const dispatch = (action: TurnBoxAction): void => {
+      machineState.value = reducer(machineState.value, action);
+    };
+
+    // Derived reactive values for context
+    const displayFace = computed(() => rafPendingFrom.value ?? machineState.value.displayFace);
+    const phase = computed(() => toPhase(machineState.value));
+    const shownFaces = computed(() => machineState.value.shownFaces);
+
     const pendingTimers: ReturnType<typeof setTimeout>[] = [];
     let pendingRaf: number | null = null;
-    let animatingFromFace: number | null = null;
-    let animatingToFace: number | null = null;
-    const pendingNavigations: Array<{ face: number; animation: boolean }> = [];
 
     const boxRef = ref<HTMLElement | null>(null);
 
@@ -148,119 +168,104 @@ export const Root = defineComponent({
       }
       // Do NOT cancel WAAPI here — the new animation's CSS transition uses the compositor
       // mid-value as before-change style for smooth reversal. Cancel only in completion timer.
-      const settleFace = animatingToFace ?? displayFace.value;
-      displayFace.value = settleFace;
-      phase.value = { kind: "idle" };
-      shownFaces.value = new Set([settleFace]);
-      isAnimatingFlag.value = false;
-      animatingFromFace = null;
-      animatingToFace = null;
+      rafPendingFrom.value = null;
+      const settleFace = machineState.value.displayFace;
+      dispatch({ type: "ABORT", displayFace: settleFace });
     };
 
     const goTo = (rawTarget: number, animation = true, fromQueue = false) => {
-      if (isAnimatingFlag.value) {
-        const from = animatingToFace ?? displayFace.value;
+      if (machineState.value.kind !== "idle") {
+        const from = machineState.value.displayFace;
         const checkTransition = resolveTransition(from, rawTarget, opts.value, animation);
         if (checkTransition.kind === "noop") return;
 
-        const isImmediate = !animation || checkTransition.to === animatingFromFace;
+        const isImmediate = !animation || checkTransition.to === machineState.value.from;
 
         if (!isImmediate) {
-          pendingNavigations.push({ face: checkTransition.to, animation });
+          dispatch({ type: "ENQUEUE", nav: { face: checkTransition.to, animation } });
           return;
         }
 
         abortAnimation();
-        pendingNavigations.length = 0;
+        // abortAnimation resets state to idle; fall through to start new navigation
       }
 
-      const from = animatingToFace ?? displayFace.value;
+      const from = machineState.value.displayFace;
       const transition = resolveTransition(from, rawTarget, opts.value, animation);
       if (transition.kind === "noop") return;
-
-      isAnimatingFlag.value = true;
-      animatingFromFace = from;
-      animatingToFace = transition.to;
 
       const time = opts.value.duration + opts.value.delay;
       props.onChange?.(transition.to);
 
-      const drainQueue = () => {
-        while (pendingNavigations.length > 0) {
+      const { to, doAnimate } = transition;
+
+      const drainQueue = (settledFace: number, queue: PendingNav[]): void => {
+        while (queue.length > 0) {
           // biome-ignore lint/style/noNonNullAssertion: shift() is safe inside while(length>0)
-          const pending = pendingNavigations.shift()!;
-          const t = resolveTransition(
-            animatingToFace ?? displayFace.value,
-            pending.face,
-            opts.value,
-            pending.animation,
-          );
+          const pending = queue.shift()!;
+          const t = resolveTransition(settledFace, pending.face, opts.value, pending.animation);
           if (t.kind !== "noop") {
             goTo(pending.face, pending.animation, true);
+            if (machineState.value.kind !== "idle" && queue.length > 0) {
+              for (const item of queue) dispatch({ type: "ENQUEUE", nav: item });
+              queue.length = 0;
+            }
             return;
           }
         }
       };
 
-      const { to, doAnimate } = transition;
-
       if (!doAnimate) {
-        displayFace.value = to;
-        phase.value = { kind: "idle" };
-        shownFaces.value = new Set([to]);
+        dispatch(buildGoInstantAction(to, from)); // → settling, shownFaces = {to}
         addTimeout(() => {
-          isAnimatingFlag.value = false;
-          animatingFromFace = null;
-          animatingToFace = null;
+          const pendingQueue: PendingNav[] =
+            machineState.value.kind === "settling" ? [...machineState.value.queue] : [];
+          dispatch({ type: "SETTLE" });
           props.onAnimationEnd?.(to);
           focusFace(to);
-          drainQueue();
+          drainQueue(to, pendingQueue);
         }, time);
         return;
       }
 
-      const currentFace = from;
-      shownFaces.value = new Set([currentFace, to]);
-      phase.value = { kind: "animating" }; // frame 1: apply transition CSS
+      dispatch(buildGoStepAction(to, from)); // → animating, shownFaces = {from, to}
+      // phase = "animating" is now derived from machineState → CSS transitions applied
 
       if (fromQueue) {
-        // Queue-drained: "from" transforms are already painted. Update displayFace in the same
-        // render as phase="animating" so CSS transitions fire immediately with no gap.
-        displayFace.value = to;
+        // Queue-drained: "from" transforms are already painted. displayFace = to immediately.
+        // rafPendingFrom NOT set → computed displayFace returns machineState.displayFace = to
         addTimeout(() => {
           cancelFaceAnimations();
-          phase.value = { kind: "idle" };
-          shownFaces.value = new Set([to]);
-          isAnimatingFlag.value = false;
-          animatingFromFace = null;
-          animatingToFace = null;
+          const pendingQueue: PendingNav[] =
+            machineState.value.kind === "animating" ? [...machineState.value.queue] : [];
+          dispatch({ type: "COMPLETE", displayFace: to });
           props.onAnimationEnd?.(to);
           nextTick(() => focusFace(to));
-          drainQueue();
+          drainQueue(to, pendingQueue);
         }, time);
         return;
       }
 
+      // Frame 1: machineState.displayFace = to, but hold "from" transforms until rAF
+      rafPendingFrom.value = from;
+
       pendingRaf = scheduleRaf(() => {
-        // frame 2: update transform
         pendingRaf = null;
-        displayFace.value = to;
+        rafPendingFrom.value = null; // Frame 2: displayFace → to, CSS transition fires
 
         addTimeout(() => {
           cancelFaceAnimations();
-          phase.value = { kind: "idle" };
-          shownFaces.value = new Set([to]);
-          isAnimatingFlag.value = false;
-          animatingFromFace = null;
-          animatingToFace = null;
+          const pendingQueue: PendingNav[] =
+            machineState.value.kind === "animating" ? [...machineState.value.queue] : [];
+          dispatch({ type: "COMPLETE", displayFace: to });
           props.onAnimationEnd?.(to);
           nextTick(() => focusFace(to));
-          drainQueue();
+          drainQueue(to, pendingQueue);
         }, time);
       });
     };
 
-    const resolveCurrentFace = (): number => animatingToFace ?? displayFace.value;
+    const resolveCurrentFace = (): number => machineState.value.displayFace;
 
     const next = () => goTo(resolveCurrentFace() + 1, true);
     const prev = () => goTo(resolveCurrentFace() - 1, true);
@@ -278,7 +283,7 @@ export const Root = defineComponent({
     expose({
       goTo,
       getCurrentFace: () => displayFace.value,
-      isAnimating: () => isAnimatingFlag.value,
+      isAnimating: () => machineState.value.kind !== "idle",
       next,
       prev,
     } satisfies TurnBoxRootHandle);
