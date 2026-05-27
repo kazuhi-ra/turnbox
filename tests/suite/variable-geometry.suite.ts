@@ -162,8 +162,8 @@ export const variableGeometrySuite = (adapters: AdapterList) => {
     // both computed with '50% 0px' origin. Regular transforms are applied only in
     // the cleanup after animation ends.
 
-    describe("during variable-geometry animation: transformOrigin is pivot-edge-locked (axis:X)", () => {
-      it("face2→face3: at transition start, transformOrigin is '50% 0px'", async () => {
+    describe("during variable-geometry animation: transformOrigin uses even-edge pivot (axis:X)", () => {
+      it("face2→face3: at transition start, transformOrigin is '50% 120px'", async () => {
         adapter = createAdapter({
           faces: 4,
           axis: "X",
@@ -172,18 +172,16 @@ export const variableGeometrySuite = (adapters: AdapterList) => {
           duration: 200,
           delay: 0,
         });
-        // Navigate to face 2 first; wait for isAnimating to clear (ADJUST_TIME + time = 20 + 200)
         adapter.goTo(2, false);
         await adapter.advanceTime(250);
-        // face 2 → face 3: hasAdjust=true
         adapter.next();
-        await adapter.advanceTime(25); // just past ADJUST_TIME=20ms
+        await adapter.advanceTime(25);
         for (const faceNum of [1, 2, 3, 4]) {
-          expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 0px");
+          expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 120px");
         }
       });
 
-      it("face3→face2: at transition start, transformOrigin is '50% 0px'", async () => {
+      it("face3→face2: at transition start, transformOrigin is '50% 120px'", async () => {
         adapter = createAdapter({
           faces: 4,
           axis: "X",
@@ -194,11 +192,10 @@ export const variableGeometrySuite = (adapters: AdapterList) => {
         });
         adapter.goTo(3, false);
         await adapter.advanceTime(250);
-        // face 3 → face 2: hasAdjust=true
         adapter.prev();
         await adapter.advanceTime(25);
         for (const faceNum of [1, 2, 3, 4]) {
-          expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 0px");
+          expect(adapter.getFaceState(faceNum).transformOrigin).toBe("50% 120px");
         }
       });
     });
@@ -435,6 +432,57 @@ export const variableGeometrySuite = (adapters: AdapterList) => {
         adapter = createAdapter({ faces: 4, axis: "Y", width: 200, even: 200 });
         expect(adapter.getContainerState().inlineLeft).toBe("");
       });
+    });
+  });
+
+  // ── variable geometry: queue-drained hasAdjust ────────────────────────────────
+  // When a hasAdjust animation is triggered from the queue drain, it must complete
+  // correctly with the destination face visible and the source face hidden.
+  // The double-RAF structure ensures CSS transition "before-change style" is
+  // established even for queue-drained calls (no startDelay shortcut).
+
+  describe.each(adapters)("%s — variable geometry: queue-drained hasAdjust completion", (_, createAdapter) => {
+    let adapter: TurnBoxTestAdapter;
+
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      adapter?.destroy();
+      vi.useRealTimers();
+    });
+
+    it("face2→face3 (hasAdjust) queue-drained: face3 shown, face2 hidden, not animating", async () => {
+      // face1→face2 completes → drainQueue fires face2→face3 (hasAdjust pair)
+      // Two-phase advance: first phase lets face1→face2 complete and framework effects register
+      // the hasAdjust cleanup timer; second phase fires that cleanup timer.
+      adapter = createAdapter({ faces: 4, axis: "X", height: 200, even: 120, duration: 200, delay: 0 });
+      adapter.next(); // face1→face2 (non-hasAdjust)
+      await adapter.advanceTime(10);
+      adapter.next(); // queue face2→face3 (hasAdjust)
+      await adapter.advanceTime(250); // face1→face2 completes; hasAdjust cleanup timer registered
+      await adapter.advanceTime(300); // hasAdjust cleanup timer fires
+      expect(adapter.getCurrentFace()).toBe(3);
+      expect(adapter.isFaceShown(3)).toBe(true);
+      expect(adapter.isFaceShown(2)).toBe(false);
+      expect(adapter.isAnimating()).toBe(false);
+    });
+
+    it("face3→face2 (hasAdjust) queue-drained: face2 shown, face3 hidden, not animating", async () => {
+      // face4→face3 completes → drainQueue fires face3→face2 (hasAdjust pair)
+      adapter = createAdapter({ faces: 4, axis: "X", height: 200, even: 120, duration: 200, delay: 0 });
+      adapter.goTo(4, false);
+      await adapter.advanceTime(250); // settle at face4
+      adapter.prev(); // face4→face3 (non-hasAdjust)
+      await adapter.advanceTime(10);
+      adapter.prev(); // queue face3→face2 (hasAdjust)
+      await adapter.advanceTime(250); // face4→face3 completes; hasAdjust cleanup timer registered
+      await adapter.advanceTime(300); // hasAdjust cleanup timer fires
+      expect(adapter.getCurrentFace()).toBe(2);
+      expect(adapter.isFaceShown(2)).toBe(true);
+      expect(adapter.isFaceShown(3)).toBe(false);
+      expect(adapter.isAnimating()).toBe(false);
     });
   });
 };

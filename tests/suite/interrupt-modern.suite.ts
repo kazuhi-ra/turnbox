@@ -134,6 +134,44 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       expect(adapter.isAnimating()).toBe(false);
     });
 
+    // ── queue seamlessness: type:repeat boundary wrap ─────────────────────────
+    // When next() at face4 is queued, {face:1} is stored (resolved from rawTarget=5).
+    // On drain, resolveTransition(4, 1, type:repeat) must recognise this as a boundary
+    // wrap (direct-wrap) — not a 3-step non-adjacent jump (doAnimate:false → snap).
+
+    it("type:repeat queued next() face4→face1: boundary wrap animates (not snap)", async () => {
+      adapter = createAdapter({ faces: 4, type: "repeat", duration: 200 });
+      adapter.goTo(3, false); // instant to face3
+      await adapter.advanceTime(300); // settle
+      adapter.next(); // face3→face4 (t=300)
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face1 (next at displayFace=4 → rawTarget=5 → stored as {face:1})
+      // face3→face4 cleanup fires at t=500ms; drainQueue starts face4→face1
+      await adapter.advanceTime(210); // total 560ms; second animation 60ms in
+      expect(adapter.isAnimating()).toBe(true); // still animating — proves it didn't snap
+      expect(adapter.getCurrentFace()).toBe(1);
+      await adapter.advanceTime(200);
+      expect(adapter.isAnimating()).toBe(false);
+      expect(adapter.getCurrentFace()).toBe(1);
+    });
+
+    it("type:repeat queued prev() face1→face4: boundary wrap animates (not snap)", async () => {
+      adapter = createAdapter({ faces: 4, type: "repeat", duration: 200 });
+      adapter.next(); // face1→face2 (t=0)
+      await adapter.advanceTime(50);
+      adapter.prev(); // immediate-execute: abort → face2→face1
+      await adapter.advanceTime(300); // settle at face1
+      adapter.prev(); // face1→face4 boundary wrap (t=350)
+      await adapter.advanceTime(50);
+      adapter.prev(); // queue face3 (next from displayFace=4)
+      await adapter.advanceTime(160); // face1→face4 cleanup fires at 200ms; drain starts at 200ms
+      expect(adapter.isAnimating()).toBe(true);
+      expect(adapter.getCurrentFace()).toBe(3);
+      await adapter.advanceTime(200);
+      expect(adapter.isAnimating()).toBe(false);
+      expect(adapter.getCurrentFace()).toBe(3);
+    });
+
     // ── queue behavior ────────────────────────────────────────────────────────
 
     it("two next() queued during same animation: same target queued twice, executes once", async () => {
@@ -177,6 +215,68 @@ export const interruptModernSuite = (adapters: AdapterList) => {
       adapter.prev(); // immediate-execute (display=2, prev=1=FROM) → clears queue
       await adapter.advanceTime(500);
       expect(adapter.getCurrentFace()).toBe(1); // face3 was cleared
+    });
+
+    // ── no flash on immediate-execute ─────────────────────────────────────────
+    // abortAnimation() hides the animating-from face (not the settle face).
+    // The new animation's step() runs via setTimeout(0) and re-shows it, but a
+    // browser paint in that ~1ms window would flash the face invisible.
+    // The fix: showFace(targetFace) synchronously before schedule(step,0).
+
+    it("target face is shown synchronously after immediate-execute, before step() fires", async () => {
+      // next(): face1→face2. abortAnimation() in prev() hides face1 (animatingFromFace).
+      // Without fix: face1 invisible until step() fires via setTimeout.
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50); // mid-animation
+      adapter.prev(); // immediate-execute: abort + reschedule face2→face1
+      // Synchronously after prev() — step() has NOT fired yet (it's a setTimeout)
+      expect(adapter.isFaceShown(1)).toBe(true);
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(1);
+    });
+
+    // ── stale queue entries do not fire as phantom navigations ────────────────
+    // When the same target is queued multiple times (all resolve to noop once
+    // settled), leftover entries must be discarded rather than held as pending.
+    // Without the fix, the stuck {face:3} entry fires when the NEXT user
+    // navigation completes, producing an unexpected reverse animation.
+
+    // ── queue: rawTarget resolved at enqueue time ─────────────────────────────
+    // Queued entries are stored as resolved face numbers, not raw targets.
+    // This prevents direct-wrap re-resolution on drain (which would produce a
+    // jarring 180° CSS animation from the "back of box" position).
+    // Instead, the entry re-resolves as a non-adjacent step (doAnimate:false)
+    // from the settled face, executing as a clean instant snap.
+
+    it("goTo(0) queued during face1→face2: resolves as instant snap to face4, no jarring animation", async () => {
+      // goTo(0) during face1→face2: rawTarget=0 resolves to direct-wrap face4, stored as {face:4}
+      // drainQueue(2): resolveTransition(2,4,type:real)=step,doAnimate:false → instant snap
+      // Without fix (rawTarget=0 stored): re-resolves as direct-wrap → 180° CSS animation from back
+      adapter = createAdapter({ faces: 4, type: "real", duration: 200 });
+      adapter.next(); // face1→face2 (FROM=1, display=2)
+      adapter.goTo(0); // direct-wrap to face4 → queued as {face:4}
+      await adapter.advanceTime(500); // face1→face2 (≈220ms) + instant snap + cleanup (200ms)
+      expect(adapter.getCurrentFace()).toBe(4);
+      expect(adapter.isAnimating()).toBe(false);
+    });
+
+    it("stale noop queue entries are discarded: subsequent next() reaches face4", async () => {
+      // face1→2 starts. face3 queued 3× (display stays at 2 for all queued calls).
+      // After settling at face3, one stale {face:3} entry would remain without the fix.
+      // next() must go to face4, not bounce back to face3.
+      adapter = createAdapter({ faces: 4, duration: 200 });
+      adapter.next(); // face1 → face2
+      await adapter.advanceTime(50);
+      adapter.next(); // queue face3
+      adapter.next(); // queue face3 (dup)
+      adapter.next(); // queue face3 (dup)
+      await adapter.advanceTime(600); // face1→2 + face2→3 settle
+      expect(adapter.getCurrentFace()).toBe(3);
+      expect(adapter.isAnimating()).toBe(false);
+      adapter.next(); // face3 → face4
+      await adapter.advanceTime(300);
+      expect(adapter.getCurrentFace()).toBe(4);
     });
   });
 };
