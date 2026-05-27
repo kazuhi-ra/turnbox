@@ -146,6 +146,8 @@ export const Root = defineComponent({
         cancelRaf(pendingRaf);
         pendingRaf = null;
       }
+      // Do NOT cancel WAAPI here — the new animation's CSS transition uses the compositor
+      // mid-value as before-change style for smooth reversal. Cancel only in completion timer.
       const settleFace = animatingToFace ?? displayFace.value;
       displayFace.value = settleFace;
       phase.value = { kind: "idle" };
