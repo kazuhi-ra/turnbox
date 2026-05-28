@@ -14,10 +14,13 @@ import type { TurnBoxState } from "@kazuhi-ra/turnbox-core/internal";
 
 const opts = normalizeOptions({ faces: 4 });
 
-const idleAt1 = (): TurnBoxState => INITIAL_STATE;
+const idleAtFace1 = (): TurnBoxState => INITIAL_STATE;
 
-const idleAt2 = (): TurnBoxState =>
-  reducer(reducer(INITIAL_STATE, buildGoInstantAction(2, 1)), { type: "SETTLE" });
+const idleAtFace2 = (): TurnBoxState => {
+  // instant nav → "settling" (timer pending); SETTLE completes it to idle
+  const settling = reducer(INITIAL_STATE, buildGoInstantAction(2, 1));
+  return reducer(settling, { type: "SETTLE" });
+};
 
 // animating face1 → face2 (from=1, displayFace=2)
 const animating1to2 = (): TurnBoxState => reducer(INITIAL_STATE, buildGoStepAction(2, 1));
@@ -29,11 +32,11 @@ const settling1to2 = (): TurnBoxState => reducer(INITIAL_STATE, buildGoInstantAc
 
 describe("resolveNavigation — idle state", () => {
   it("returns noop when target equals current face", () => {
-    expect(resolveNavigation(idleAt1(), 1, opts, true)).toEqual({ kind: "noop" });
+    expect(resolveNavigation(idleAtFace1(), 1, opts, true)).toEqual({ kind: "noop" });
   });
 
   it("returns go with correct from/to/doAnimate for animated nav", () => {
-    expect(resolveNavigation(idleAt1(), 2, opts, true)).toEqual({
+    expect(resolveNavigation(idleAtFace1(), 2, opts, true)).toEqual({
       kind: "go",
       from: 1,
       to: 2,
@@ -42,7 +45,7 @@ describe("resolveNavigation — idle state", () => {
   });
 
   it("returns go with doAnimate:false for instant nav", () => {
-    expect(resolveNavigation(idleAt2(), 3, opts, false)).toEqual({
+    expect(resolveNavigation(idleAtFace2(), 3, opts, false)).toEqual({
       kind: "go",
       from: 2,
       to: 3,
