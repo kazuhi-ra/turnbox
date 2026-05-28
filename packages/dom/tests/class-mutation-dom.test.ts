@@ -268,7 +268,6 @@ describe("DOM — animate: target face is at center position when aria-hidden is
   it("when aria-hidden is removed from target face, its transform is already rotateX(0deg)", async () => {
     const container = makeContainer(4);
     const instance = createTurnBox(container, { faces: 4, duration: DURATION });
-    const _faces = Array.from(container.children) as HTMLElement[];
 
     let transformAtUnhide: string | null = null;
     const observer = new MutationObserver((records) => {
