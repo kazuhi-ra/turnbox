@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [0.4.0] — 2026-05-27
+## [0.4.0] — 2026-05-28
 
 ### Changed
 
@@ -21,7 +21,10 @@ This project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Bilateral CSS animation restored** (#23): `aria-hidden` removal on the incoming face is now deferred to `step()`, after `applyFaceTransforms()` positions the face. Previously the face was revealed at its center position before the transition started, causing only the outgoing face to animate; now both faces start their CSS transitions from their side positions simultaneously
+- **Animation glitches** (#18): fixed boundary snap on the first frame, abort flash when interrupting a transition, and a React state consolidation issue that caused intermediate renders during navigation
 - **React `inert` on hidden faces**: replaced `useEffect` + `useRef` with a ref callback so the DOM property is set synchronously before paint; fixes a regression in React 18 where the `inert` JSX prop was silently dropped
+- **No-op DOM mutation guards** (#22): `setCurrentFace` and `hideFace` now skip classList/attribute writes when the value is already correct, preventing spurious MutationObserver records in Chrome and jsdom
 
 ## [0.3.0] — 2026-05-26
 
