@@ -53,7 +53,7 @@
     "@kazuhi-ra/turnbox-dom": "workspace:*"
   },
   "devDependencies": {
-    "@vue/server-renderer": "^3.5.34",
+    "@vue/server-renderer": "^3.5.35",
     "@vue/test-utils": "^2",
     "vue": "^3"
   }
