@@ -119,6 +119,7 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   };
 
   const setCurrentFace = (n: number): void => {
+    if (currentFace === n) return;
     container.classList.remove(`turnBoxCurrentFace${currentFace}`);
     currentFace = n;
     container.classList.add(`turnBoxCurrentFace${n}`);
@@ -137,8 +138,8 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     const face = faces[faceNum - 1];
     if (!face) return;
     face.classList.remove("turnBoxShow");
-    face.setAttribute("aria-hidden", "true");
-    face.inert = true;
+    if (face.getAttribute("aria-hidden") !== "true") face.setAttribute("aria-hidden", "true");
+    if (!face.inert) face.inert = true;
   };
 
   // Reconcile DOM face visibility with state.shownFaces.
