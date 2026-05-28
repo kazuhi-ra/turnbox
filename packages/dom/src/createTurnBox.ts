@@ -129,7 +129,9 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   const showFace = (faceNum: number): void => {
     const face = faces[faceNum - 1];
     if (!face) return;
-    face.classList.add("turnBoxShow");
+    // classList.add fires a MutationObserver record even when the token is already present
+    // (Chrome and jsdom both exhibit this behavior). Guard to suppress no-op mutations.
+    if (!face.classList.contains("turnBoxShow")) face.classList.add("turnBoxShow");
     face.removeAttribute("aria-hidden");
     face.inert = false;
   };
@@ -137,7 +139,9 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
   const hideFace = (faceNum: number): void => {
     const face = faces[faceNum - 1];
     if (!face) return;
-    face.classList.remove("turnBoxShow");
+    // classList.remove fires a MutationObserver record even when the token is absent
+    // (Chrome and jsdom both exhibit this behavior). Guard to suppress no-op mutations.
+    if (face.classList.contains("turnBoxShow")) face.classList.remove("turnBoxShow");
     if (face.getAttribute("aria-hidden") !== "true") face.setAttribute("aria-hidden", "true");
     if (!face.inert) face.inert = true;
   };
@@ -220,9 +224,31 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
     } else {
       dispatch(buildGoInstantAction(to, from)); // shownFaces = {to}
     }
-    // Show targetFace now so a paint between this task and step()'s setTimeout
-    // task doesn't flash it invisible. syncFaceVisibility handles this via shownFaces.
-    syncFaceVisibility();
+    if (doAnimate) {
+      // turnBoxShow is added early to prevent a paint flash between this task and
+      // step()'s setTimeout task. aria-hidden and inert for the to-face are deferred
+      // to step() — run atomically after applyFaceTransforms() places the face at
+      // center — so screen readers never see a face at a side position, and both
+      // from and to faces start the CSS transition from their side positions (bilateral).
+      faces.forEach((_, i) => {
+        const faceNum = i + 1;
+        const face = faces[faceNum - 1]!;
+        if (state.shownFaces.has(faceNum)) {
+          if (!face.classList.contains("turnBoxShow")) face.classList.add("turnBoxShow");
+          if (faceNum !== to) {
+            if (face.getAttribute("aria-hidden") !== null) face.removeAttribute("aria-hidden");
+            if (face.inert) face.inert = false;
+          }
+          // to-face: turnBoxShow added now; aria-hidden/inert revealed in step() after applyFaceTransforms
+        } else {
+          if (face.classList.contains("turnBoxShow")) face.classList.remove("turnBoxShow");
+          if (face.getAttribute("aria-hidden") !== "true") face.setAttribute("aria-hidden", "true");
+          if (!face.inert) face.inert = true;
+        }
+      });
+    } else {
+      syncFaceVisibility();
+    }
 
     const step = (): void => {
       if (doAnimate) {
@@ -235,6 +261,13 @@ export const createTurnBox = (container: HTMLElement, options: DomOptions): Turn
 
       setCurrentFace(to);
       applyFaceTransforms(faces, to, opts);
+      if (doAnimate) {
+        const toFaceEl = faces[to - 1];
+        if (toFaceEl) {
+          toFaceEl.removeAttribute("aria-hidden");
+          toFaceEl.inert = false;
+        }
+      }
 
       schedule(() => {
         faces.forEach((f) => {
